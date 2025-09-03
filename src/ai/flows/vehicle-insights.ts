@@ -61,7 +61,17 @@ const vehicleInsightsFlow = ai.defineFlow(
     outputSchema: VehicleInsightsOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+        const {output} = await prompt(input);
+        return output!;
+    } catch (error) {
+        console.error("AI Insight Error:", error);
+        // Return a default/safe response when the AI fails
+        return {
+            efficiencyInsight: "Could not retrieve efficiency insights at this time.",
+            costSavingSuggestion: "Could not retrieve cost saving suggestions.",
+            anomalyDetection: "AI analysis is temporarily unavailable. Please try again later."
+        }
+    }
   }
 );
