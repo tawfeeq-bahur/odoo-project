@@ -35,7 +35,7 @@ const prompt = ai.definePrompt({
   name: 'vehicleInsightsPrompt',
   input: { schema: VehicleInsightsInputSchema },
   output: { schema: VehicleInsightsOutputSchema },
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-2.0-flash-preview',
   prompt: `
     You are a fleet management analyst AI. Based on the following summary data for the current month, provide actionable insights.
 
