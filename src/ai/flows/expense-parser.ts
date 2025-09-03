@@ -21,7 +21,7 @@ const ExpenseParserInputSchema = z.object({
 export type ExpenseParserInput = z.infer<typeof ExpenseParserInputSchema>;
 
 const ParsedExpenseSchema = z.object({
-    type: z.enum(["Fuel", "Toll", "Maintenance", "Travel Allowance", "Other"]).describe('The type of expense.'),
+    type: z.enum(["Fuel", "Toll", "Maintenance", "Health", "Travel Allowance", "Other"]).describe('The type of expense.'),
     amount: z.number().describe('The total amount of the expense.'),
     date: z.string().describe('The date of the expense in YYYY-MM-DD format.'),
 });
@@ -44,7 +44,7 @@ const prompt = ai.definePrompt({
 
 Analyze the provided image of a bill or receipt. Identify the type of expense, the total amount, and the date.
 
-Categorize the expense into one of the following types: "Fuel", "Toll", "Maintenance", "Travel Allowance", "Other".
+Categorize the expense into one of the following types: "Fuel", "Toll", "Maintenance", "Health", "Travel Allowance", "Other".
 
 Extract the following information for each expense found and return it in a structured format:
 - Expense Type
@@ -66,3 +66,5 @@ const expenseParserFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

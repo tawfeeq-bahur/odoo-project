@@ -13,7 +13,7 @@ export type Vehicle = {
 
 export type Expense = {
   id:string;
-  type: "Fuel" | "Toll" | "Maintenance" | "Travel Allowance" | "Other";
+  type: "Fuel" | "Toll" | "Maintenance" | "Health" | "Travel Allowance" | "Other";
   amount: number;
   date: string; // YYYY-MM-DD
   tripId?: string; // Optional: link to a specific trip or vehicle
@@ -56,3 +56,5 @@ export type User = {
   role: 'admin' | 'employee';
   assignedVehicleId?: string | null;
 }
+
+    
