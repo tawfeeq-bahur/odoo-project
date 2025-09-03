@@ -5,7 +5,7 @@ import { useSharedState } from "@/components/AppLayout";
 import { VehicleList } from "@/components/fleet/VehicleList";
 import { FleetSummary } from "@/components/fleet/FleetSummary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, PlusCircle, DollarSign, List, BarChart as BarChartIcon, AreaChart as AreaChartIcon, PieChart as PieChartIcon } from "lucide-react";
+import { Truck, PlusCircle, DollarSign, List, User, PieChart as PieChartIcon } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -13,7 +13,7 @@ import { BarChart, AreaChart, PieChart as RechartsPieChart, Area as RechartsArea
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
+import type { Expense } from "@/lib/types";
 
 export default function DashboardPage() {
   const { vehicles, expenses, updateVehicleStatus, deleteVehicle, user } = useSharedState();
@@ -71,6 +71,16 @@ export default function DashboardPage() {
 
   const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
+  const getStatusBadge = (status: Expense['status']) => {
+    switch (status) {
+        case 'approved':
+            return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border-green-200 dark:border-green-700">Approved</Badge>;
+        case 'pending':
+            return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700">Pending</Badge>;
+        case 'rejected':
+            return <Badge variant="destructive">Rejected</Badge>;
+    }
+  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -88,7 +98,7 @@ export default function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BarChartIcon className="h-5 w-5" /> Trips Per Vehicle</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><BarChart className="h-5 w-5" /> Trips Per Vehicle</CardTitle>
                         <CardDescription>Number of trips completed by each vehicle this month.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
@@ -106,7 +116,7 @@ export default function DashboardPage() {
                 </Card>
                  <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><AreaChartIcon className="h-5 w-5" /> Monthly Expense Trends</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><AreaChart className="h-5 w-5" /> Monthly Expense Trends</CardTitle>
                         <CardDescription>Total expenses over the last 6 months.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
@@ -209,6 +219,7 @@ export default function DashboardPage() {
                                             <TableRow>
                                                 <TableHead>Type</TableHead>
                                                 <TableHead>Date</TableHead>
+                                                <TableHead>Status</TableHead>
                                                 <TableHead className="text-right">Amount</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -217,6 +228,7 @@ export default function DashboardPage() {
                                                 <TableRow key={exp.id}>
                                                     <TableCell><Badge variant="outline">{exp.type}</Badge></TableCell>
                                                     <TableCell>{format(new Date(exp.date), "PPP")}</TableCell>
+                                                    <TableCell>{getStatusBadge(exp.status)}</TableCell>
                                                     <TableCell className="text-right font-medium">₹{exp.amount.toFixed(2)}</TableCell>
                                                 </TableRow>
                                             ))}

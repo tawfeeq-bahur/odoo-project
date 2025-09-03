@@ -56,5 +56,3 @@ export type User = {
   role: 'admin' | 'employee';
   assignedVehicleId?: string | null;
 }
-
-    

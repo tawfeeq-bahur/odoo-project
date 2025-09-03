@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart, LifeBuoy } from "lucide-react";
+import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart, LifeBuoy, Route } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -32,8 +32,9 @@ const adminMenuItems = [
 
 const employeeMenuItems = [
   { href: "/", label: "My Dashboard", icon: LayoutDashboard },
+  { href: "/trips", label: "My Trips", icon: Route },
   { href: "/guide", label: "Trip Planner", icon: Map },
-  { href: "/scanner", label: "Expense Scanner", icon: ScanLine },
+  { href: "/scanner", label: "Log Expense", icon: ScanLine },
   { href: "/profile", label: "My Profile", icon: User },
   { href: "/support", label: "Support", icon: LifeBuoy },
 ];
