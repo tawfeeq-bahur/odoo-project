@@ -5,11 +5,11 @@ import { useSharedState } from "@/components/AppLayout";
 import { VehicleList } from "@/components/fleet/VehicleList";
 import { FleetSummary } from "@/components/fleet/FleetSummary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, PlusCircle, User, BarChart, AreaChart, List, DollarSign, PieChart as PieChartIcon } from "lucide-react";
+import { Truck, PlusCircle, User, BarChart as BarChartIcon, AreaChart as AreaChartIcon, List, DollarSign, PieChart as PieChartIcon } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell, Pie as RechartsPie, Area as RechartsArea } from "recharts";
+import { Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell, Pie as RechartsPie, Area as RechartsArea, BarChart, AreaChart, PieChart } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -98,7 +98,7 @@ export default function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BarChart className="h-5 w-5" /> Trips Per Vehicle</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><BarChartIcon className="h-5 w-5" /> Trips Per Vehicle</CardTitle>
                         <CardDescription>Number of trips completed by each vehicle this month.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
@@ -116,7 +116,7 @@ export default function DashboardPage() {
                 </Card>
                  <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><AreaChart className="h-5 w-5" /> Monthly Expense Trends</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><AreaChartIcon className="h-5 w-5" /> Monthly Expense Trends</CardTitle>
                         <CardDescription>Total expenses over the last 6 months.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
@@ -239,14 +239,14 @@ export default function DashboardPage() {
                                 {employeeExpenseTypes.length > 0 ? (
                                      <ChartContainer config={{}} className="h-[250px] w-full">
                                          <ResponsiveContainer>
-                                            <RechartsPie>
+                                            <PieChart>
                                                 <RechartsPie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
                                                     {employeeExpenseTypes.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </RechartsPie>
                                                 <RechartsTooltip content={<ChartTooltipContent />} />
-                                            </RechartsPie>
+                                            </PieChart>
                                          </ResponsiveContainer>
                                      </ChartContainer>
                                 ) : (
@@ -265,3 +265,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
