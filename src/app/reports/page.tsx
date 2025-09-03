@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileDown, CheckCircle, XCircle } from 'lucide-react';
-import type { Expense } from '@/lib/types';
+import { FileDown, CheckCircle, XCircle, User, Activity } from 'lucide-react';
+import type { Expense, Vehicle } from '@/lib/types';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 export default function ReportsPage() {
     const { expenses, vehicles, updateExpenseStatus, user } = useSharedState();
@@ -52,8 +53,20 @@ export default function ReportsPage() {
 
     const filteredExpenses = expenses.filter(expense => {
         if (selectedEmployee === 'all') return true;
-        return getEmployeeName(expense.tripId) === selectedEmployee;
+        const employeeName = getEmployeeName(expense.tripId);
+        return employeeName === selectedEmployee;
     });
+
+    const performanceData = employees.map(name => {
+        const employeeVehicles = vehicles.filter(v => v.assignedTo === name);
+        const employeeExpenses = expenses.filter(exp => employeeVehicles.some(v => v.id === exp.tripId));
+        return {
+            name,
+            trips: Math.floor(Math.random() * 20),
+            onTime: Math.floor(Math.random() * 19) + 1,
+            totalExpenses: employeeExpenses.reduce((sum, exp) => sum + exp.amount, 0),
+        }
+    })
 
     const downloadCSV = () => {
         const headers = ["Employee", "Date", "Type", "Amount", "Status"];
@@ -85,42 +98,80 @@ export default function ReportsPage() {
 
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
              <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight font-headline">Reports & Analytics</h1>
-                    <p className="text-muted-foreground">Review, approve, and manage all submitted expenses.</p>
+                    <p className="text-muted-foreground">Review expenses, track performance, and generate reports.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Filter by employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Employees</SelectItem>
-                            {employees.map(emp => (
-                                <SelectItem key={emp} value={emp}>{emp}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <Button variant="outline" onClick={downloadCSV}>
-                        <FileDown className="mr-2" />
-                        Export to CSV
-                    </Button>
-                </div>
+                 <Button variant="outline" onClick={downloadCSV}>
+                    <FileDown className="mr-2" />
+                    Export to CSV
+                </Button>
             </div>
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Activity className="h-5 w-5" />
+                        Driver Performance
+                    </CardTitle>
+                    <CardDescription>
+                       An overview of driver performance metrics.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Employee</TableHead>
+                                <TableHead>Trips this Month</TableHead>
+                                <TableHead>On-Time Rate</TableHead>
+                                <TableHead className="text-right">Total Expenses Submitted</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {performanceData.map((driver) => (
+                                <TableRow key={driver.name}>
+                                    <TableCell className="font-medium">{driver.name}</TableCell>
+                                    <TableCell>{driver.trips}</TableCell>
+                                    <TableCell>{((driver.onTime / driver.trips) * 100).toFixed(0)}%</TableCell>
+                                    <TableCell className="text-right font-medium">₹{driver.totalExpenses.toFixed(2)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>
-                        {selectedEmployee === 'all' ? 'All Submitted Expenses' : `Expenses for ${selectedEmployee}`}
-                    </CardTitle>
-                    <CardDescription>
-                        {selectedEmployee === 'all' 
-                            ? 'A complete log of all expenses submitted by your drivers.'
-                            : `A complete log of all expenses submitted by ${selectedEmployee}.`
-                        }
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>
+                                {selectedEmployee === 'all' ? 'All Submitted Expenses' : `Expenses for ${selectedEmployee}`}
+                            </CardTitle>
+                            <CardDescription>
+                                {selectedEmployee === 'all' 
+                                    ? 'A complete log of all expenses submitted by your drivers.'
+                                    : `A complete log of all expenses submitted by ${selectedEmployee}.`
+                                }
+                            </CardDescription>
+                        </div>
+                        <div className="w-48">
+                            <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filter by employee" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Employees</SelectItem>
+                                    {employees.map(emp => (
+                                        <SelectItem key={emp} value={emp}>{emp}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                      <Table>
@@ -171,5 +222,3 @@ export default function ReportsPage() {
         </div>
     );
 }
-
-    

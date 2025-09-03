@@ -6,7 +6,7 @@ import { useSharedState } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Truck, Fuel, Wrench, User } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Truck, Fuel, Wrench, User, UserMinus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -165,7 +165,7 @@ export default function VehicleManagementPage() {
                           
                            {vehicle.assignedTo && (
                              <DropdownMenuItem onClick={() => assignVehicle(vehicle.id, null)}>
-                                <User className="mr-2 h-4 w-4" />
+                                <UserMinus className="mr-2 h-4 w-4" />
                                 Unassign
                             </DropdownMenuItem>
                            )}

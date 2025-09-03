@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart, LifeBuoy, Route } from "lucide-react";
+import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart, LifeBuoy, Route, Bell } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -22,6 +22,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import type { Vehicle, Expense, User as UserType } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
 import LoginPage from "@/app/login/page";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const adminMenuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -101,10 +109,10 @@ const initialVehicles: Vehicle[] = [
 ];
 
 const initialExpenses: Expense[] = [
-    {id: 'exp1', type: 'Fuel', amount: 150.75, date: new Date('2024-07-28').toISOString(), tripId: '1', status: 'approved'},
-    {id: 'exp2', type: 'Toll', amount: 25.00, date: new Date('2024-07-28').toISOString(), tripId: '1', status: 'approved'},
-    {id: 'exp3', type: 'Maintenance', amount: 350.00, date: new Date('2024-07-25').toISOString(), tripId: '2', status: 'rejected'},
-    {id: 'exp4', type: 'Fuel', amount: 120.50, date: new Date('2024-07-22').toISOString(), tripId: '2', status: 'pending'},
+    {id: 'exp1', type: 'Fuel', amount: 15075, date: new Date('2024-07-28').toISOString(), tripId: '1', status: 'approved'},
+    {id: 'exp2', type: 'Toll', amount: 2500, date: new Date('2024-07-28').toISOString(), tripId: '1', status: 'approved'},
+    {id: 'exp3', type: 'Maintenance', amount: 35000, date: new Date('2024-07-25').toISOString(), tripId: '2', status: 'rejected'},
+    {id: 'exp4', type: 'Fuel', amount: 12050, date: new Date('2024-07-22').toISOString(), tripId: '2', status: 'pending'},
 ]
 
 // Simulate a global database for expenses
@@ -250,7 +258,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                             <span className="font-semibold font-headline">FleetFlow</span>
                         </div>
                     </div>
-                     <ThemeToggle />
                 </div>
               </SidebarHeader>
               <SidebarContent>
@@ -291,11 +298,31 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarFooter>
             </Sidebar>
             <div className="flex flex-col w-full">
-                <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 md:hidden">
-                  <SidebarTrigger />
-                  <h1 className="text-lg font-semibold font-headline">FleetFlow</h1>
-                  <div className="ml-auto">
-                    <ThemeToggle />
+                <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
+                  <SidebarTrigger className="md:hidden" />
+                  
+                  <div className="flex-1">
+                    {/* Placeholder for breadcrumbs or page title */}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                     {user.role === 'admin' && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Bell />
+                                    <span className="sr-only">Notifications</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Service due for TRK-003</DropdownMenuItem>
+                                <DropdownMenuItem>Expense from Ram approved</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                     )}
+                     <ThemeToggle />
                   </div>
                 </header>
                 <SidebarInset>{children}</SidebarInset>

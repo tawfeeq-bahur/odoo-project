@@ -5,11 +5,11 @@ import { useSharedState } from "@/components/AppLayout";
 import { VehicleList } from "@/components/fleet/VehicleList";
 import { FleetSummary } from "@/components/fleet/FleetSummary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, PlusCircle, DollarSign, List, User, PieChart as PieChartIcon } from "lucide-react";
+import { Truck, PlusCircle, User, BarChart, AreaChart, List, DollarSign, PieChart as PieChartIcon } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, AreaChart, PieChart as RechartsPieChart, Area as RechartsArea, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell, Pie } from "recharts";
+import { Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell, Pie as RechartsPie, Area as RechartsArea } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -31,12 +31,12 @@ export default function DashboardPage() {
   // Data for charts
   const tripsPerVehicle = vehicles.map(v => ({ name: v.plateNumber, trips: Math.floor(Math.random() * 10) + 1 }));
   const monthlyExpenses = [
-    { month: 'Jan', total: Math.floor(Math.random() * 5000) + 1000 },
-    { month: 'Feb', total: Math.floor(Math.random() * 5000) + 1000 },
-    { month: 'Mar', total: Math.floor(Math.random() * 5000) + 1000 },
-    { month: 'Apr', total: Math.floor(Math.random() * 5000) + 1000 },
-    { month: 'May', total: Math.floor(Math.random() * 5000) + 1000 },
-    { month: 'Jun', total: Math.floor(Math.random() * 5000) + 1000 },
+    { month: 'Jan', total: Math.floor(Math.random() * 50000) + 10000 },
+    { month: 'Feb', total: Math.floor(Math.random() * 50000) + 10000 },
+    { month: 'Mar', total: Math.floor(Math.random() * 50000) + 10000 },
+    { month: 'Apr', total: Math.floor(Math.random() * 50000) + 10000 },
+    { month: 'May', total: Math.floor(Math.random() * 50000) + 10000 },
+    { month: 'Jun', total: Math.floor(Math.random() * 50000) + 10000 },
   ];
 
   const employeeExpenseTypes = displayExpenses.reduce((acc, exp) => {
@@ -139,43 +139,29 @@ export default function DashboardPage() {
                         Employee Expenses
                     </h2>
                     <Card>
-                        <CardContent className="p-0">
-                             <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Employee</TableHead>
-                                        <TableHead className="text-right">Total Expenses</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {expensesByEmployee.map((emp, idx) => (
-                                        <TableRow key={idx}>
-                                            <TableCell className="font-medium flex items-center gap-2">
-                                                <User className="h-4 w-4 text-muted-foreground" />
-                                                {emp.name}
-                                            </TableCell>
-                                            <TableCell className="text-right font-bold">₹{emp.total.toFixed(2)}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                            {expensesByEmployee.length === 0 && (
-                                <div className="text-center p-10 text-muted-foreground">
-                                    No employee expenses to report.
-                                </div>
-                            )}
-                        </CardContent>
+                       <CardContent className="pl-2 pt-6">
+                         <ChartContainer config={{}} className="h-[300px] w-full">
+                            <ResponsiveContainer>
+                                <BarChart data={expensesByEmployee} layout="vertical">
+                                    <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
+                                    <YAxis type="category" dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <RechartsTooltip content={<ChartTooltipContent />} />
+                                    <Bar dataKey="total" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} layout="vertical" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                       </CardContent>
                     </Card>
                 </div>
                  <div>
-                     <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold tracking-tight font-headline mb-4">
+                     <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-2xl font-bold tracking-tight font-headline">
                         Vehicle Status
                         </h2>
-                        <Button asChild>
+                        <Button asChild variant="outline">
                             <Link href="/vehicles">
                                 <PlusCircle className="mr-2" />
-                                Manage Vehicles
+                                Manage Fleet
                             </Link>
                         </Button>
                     </div>
@@ -253,14 +239,14 @@ export default function DashboardPage() {
                                 {employeeExpenseTypes.length > 0 ? (
                                      <ChartContainer config={{}} className="h-[250px] w-full">
                                          <ResponsiveContainer>
-                                            <RechartsPieChart>
-                                                <Pie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
+                                            <RechartsPie>
+                                                <RechartsPie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
                                                     {employeeExpenseTypes.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
-                                                </Pie>
+                                                </RechartsPie>
                                                 <RechartsTooltip content={<ChartTooltipContent />} />
-                                            </RechartsPieChart>
+                                            </RechartsPie>
                                          </ResponsiveContainer>
                                      </ChartContainer>
                                 ) : (
