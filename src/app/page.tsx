@@ -5,11 +5,12 @@ import { useSharedState } from "@/components/AppLayout";
 import { VehicleList } from "@/components/fleet/VehicleList";
 import { FleetSummary } from "@/components/fleet/FleetSummary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, PlusCircle, BarChart, AreaChart, PieChart, DollarSign, List } from "lucide-react";
+import { Truck, PlusCircle, DollarSign, List } from "lucide-react";
+import { BarChart as BarChartIcon, AreaChart as AreaChartIcon, PieChart as PieChartIcon } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Area as RechartsArea, Pie as RechartsPie, Cell } from "recharts";
+import { Bar, BarChart, AreaChart, PieChart, Area as RechartsArea, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Pie as RechartsPie, Cell } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +68,7 @@ export default function DashboardPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><BarChart className="h-5 w-5" /> Trips Per Vehicle</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><BarChartIcon className="h-5 w-5" /> Trips Per Vehicle</CardTitle>
                         <CardDescription>Number of trips completed by each vehicle this month.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
@@ -85,18 +86,18 @@ export default function DashboardPage() {
                 </Card>
                  <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><AreaChart className="h-5 w-5" /> Monthly Expense Trends</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><AreaChartIcon className="h-5 w-5" /> Monthly Expense Trends</CardTitle>
                         <CardDescription>Total expenses over the last 6 months.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <ChartContainer config={{}} className="h-[300px] w-full">
                             <ResponsiveContainer>
-                                <RechartsArea data={monthlyExpenses} margin={{top: 5, right: 20, left: -10, bottom: 0}}>
+                                <AreaChart data={monthlyExpenses} margin={{top: 5, right: 20, left: -10, bottom: 0}}>
                                     <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`}/>
                                     <RechartsTooltip content={<ChartTooltipContent />} />
                                     <RechartsArea type="monotone" dataKey="total" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.4} />
-                                </RechartsArea>
+                                </AreaChart>
                             </ResponsiveContainer>
                         </ChartContainer>
                     </CardContent>
@@ -178,23 +179,25 @@ export default function DashboardPage() {
                     <div className="md:col-span-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><PieChart className="h-5 w-5" /> Expense Breakdown</CardTitle>
+                                <CardTitle className="flex items-center gap-2"><PieChartIcon className="h-5 w-5" /> Expense Breakdown</CardTitle>
                                 <CardDescription>A breakdown of your expenses by type.</CardDescription>
                             </CardHeader>
                              <CardContent>
                                 {employeeExpenseTypes.length > 0 ? (
                                      <ChartContainer config={{}} className="h-[250px] w-full">
                                          <ResponsiveContainer>
-                                            <RechartsPie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
-                                                {employeeExpenseTypes.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </RechartsPie>
+                                            <PieChart>
+                                                <RechartsPie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
+                                                    {employeeExpenseTypes.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                    ))}
+                                                </RechartsPie>
+                                            </PieChart>
                                          </ResponsiveContainer>
                                      </ChartContainer>
                                 ) : (
                                      <div className="text-center py-10 text-muted-foreground h-[250px] flex flex-col justify-center items-center">
-                                        <PieChart className="mx-auto h-8 w-8 mb-2" />
+                                        <PieChartIcon className="mx-auto h-8 w-8 mb-2" />
                                         <p>No expense data to display.</p>
                                     </div>
                                 )}
@@ -208,3 +211,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
