@@ -15,7 +15,7 @@ import { AlertTriangle, Truck } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: 'Username is required.' }),
+  username: z.string().min(1, { message: 'Username or Plate Number is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
@@ -34,14 +34,12 @@ export default function LoginPage() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     const { username, password } = values;
 
-    if (username === 'admin' && password === '123') {
-      login(username, 'admin');
-      setError(null);
-    } else if (username === 'employee' && password === '123') {
-      login(username, 'employee');
-      setError(null);
+    const success = login(username, password);
+
+    if (!success) {
+        setError('Invalid credentials. Please check your username/plate number and password.');
     } else {
-      setError('Invalid username or password.');
+        setError(null);
     }
   }
 
@@ -66,9 +64,9 @@ export default function LoginPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Username / Plate Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin or employee" {...field} />
+                      <Input placeholder="admin or e.g., TRK-001" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

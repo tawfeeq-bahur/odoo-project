@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 export default function DashboardPage() {
   const { vehicles, expenses, updateVehicleStatus, deleteVehicle, user } = useSharedState();
 
-  const employeeVehicle = vehicles.find(v => v.assignedTo === 'employee');
+  const employeeVehicle = vehicles.find(v => v.id === user?.assignedVehicleId);
   const displayVehicles = user?.role === 'admin' ? vehicles : (employeeVehicle ? [employeeVehicle] : []);
   
   // For now, let's assume all expenses are for the employee if logged in as employee.
@@ -24,7 +24,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h1 className="text-3xl font-bold tracking-tight font-headline bg-gradient-to-r from-primary via-blue-500 to-green-500 text-transparent bg-clip-text">
-          {user?.role === 'admin' ? 'Admin Dashboard' : 'Employee Dashboard'}
+          {user?.role === 'admin' ? 'Admin Dashboard' : `Dashboard for ${user?.username}`}
         </h1>
       </div>
       
@@ -58,9 +58,9 @@ export default function DashboardPage() {
                   <div className="p-4 bg-primary/10 rounded-full">
                     <Truck className="w-12 h-12 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold">No Vehicles Found</h3>
+                  <h3 className="text-xl font-semibold">No Vehicle Found</h3>
                   <p className="text-muted-foreground max-w-sm">
-                    {user?.role === 'admin' ? 'There are no vehicles in your fleet.' : 'You have not been assigned a vehicle.'}
+                    {user?.role === 'admin' ? 'There are no vehicles in your fleet.' : 'You have not been assigned a vehicle. Please contact your administrator.'}
                   </p>
                  {user?.role === 'admin' && (
                     <Button asChild className="mt-2">

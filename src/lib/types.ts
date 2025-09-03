@@ -8,7 +8,7 @@ export type Vehicle = {
   status: "On Trip" | "Idle" | "Maintenance";
   fuelLevel: number; // Percentage
   lastMaintenance: string; // ISO Date
-  assignedTo?: 'employee' | null;
+  assignedTo: string | null;
 };
 
 export type Expense = {
@@ -53,4 +53,5 @@ export type Reminder = {
 export type User = {
   username: string;
   role: 'admin' | 'employee';
+  assignedVehicleId?: string | null;
 }

@@ -28,7 +28,6 @@ const adminMenuItems = [
   { href: "/guide", label: "Trip Planner", icon: Map },
   { href: "/scanner", label: "Expense Scanner", icon: ScanLine },
   { href: "/vehicles", label: "Vehicle Management", icon: Truck },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const employeeMenuItems = [
@@ -42,12 +41,12 @@ interface SharedState {
   vehicles: Vehicle[];
   expenses: Expense[];
   user: UserType | null;
-  login: (username: string, role: 'admin' | 'employee') => void;
+  login: (username: string, password: string) => boolean;
   logout: () => void;
   addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
   updateVehicleStatus: (vehicleId: string, status: Vehicle['status']) => void;
   deleteVehicle: (vehicleId: string) => void;
-  assignVehicle: (vehicleId: string, assignedTo: 'employee' | null) => void;
+  assignVehicle: (vehicleId: string, assignedTo: string | null) => void;
   addExpense: (expense: Omit<Expense, "id"> & { id?: string }) => void;
 }
 
@@ -73,7 +72,7 @@ const initialVehicles: Vehicle[] = [
     status: "On Trip",
     fuelLevel: 75,
     lastMaintenance: new Date('2024-06-15').toISOString(),
-    assignedTo: 'employee'
+    assignedTo: 'Raja'
   },
   {
     id: "2",
@@ -83,7 +82,7 @@ const initialVehicles: Vehicle[] = [
     status: "Idle",
     fuelLevel: 90,
     lastMaintenance: new Date('2024-07-20').toISOString(),
-    assignedTo: null
+    assignedTo: 'Ram'
   },
   {
     id: "3",
@@ -133,8 +132,25 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [expenses, setExpenses] = useGlobalExpenses();
   const [user, setUser] = useState<UserType | null>(null);
 
-  const login = (username: string, role: 'admin' | 'employee') => {
-    setUser({ username, role });
+  const login = (username: string, password: string): boolean => {
+    // Admin login
+    if (username === 'admin' && password === '123') {
+      setUser({ username: 'Admin', role: 'admin' });
+      return true;
+    }
+    
+    // Employee login (using plate number as username)
+    const assignedVehicle = vehicles.find(v => v.plateNumber.toLowerCase() === username.toLowerCase() && v.assignedTo);
+    if (assignedVehicle && password === '123') {
+        setUser({ 
+            username: assignedVehicle.assignedTo!, 
+            role: 'employee',
+            assignedVehicleId: assignedVehicle.id
+        });
+        return true;
+    }
+
+    return false;
   };
   
   const logout = () => {
@@ -157,7 +173,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setVehicles(prev => prev.filter(v => v.id !== vehicleId));
   };
   
-  const assignVehicle = (vehicleId: string, assignedTo: 'employee' | null) => {
+  const assignVehicle = (vehicleId: string, assignedTo: string | null) => {
     setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, assignedTo } : v));
   };
 
@@ -199,9 +215,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const menuItems = user.role === 'admin' ? adminMenuItems : employeeMenuItems;
-  const userEmail = user.role === 'admin' ? 'admin@fleetflow.com' : 'employee@fleetflow.com';
-  const userName = user.role === 'admin' ? 'Admin' : 'Employee';
-  const userFallback = user.role === 'admin' ? 'AD' : 'EM';
+  const userEmail = user.role === 'admin' ? 'admin@fleetflow.com' : `${user.username.toLowerCase()}@fleetflow.com`;
+  const userName = user.username;
+  const userFallback = userName.substring(0, 2).toUpperCase();
 
   return (
     <SidebarProvider>
@@ -247,7 +263,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                  </Button>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://placehold.co/40x40.png" alt="User" data-ai-hint="person portrait" />
+                    <AvatarImage src={`https://placehold.co/40x40.png?text=${userFallback}`} alt="User" data-ai-hint="person portrait" />
                     <AvatarFallback>{userFallback}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">

@@ -18,10 +18,25 @@ import {
 import { AddVehicleDialog } from '@/components/fleet/AddVehicleDialog';
 import type { Vehicle } from '@/lib/types';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 export default function VehicleManagementPage() {
   const { vehicles, addVehicle, deleteVehicle, updateVehicleStatus, user, assignVehicle } = useSharedState();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [assignToName, setAssignToName] = useState('');
+
 
   if (user?.role !== 'admin') {
     return (
@@ -40,7 +55,7 @@ export default function VehicleManagementPage() {
 
   const handleAddVehicle = (vehicle: Omit<Vehicle, 'id'>) => {
     addVehicle(vehicle);
-    setIsDialogOpen(false);
+    setIsAddDialogOpen(false);
   };
 
   const getStatusBadge = (status: Vehicle['status']) => {
@@ -53,6 +68,11 @@ export default function VehicleManagementPage() {
         return <Badge variant="destructive">Maintenance</Badge>;
     }
   };
+
+  const handleAssign = (vehicleId: string) => {
+    assignVehicle(vehicleId, assignToName);
+    setAssignToName('');
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -116,17 +136,40 @@ export default function VehicleManagementPage() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                          </DropdownMenuItem>
-                          {vehicle.assignedTo === 'employee' ? (
-                            <DropdownMenuItem onClick={() => assignVehicle(vehicle.id, null)}>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" className="w-full justify-start text-sm font-normal h-8 px-2">
+                                  <User className="mr-2 h-4 w-4" />
+                                  {vehicle.assignedTo ? 'Re-assign' : 'Assign'}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Assign Vehicle to Employee</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Enter the name of the employee you want to assign this vehicle to.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <Input 
+                                    placeholder="Employee Name"
+                                    value={assignToName}
+                                    onChange={(e) => setAssignToName(e.target.value)}
+                                />
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleAssign(vehicle.id)}>Assign</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                           </AlertDialog>
+                          
+                           {vehicle.assignedTo && (
+                             <DropdownMenuItem onClick={() => assignVehicle(vehicle.id, null)}>
                                 <User className="mr-2 h-4 w-4" />
                                 Unassign
                             </DropdownMenuItem>
-                          ) : (
-                             <DropdownMenuItem onClick={() => assignVehicle(vehicle.id, 'employee')}>
-                                <User className="mr-2 h-4 w-4" />
-                                Assign to Employee
-                            </DropdownMenuItem>
-                          )}
+                           )}
+
                          <DropdownMenuItem onClick={() => updateVehicleStatus(vehicle.id, 'Maintenance')}>
                             <Wrench className="mr-2 h-4 w-4" />
                             Send to Maintenance
