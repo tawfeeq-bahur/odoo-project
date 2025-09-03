@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart } from "lucide-react";
+import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart, LifeBuoy } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -34,6 +34,8 @@ const employeeMenuItems = [
   { href: "/", label: "My Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Trip Planner", icon: Map },
   { href: "/scanner", label: "Expense Scanner", icon: ScanLine },
+  { href: "/profile", label: "My Profile", icon: User },
+  { href: "/support", label: "Support", icon: LifeBuoy },
 ];
 
 // Define the shape of the shared state
