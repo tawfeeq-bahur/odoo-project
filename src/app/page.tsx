@@ -9,7 +9,7 @@ import { Truck, PlusCircle, DollarSign, List, BarChart as BarChartIcon, AreaChar
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, AreaChart, PieChart as RechartsPieChart, Area as RechartsArea, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from "recharts";
+import { Bar, BarChart, AreaChart, PieChart as RechartsPieChart, Pie, Area as RechartsArea, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
