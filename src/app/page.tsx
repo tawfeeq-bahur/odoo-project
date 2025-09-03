@@ -9,10 +9,11 @@ import { Truck, PlusCircle, DollarSign, List, BarChart as BarChartIcon, AreaChar
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, AreaChart, Pie, PieChart as RechartsPieChart, Area as RechartsArea, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from "recharts";
+import { Bar, BarChart, AreaChart, PieChart as RechartsPieChart, Area as RechartsArea, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { User } from "lucide-react";
 
 export default function DashboardPage() {
   const { vehicles, expenses, updateVehicleStatus, deleteVehicle, user } = useSharedState();
@@ -47,6 +48,26 @@ export default function DashboardPage() {
       }
       return acc;
   }, [] as { type: string, amount: number }[]);
+  
+  const expensesByEmployee = vehicles
+    .filter(v => v.assignedTo)
+    .map(v => {
+        const employeeExpenses = expenses.filter(e => e.tripId === v.id);
+        const total = employeeExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+        return {
+            name: v.assignedTo,
+            total: total
+        }
+    })
+    .reduce((acc, curr) => {
+        const existing = acc.find(item => item.name === curr.name);
+        if(existing) {
+            existing.total += curr.total;
+        } else {
+            acc.push(curr);
+        }
+        return acc;
+    }, [] as {name: string | null, total: number}[]);
 
   const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
@@ -102,23 +123,58 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
             </div>
-             <div>
-                 <div className="flex items-center justify-between">
+            <div className="grid gap-8 md:grid-cols-2">
+                <div>
                     <h2 className="text-2xl font-bold tracking-tight font-headline mb-4">
-                    Vehicle Status
+                        Employee Expenses
                     </h2>
-                    <Button asChild>
-                        <Link href="/vehicles">
-                            <PlusCircle className="mr-2" />
-                            Manage Vehicles
-                        </Link>
-                    </Button>
+                    <Card>
+                        <CardContent className="p-0">
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead className="text-right">Total Expenses</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {expensesByEmployee.map((emp, idx) => (
+                                        <TableRow key={idx}>
+                                            <TableCell className="font-medium flex items-center gap-2">
+                                                <User className="h-4 w-4 text-muted-foreground" />
+                                                {emp.name}
+                                            </TableCell>
+                                            <TableCell className="text-right font-bold">${emp.total.toFixed(2)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                            {expensesByEmployee.length === 0 && (
+                                <div className="text-center p-10 text-muted-foreground">
+                                    No employee expenses to report.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
-                <VehicleList 
-                    vehicles={displayVehicles} 
-                    onUpdateStatus={updateVehicleStatus} 
-                    onDeleteVehicle={deleteVehicle} 
-                />
+                 <div>
+                     <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold tracking-tight font-headline mb-4">
+                        Vehicle Status
+                        </h2>
+                        <Button asChild>
+                            <Link href="/vehicles">
+                                <PlusCircle className="mr-2" />
+                                Manage Vehicles
+                            </Link>
+                        </Button>
+                    </div>
+                    <VehicleList 
+                        vehicles={displayVehicles} 
+                        onUpdateStatus={updateVehicleStatus} 
+                        onDeleteVehicle={deleteVehicle} 
+                    />
+                </div>
             </div>
         </div>
       )}
@@ -191,6 +247,7 @@ export default function DashboardPage() {
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </Pie>
+                                                <RechartsTooltip content={<ChartTooltipContent />} />
                                             </RechartsPieChart>
                                          </ResponsiveContainer>
                                      </ChartContainer>

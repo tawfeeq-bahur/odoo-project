@@ -26,7 +26,6 @@ import LoginPage from "@/app/login/page";
 const adminMenuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Trip Planner", icon: Map },
-  { href: "/scanner", label: "Expense Scanner", icon: ScanLine },
   { href: "/vehicles", label: "Vehicle Management", icon: Truck },
 ];
 
