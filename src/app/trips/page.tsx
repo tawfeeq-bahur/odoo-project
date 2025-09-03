@@ -6,9 +6,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Route, CircleCheck, CircleX, Clock } from 'lucide-react';
+import { Route, CircleCheck, CircleX, Clock, MoreHorizontal, AlertTriangle, Edit } from 'lucide-react';
 import type { Trip } from '@/lib/types';
 import { format } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Textarea } from '@/components/ui/textarea';
+
 
 const mockTrips: Trip[] = [
     {
@@ -141,9 +160,40 @@ const TripTable = ({trips, getStatusBadge}: {trips: Trip[], getStatusBadge: (sta
                         <TableCell>{trip.endDate ? format(new Date(trip.endDate), 'PPP') : '-'}</TableCell>
                         <TableCell>{getStatusBadge(trip.status)}</TableCell>
                         <TableCell className="text-right">
-                           {trip.status === 'Ongoing' && <Button size="sm">End Trip</Button>}
-                           {trip.status === 'Planned' && <Button size="sm">Start Trip</Button>}
-                           {trip.status === 'Completed' && <Button size="sm" variant="outline">View Details</Button>}
+                           <DropdownMenu>
+                               <DropdownMenuTrigger asChild>
+                                   <Button variant="ghost" size="icon">
+                                       <MoreHorizontal className="h-4 w-4" />
+                                   </Button>
+                               </DropdownMenuTrigger>
+                               <DropdownMenuContent align="end">
+                                   {trip.status === 'Planned' && <DropdownMenuItem>Start Trip</DropdownMenuItem>}
+                                   {trip.status === 'Ongoing' && <DropdownMenuItem>End Trip</DropdownMenuItem>}
+                                   {trip.status === 'Completed' && <DropdownMenuItem>View Details</DropdownMenuItem>}
+                                   {(trip.status === 'Planned' || trip.status === 'Ongoing') && (
+                                       <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" className="w-full justify-start text-sm font-normal h-8 px-2 text-destructive focus:text-destructive">
+                                                    <AlertTriangle className="mr-2 h-4 w-4" /> Report Issue
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                           <AlertDialogContent>
+                                               <AlertDialogHeader>
+                                                   <AlertDialogTitle>Report an Issue</AlertDialogTitle>
+                                                   <AlertDialogDescription>
+                                                        Please describe the issue you are facing with this trip. Your admin will be notified.
+                                                   </AlertDialogDescription>
+                                               </AlertDialogHeader>
+                                                <Textarea placeholder="e.g., Vehicle breakdown, health issue, etc." />
+                                               <AlertDialogFooter>
+                                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                   <AlertDialogAction>Submit Report</AlertDialogAction>
+                                               </AlertDialogFooter>
+                                           </AlertDialogContent>
+                                       </AlertDialog>
+                                   )}
+                               </DropdownMenuContent>
+                           </DropdownMenu>
                         </TableCell>
                     </TableRow>
                 ))}
