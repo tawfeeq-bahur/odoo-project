@@ -24,7 +24,7 @@ export default function ScannerPage() {
   const [parsedExpenses, setParsedExpenses] = useState<ParsedExpense[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { addExpense } = useSharedState();
+  const { addExpense, user } = useSharedState();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -75,7 +75,8 @@ export default function ScannerPage() {
   const handleAddExpense = (expense: ParsedExpense) => {
     addExpense({
       ...expense,
-      id: new Date().toISOString()
+      id: new Date().toISOString(),
+      tripId: user?.role === 'employee' ? user.assignedVehicleId : undefined,
     })
     toast({
       title: "Expense Added",

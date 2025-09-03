@@ -16,7 +16,7 @@ export type Expense = {
   type: "Fuel" | "Toll" | "Maintenance" | "Travel Allowance" | "Other";
   amount: number;
   date: string; // YYYY-MM-DD
-  tripId?: string; // Optional: link to a specific trip
+  tripId?: string; // Optional: link to a specific trip or vehicle
 };
 
 export type Trip = {

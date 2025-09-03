@@ -47,7 +47,7 @@ interface SharedState {
   updateVehicleStatus: (vehicleId: string, status: Vehicle['status']) => void;
   deleteVehicle: (vehicleId: string) => void;
   assignVehicle: (vehicleId: string, assignedTo: string | null) => void;
-  addExpense: (expense: Omit<Expense, "id"> & { id?: string }) => void;
+  addExpense: (expense: Omit<Expense, "id" | "tripId"> & { id?: string; tripId?: string }) => void;
 }
 
 // Create the context
@@ -96,8 +96,15 @@ const initialVehicles: Vehicle[] = [
   },
 ];
 
+const initialExpenses: Expense[] = [
+    {id: 'exp1', type: 'Fuel', amount: 150.75, date: new Date('2024-07-28').toISOString(), tripId: '1'},
+    {id: 'exp2', type: 'Toll', amount: 25.00, date: new Date('2024-07-28').toISOString(), tripId: '1'},
+    {id: 'exp3', type: 'Maintenance', amount: 350.00, date: new Date('2024-07-25').toISOString(), tripId: '2'},
+    {id: 'exp4', type: 'Fuel', amount: 120.50, date: new Date('2024-07-22').toISOString(), tripId: '2'},
+]
+
 // Simulate a global database for expenses
-let globalExpenses: Expense[] = [];
+let globalExpenses: Expense[] = initialExpenses;
 const expenseListeners: React.Dispatch<React.SetStateAction<Expense[]>>[] = [];
 
 const useGlobalExpenses = () => {
@@ -177,10 +184,11 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, assignedTo } : v));
   };
 
-  const addExpense = (expense: Omit<Expense, "id"> & { id?: string }) => {
+  const addExpense = (expense: Omit<Expense, "id" | "tripId"> & { id?: string, tripId?: string }) => {
     const newExpense: Expense = {
       ...expense,
       id: expense.id || new Date().toISOString(),
+      tripId: expense.tripId, // Pass the vehicle ID as tripId
     };
     setExpenses(prev => [...prev, newExpense]);
   }
