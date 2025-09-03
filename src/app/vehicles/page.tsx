@@ -20,8 +20,23 @@ import type { Vehicle } from '@/lib/types';
 import { format } from 'date-fns';
 
 export default function VehicleManagementPage() {
-  const { vehicles, addVehicle, deleteVehicle, updateVehicleStatus } = useSharedState();
+  const { vehicles, addVehicle, deleteVehicle, updateVehicleStatus, user } = useSharedState();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  if (user?.role !== 'admin') {
+    return (
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Access Denied</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>You do not have permission to view this page.</p>
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
 
   const handleAddVehicle = (vehicle: Omit<Vehicle, 'id'>) => {
     addVehicle(vehicle);
@@ -95,7 +110,7 @@ export default function VehicleManagementPage() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                          </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => onUpdateStatus(vehicle.id, 'Maintenance')}>
+                         <DropdownMenuItem onClick={() => updateVehicleStatus(vehicle.id, 'Maintenance')}>
                             <Wrench className="mr-2 h-4 w-4" />
                             Send to Maintenance
                          </DropdownMenuItem>

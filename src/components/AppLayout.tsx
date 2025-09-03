@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine } from "lucide-react";
+import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import type { Vehicle, Expense } from "@/lib/types";
+import type { Vehicle, Expense, User as UserType } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
+import LoginPage from "@/app/login/page";
 
-const menuItems = [
+const adminMenuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Trip Planner", icon: Map },
   { href: "/scanner", label: "Expense Scanner", icon: ScanLine },
@@ -30,10 +31,19 @@ const menuItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
+const employeeMenuItems = [
+  { href: "/", label: "My Dashboard", icon: LayoutDashboard },
+  { href: "/guide", label: "Trip Planner", icon: Map },
+  { href: "/scanner", label: "Expense Scanner", icon: ScanLine },
+];
+
 // Define the shape of the shared state
 interface SharedState {
   vehicles: Vehicle[];
   expenses: Expense[];
+  user: UserType | null;
+  login: (username: string, role: 'admin' | 'employee') => void;
+  logout: () => void;
   addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
   updateVehicleStatus: (vehicleId: string, status: Vehicle['status']) => void;
   deleteVehicle: (vehicleId: string) => void;
@@ -88,6 +98,15 @@ const initialVehicles: Vehicle[] = [
 export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [user, setUser] = useState<UserType | null>(null);
+
+  const login = (username: string, role: 'admin' | 'employee') => {
+    setUser({ username, role });
+  };
+  
+  const logout = () => {
+    setUser(null);
+  };
 
   const addVehicle = (vehicle: Omit<Vehicle, "id">) => {
     const newVehicle: Vehicle = {
@@ -113,10 +132,12 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setExpenses(prev => [...prev, newExpense]);
   }
 
-
   const value = {
     vehicles,
     expenses,
+    user,
+    login,
+    logout,
     addVehicle,
     updateVehicleStatus,
     deleteVehicle,
@@ -133,6 +154,16 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, logout } = useSharedState();
+
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  const menuItems = user.role === 'admin' ? adminMenuItems : employeeMenuItems;
+  const userEmail = user.role === 'admin' ? 'admin@fleetflow.com' : 'employee@fleetflow.com';
+  const userName = user.role === 'admin' ? 'Admin' : 'Employee';
+  const userFallback = user.role === 'admin' ? 'AD' : 'EM';
 
   return (
     <SidebarProvider>
@@ -172,15 +203,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   ))}
                 </SidebarMenu>
               </SidebarContent>
-              <SidebarFooter>
+              <SidebarFooter className="space-y-3">
+                 <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                    <LogOut className="mr-2" /> Logout
+                 </Button>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="https://placehold.co/40x40.png" alt="User" data-ai-hint="person portrait" />
-                    <AvatarFallback>FM</AvatarFallback>
+                    <AvatarFallback>{userFallback}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">Fleet Manager</span>
-                    <span className="text-xs text-muted-foreground">manager@fleetflow.com</span>
+                    <span className="text-sm font-medium">{userName}</span>
+                    <span className="text-xs text-muted-foreground">{userEmail}</span>
                   </div>
                 </div>
               </SidebarFooter>

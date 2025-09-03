@@ -1,4 +1,5 @@
 
+
 export type Vehicle = {
   id: string;
   name: string;
@@ -10,7 +11,7 @@ export type Vehicle = {
 };
 
 export type Expense = {
-  id: string;
+  id:string;
   type: "Fuel" | "Toll" | "Maintenance" | "Travel Allowance" | "Other";
   amount: number;
   date: string; // YYYY-MM-DD
@@ -47,3 +48,8 @@ export type Reminder = {
   time: string;
   status: 'pending' | 'snoozed';
 };
+
+export type User = {
+  username: string;
+  role: 'admin' | 'employee';
+}

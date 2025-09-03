@@ -1,8 +1,28 @@
 
+'use client'
+
 import { EmergencyContacts } from "@/components/settings/EmergencyContacts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSharedState } from "@/components/AppLayout";
 
 export default function SettingsPage() {
+  const { user } = useSharedState();
+
+  if (user?.role !== 'admin') {
+      return (
+          <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Access Denied</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <p>You do not have permission to view this page.</p>
+                  </CardContent>
+              </Card>
+          </div>
+      )
+  }
+
   return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="space-y-2">

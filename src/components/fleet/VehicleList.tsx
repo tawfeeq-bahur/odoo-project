@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '../ui/card';
 import { format } from 'date-fns';
+import { useSharedState } from '../AppLayout';
 
 type VehicleListProps = {
   vehicles: Vehicle[];
@@ -31,6 +32,8 @@ type VehicleListProps = {
 };
 
 export function VehicleList({ vehicles, onUpdateStatus, onDeleteVehicle }: VehicleListProps) {
+  const { user } = useSharedState();
+
   const getStatusBadge = (status: Vehicle['status']) => {
     switch (status) {
       case 'On Trip':
@@ -53,9 +56,11 @@ export function VehicleList({ vehicles, onUpdateStatus, onDeleteVehicle }: Vehic
               <TableHead>Status</TableHead>
               <TableHead>Fuel Level</TableHead>
               <TableHead>Last Maintenance</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
+              {user?.role === 'admin' && (
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -74,27 +79,29 @@ export function VehicleList({ vehicles, onUpdateStatus, onDeleteVehicle }: Vehic
                     </div>
                 </TableCell>
                 <TableCell>{format(new Date(vehicle.lastMaintenance), 'PPP')}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                       <DropdownMenuItem onClick={() => onUpdateStatus(vehicle.id, 'Maintenance')}>
-                        <Wrench className="mr-2" />
-                        Send for Maintenance
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => onDeleteVehicle(vehicle.id)}>
-                        <Trash2 className="mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+                {user?.role === 'admin' && (
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => onUpdateStatus(vehicle.id, 'Maintenance')}>
+                          <Wrench className="mr-2" />
+                          Send for Maintenance
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => onDeleteVehicle(vehicle.id)}>
+                          <Trash2 className="mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
