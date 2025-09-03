@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, LayoutDashboard, Pill, Settings, User, Bell, BookUser, LifeBuoy, ScanLine } from "lucide-react";
+import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -19,25 +19,25 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import type { Medication } from "@/lib/types";
-import { subDays } from "date-fns";
+import type { Vehicle, Expense } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/guide", label: "Medication Guide", icon: LifeBuoy },
-  { href: "/scanner", label: "Prescription Scanner", icon: ScanLine },
-  { href: "/assistant", label: "AI Assistant", icon: Bot },
-  { href: "/profile", label: "Profile", icon: BookUser },
+  { href: "/guide", label: "Trip Planner", icon: Map },
+  { href: "/scanner", label: "Expense Scanner", icon: ScanLine },
+  { href: "/vehicles", label: "Vehicle Management", icon: Truck },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 // Define the shape of the shared state
 interface SharedState {
-  medications: Medication[];
-  addMedication: (medication: Omit<Medication, "id" | "doses">) => void;
-  updateDoseStatus: (medicationId: string, scheduledTime: string, status: 'taken' | 'skipped') => void;
-  deleteMedication: (medicationId: string) => void;
+  vehicles: Vehicle[];
+  expenses: Expense[];
+  addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
+  updateVehicleStatus: (vehicleId: string, status: Vehicle['status']) => void;
+  deleteVehicle: (vehicleId: string) => void;
+  addExpense: (expense: Omit<Expense, "id"> & { id?: string }) => void;
 }
 
 // Create the context
@@ -53,77 +53,74 @@ export const useSharedState = () => {
 };
 
 
-const initialMedications: Medication[] = [
+const initialVehicles: Vehicle[] = [
   {
     id: "1",
-    name: "Metformin",
-    dosage: "500mg",
-    frequency: "Twice a day",
-    startDate: subDays(new Date(), 35).toISOString(),
-    timings: ["08:00", "20:00"],
-    doses: [
-      { scheduled: "08:00", status: "pending" },
-      { scheduled: "20:00", status: "pending" },
-    ],
+    name: "Volvo Prime Mover",
+    plateNumber: "TRK-001",
+    model: "VNL 860",
+    status: "On Trip",
+    fuelLevel: 75,
+    lastMaintenance: new Date('2024-06-15').toISOString()
   },
   {
     id: "2",
-    name: "Lisinopril",
-    dosage: "10mg",
-    frequency: "Once a day",
-    startDate: subDays(new Date(), 10).toISOString(),
-    timings: ["09:00"],
-    doses: [{ scheduled: "09:00", status: "taken" }],
+    name: "Ford Transit Van",
+    plateNumber: "VAN-002",
+    model: "Transit-250",
+    status: "Idle",
+    fuelLevel: 90,
+    lastMaintenance: new Date('2024-07-20').toISOString()
   },
   {
     id: "3",
-    name: "Atorvastatin",
-    dosage: "20mg",
-    frequency: "Once a day",
-    startDate: new Date().toISOString(),
-    timings: ["21:00"],
-    doses: [{ scheduled: "21:00", status: "skipped" }],
+    name: "Scania Rigid Truck",
+    plateNumber: "TRK-003",
+    model: "P-series",
+    status: "Maintenance",
+    fuelLevel: 20,
+    lastMaintenance: new Date().toISOString()
   },
 ];
 
 
 // Create the provider component
 export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
-  const [medications, setMedications] = useState<Medication[]>(initialMedications);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
-  const addMedication = (medication: Omit<Medication, "id" | "doses">) => {
-    const newMedication: Medication = {
-      ...medication,
+  const addVehicle = (vehicle: Omit<Vehicle, "id">) => {
+    const newVehicle: Vehicle = {
+      ...vehicle,
       id: new Date().toISOString(),
-      doses: medication.timings.map(t => ({ scheduled: t, status: 'pending' })),
     };
-    setMedications(prev => [...prev, newMedication]);
+    setVehicles(prev => [...prev, newVehicle]);
+  };
+
+  const updateVehicleStatus = (vehicleId: string, status: Vehicle['status']) => {
+    setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, status } : v));
+  }
+
+  const deleteVehicle = (vehicleId: string) => {
+    setVehicles(prev => prev.filter(v => v.id !== vehicleId));
   };
   
-  const updateDoseStatus = (medicationId: string, scheduledTime: string, status: 'taken' | 'skipped') => {
-    setMedications(prevMeds => prevMeds.map(med => {
-      if (med.id === medicationId) {
-        return {
-          ...med,
-          doses: med.doses.map(dose => 
-            dose.scheduled === scheduledTime ? { ...dose, status } : dose
-          )
-        };
-      }
-      return med;
-    }));
-  };
-
-  const deleteMedication = (medicationId: string) => {
-    setMedications(prev => prev.filter(med => med.id !== medicationId));
-  };
+  const addExpense = (expense: Omit<Expense, "id"> & { id?: string }) => {
+    const newExpense: Expense = {
+      ...expense,
+      id: expense.id || new Date().toISOString(),
+    };
+    setExpenses(prev => [...prev, newExpense]);
+  }
 
 
   const value = {
-    medications,
-    addMedication,
-    updateDoseStatus,
-    deleteMedication,
+    vehicles,
+    expenses,
+    addVehicle,
+    updateVehicleStatus,
+    deleteVehicle,
+    addExpense,
   };
 
   return (
@@ -145,10 +142,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full bg-sidebar-primary text-sidebar-primary-foreground">
-                            <Pill className="h-4 w-4" />
+                            <Truck className="h-4 w-4" />
                         </Button>
                         <div className="flex flex-col">
-                            <span className="font-semibold font-headline">Pocket Doctor</span>
+                            <span className="font-semibold font-headline">FleetFlow</span>
                         </div>
                     </div>
                      <ThemeToggle />
@@ -179,11 +176,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="https://placehold.co/40x40.png" alt="User" data-ai-hint="person portrait" />
-                    <AvatarFallback>U</AvatarFallback>
+                    <AvatarFallback>FM</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">User</span>
-                    <span className="text-xs text-muted-foreground">user@pocketdoc.com</span>
+                    <span className="text-sm font-medium">Fleet Manager</span>
+                    <span className="text-xs text-muted-foreground">manager@fleetflow.com</span>
                   </div>
                 </div>
               </SidebarFooter>
@@ -191,7 +188,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col w-full">
                 <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 md:hidden">
                   <SidebarTrigger />
-                  <h1 className="text-lg font-semibold font-headline">Pocket Doctor</h1>
+                  <h1 className="text-lg font-semibold font-headline">FleetFlow</h1>
                   <div className="ml-auto">
                     <ThemeToggle />
                   </div>

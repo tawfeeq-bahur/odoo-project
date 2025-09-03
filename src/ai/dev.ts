@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/medication-assistant.ts';
-import '@/ai/flows/medication-guide.ts';
-import '@/ai/flows/prescription-parser.ts';
+import '@/ai/flows/trip-planner.ts';
+import '@/ai/flows/expense-parser.ts';
+import '@/ai/flows/vehicle-insights.ts';

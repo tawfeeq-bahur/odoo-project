@@ -10,40 +10,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getMedicationGuide, MedicationGuideOutput } from '@/ai/flows/medication-guide';
+import { getTripPlan, TripPlannerOutput } from '@/ai/flows/trip-planner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LifeBuoy, ThumbsUp, ThumbsDown, Clock, AlertTriangle, PlusCircle } from 'lucide-react';
+import { Map, Milestone, Fuel, Clock, AlertTriangle, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { AddMedicationDialog } from '@/components/medication/AddMedicationDialog';
-import { useSharedState } from '@/components/AppLayout';
-import { MedicationList } from '@/components/medication/MedicationList';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
-  medicationName: z.string().min(2, { message: 'Medication name must be at least 2 characters.' }),
+  source: z.string().min(2, { message: 'Source must be at least 2 characters.' }),
+  destination: z.string().min(2, { message: 'Destination must be at least 2 characters.' }),
 });
 
-export default function GuidePage() {
-  const [guide, setGuide] = useState<MedicationGuideOutput | null>(null);
+export default function TripPlannerPage() {
+  const [plan, setPlan] = useState<TripPlannerOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { medications, addMedication, updateDoseStatus, deleteMedication } = useSharedState();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      medicationName: '',
+      source: '',
+      destination: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setError(null);
-    setGuide(null);
+    setPlan(null);
     try {
-      const result = await getMedicationGuide({ medicationName: values.medicationName });
-      setGuide(result);
+      const result = await getTripPlan(values);
+      setPlan(result);
     } catch (err) {
-      setError('Sorry, I could not retrieve information for that medication. Please try again.');
+      setError('Sorry, I could not generate a trip plan. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -52,147 +51,110 @@ export default function GuidePage() {
   return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Medication Guide</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">Trip Planner</h1>
           <p className="text-muted-foreground">
-            Enter a medication name to get automated suggestions and add it to your schedule.
+            Enter a source and destination to get an AI-powered trip plan and cost estimation.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Look up a Medication</CardTitle>
+            <CardTitle>Plan a New Trip</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col md:flex-row items-end gap-4">
                 <FormField
                   control={form.control}
-                  name="medicationName"
+                  name="source"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Medication Name</FormLabel>
+                    <FormItem className="flex-1 w-full">
+                      <FormLabel>Source</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Lisinopril" {...field} />
+                        <Input placeholder="e.g., Los Angeles, CA" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                 <AddMedicationDialog 
-                    onAddMedication={addMedication}
-                  >
-                   <Button type="button" variant="outline">
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add Manually
-                    </Button>
-                  </AddMedicationDialog>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Searching...' : 'Get Guide'}
+                 <FormField
+                  control={form.control}
+                  name="destination"
+                  render={({ field }) => (
+                    <FormItem className="flex-1 w-full">
+                      <FormLabel>Destination</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., New York, NY" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+                  {isLoading ? 'Generating...' : 'Get Plan'}
                 </Button>
               </form>
             </Form>
           </CardContent>
         </Card>
 
-        {isLoading && <GuideSkeleton />}
+        {isLoading && <PlanSkeleton />}
         {error && <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
         
-        {guide && (
+        {plan && (
           <Card className="mt-6">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-2xl font-headline">Guide for {guide.medicationName}</CardTitle>
-                 <AddMedicationDialog 
-                    onAddMedication={addMedication}
-                    initialData={{
-                      name: guide.medicationName,
-                      dosage: guide.suggestedDosage,
-                      frequency: guide.suggestedFrequency
-                    }}
-                  >
-                    <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add to My Schedule
-                    </Button>
-                  </AddMedicationDialog>
+            <CardHeader>
+                <CardTitle className="text-2xl font-headline">Trip Plan: {plan.source} to {plan.destination}</CardTitle>
+                <CardDescription>{plan.suggestedRoute}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-3 gap-6">
-                 <InfoCard icon={Clock} title="Best Time to Take" content={guide.timing} />
-                 <InfoCard icon={LifeBuoy} title="Food" content={guide.food} />
-                 <InfoCard icon={Clock} title="Duration" content={guide.duration} />
+              <div className="grid md:grid-cols-4 gap-6 text-center">
+                 <InfoCard icon={Map} title="Distance" content={plan.distance} />
+                 <InfoCard icon={Clock} title="Duration" content={plan.duration} />
+                 <InfoCard icon={Fuel} title="Fuel Cost" content={`$${plan.estimatedFuelCost.toFixed(2)}`} />
+                 <InfoCard icon={Milestone} title="Toll Cost" content={`$${plan.estimatedTollCost.toFixed(2)}`} />
               </div>
-               <div className="grid md:grid-cols-2 gap-6">
-                <ListCard icon={ThumbsUp} title="Advantages" items={guide.advantages} iconClassName="text-green-600" />
-                <ListCard icon={ThumbsDown} title="Disadvantages / Side Effects" items={guide.disadvantages} iconClassName="text-red-600" />
-               </div>
-               <Alert variant="default" className="bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800/40 dark:text-yellow-300">
-                  <AlertTriangle className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
+               <Separator />
+               <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800/40 dark:text-blue-300">
+                  <AlertTriangle className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                   <AlertTitle>Disclaimer</AlertTitle>
                   <AlertDescription>
-                    {guide.disclaimer}
+                    {plan.disclaimer}
                   </AlertDescription>
               </Alert>
             </CardContent>
           </Card>
         )}
-
-        <div className="mt-8">
-            <h2 className="text-2xl font-bold tracking-tight font-headline">
-              My Medication Schedule
-            </h2>
-            <div className="mt-4">
-               <MedicationList 
-                  medications={medications} 
-                  onUpdateDose={updateDoseStatus} 
-                  onDeleteMedication={deleteMedication} 
-                />
-            </div>
-        </div>
-
       </div>
   );
 }
 
 const InfoCard = ({ icon: Icon, title, content }: { icon: React.ElementType, title: string, content: string }) => (
-    <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/50">
-        <Icon className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+    <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-muted/50">
+        <Icon className="h-8 w-8 text-primary" />
         <div>
-            <h3 className="font-semibold">{title}</h3>
-            <p className="text-muted-foreground">{content}</p>
+            <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+            <p className="text-xl font-bold">{content}</p>
         </div>
     </div>
 );
 
-const ListCard = ({ icon: Icon, title, items, iconClassName }: { icon: React.ElementType, title: string, items: string[], iconClassName?: string }) => (
-     <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/50">
-        <Icon className={cn("h-6 w-6 flex-shrink-0 mt-1", iconClassName)} />
-        <div>
-            <h3 className="font-semibold">{title}</h3>
-            <ul className="list-disc pl-5 mt-1 space-y-1 text-muted-foreground">
-                {items.map((item, index) => <li key={index}>{item}</li>)}
-            </ul>
-        </div>
-    </div>
-);
-
-const GuideSkeleton = () => (
+const PlanSkeleton = () => (
   <Card className="mt-6">
     <CardHeader>
-       <div className="flex flex-row items-center justify-between">
-         <Skeleton className="h-8 w-1/3" />
-         <Skeleton className="h-10 w-48" />
+       <div className="space-y-2">
+         <Skeleton className="h-8 w-2/3" />
+         <Skeleton className="h-4 w-full" />
        </div>
     </CardHeader>
     <CardContent className="space-y-6">
-      <div className="grid md:grid-cols-3 gap-6">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+      <div className="grid md:grid-cols-4 gap-6">
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-28 w-full" />
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
+      <Skeleton className="h-4 w-full" />
       <Skeleton className="h-16 w-full" />
     </CardContent>
   </Card>

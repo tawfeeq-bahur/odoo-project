@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Pocket Doctor',
-  description: 'Your personal medication assistant.',
+  title: 'FleetFlow',
+  description: 'AI-Powered Fleet Management',
 };
 
 export default function RootLayout({

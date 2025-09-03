@@ -1,15 +1,15 @@
-# Pocket Doctor --
+# FleetFlow - Fleet Management Optimization
 
-Pocket Doctor is a modern, AI-enhanced web application designed to help users manage their medications effectively. It provides a centralized dashboard for tracking schedules, an intelligent guide for medication information, and an AI assistant to answer health-related questions, simplifying the complexity of healthcare management.
+FleetFlow is an AI-powered web application designed to streamline fleet management operations. It provides a centralized dashboard for real-time monitoring, a smart trip planner for cost and distance estimation, and an expense scanner to simplify financial tracking.
 
 ## Core Features
 
-*   **Personalized Medication Schedule:** Create and manage a custom medication schedule.
-*   **Adherence Tracking:** Log daily doses as taken, skipped, or pending.
-*   **AI-Powered Medication Guide:** Instantly look up detailed information for any medication.
-*   **AI Conversational Assistant:** Get answers to your medication-related questions from an AI chatbot.
-*   **Adherence Dashboard:** Visualize your medication adherence statistics through an intuitive dashboard.
-*   **Responsive & Themed UI:** Enjoy a clean, modern interface with both light and dark themes.
+*   **Fleet Dashboard:** Get a real-time overview of your entire fleet, including vehicle status, ongoing trips, and key performance indicators like fuel consumption and total expenses.
+*   **AI Trip Planner:** Enter a source and destination to receive instant AI-powered estimations for trip distance, duration, fuel costs, and potential toll charges.
+*   **AI Expense Scanner:** Upload images of fuel receipts, toll bills, or maintenance invoices. The AI will automatically parse the details and add them to your trip expenses.
+*   **Vehicle & Trip Management:** Track detailed information for each vehicle and log every trip with associated expenses and routes.
+*   **Data-Driven Analytics:** Visualize historical data with interactive charts to identify inefficiencies, detect anomalies, and make informed decisions for future planning.
+*   **Responsive & Themed UI:** A clean, professional interface that works seamlessly on both desktop and mobile devices, with light and dark theme support.
 
 ## Technology Stack
 
@@ -29,11 +29,10 @@ Pocket Doctor is a modern, AI-enhanced web application designed to help users ma
 
 ## UI/UX Focus
 
-*   **Clean and Modern:** The UI is designed to be minimal and clutter-free, using a professional color palette and ample white space.
-*   **Component-Based:** Built with ShadCN UI components for a consistent and high-quality look and feel.
-*   **Responsive:** The layout adapts smoothly to all screen sizes, from mobile phones to desktops.
-*   **User-Centric:** Focuses on clarity and ease of use, with clear calls-to-action and intuitive navigation.
-*   **Dark Mode:** Includes a fully-supported dark theme to reduce eye strain and cater to user preferences.
+*   **Professional & Clean:** The UI is designed to be clutter-free and intuitive, using a corporate color palette (blues and grays) suitable for a business tool.
+*   **Data-Centric:** Dashboards and components are designed to present data clearly and effectively, enabling quick insights.
+*   **Responsive:** The layout is fully responsive, ensuring a seamless experience whether you're in the office on a desktop or on the go with a mobile device.
+*   **Efficient Workflow:** The user journey is optimized for efficiency, from planning a trip to logging expenses, minimizing manual data entry.
 
 ---
 
