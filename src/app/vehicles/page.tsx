@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import Link from 'next/link';
 
 
 export default function VehicleManagementPage() {
@@ -106,8 +107,10 @@ export default function VehicleManagementPage() {
               {vehicles.map((vehicle) => (
                 <TableRow key={vehicle.id}>
                   <TableCell className="font-medium">
-                    <div className="font-medium">{vehicle.name}</div>
-                    <div className="text-sm text-muted-foreground">{vehicle.plateNumber}</div>
+                    <Link href={`/vehicles/${vehicle.id}`} className="hover:underline">
+                      <div className="font-medium">{vehicle.name}</div>
+                      <div className="text-sm text-muted-foreground">{vehicle.plateNumber}</div>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     {vehicle.assignedTo ? (

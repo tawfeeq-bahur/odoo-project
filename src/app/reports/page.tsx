@@ -12,6 +12,7 @@ import type { Expense, Vehicle } from '@/lib/types';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 export default function ReportsPage() {
     const { expenses, vehicles, updateExpenseStatus, user } = useSharedState();
@@ -117,7 +118,7 @@ export default function ReportsPage() {
                         Driver Performance
                     </CardTitle>
                     <CardDescription>
-                       An overview of driver performance metrics.
+                       An overview of driver performance metrics. Click a name to see details.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -133,7 +134,11 @@ export default function ReportsPage() {
                         <TableBody>
                             {performanceData.map((driver) => (
                                 <TableRow key={driver.name}>
-                                    <TableCell className="font-medium">{driver.name}</TableCell>
+                                    <TableCell className="font-medium">
+                                        <Link href={`/employees/${driver.name}`} className="hover:underline">
+                                           {driver.name}
+                                        </Link>
+                                    </TableCell>
                                     <TableCell>{driver.trips}</TableCell>
                                     <TableCell>{((driver.onTime / driver.trips) * 100).toFixed(0)}%</TableCell>
                                     <TableCell className="text-right font-medium">₹{driver.totalExpenses.toFixed(2)}</TableCell>
