@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Vehicle } from '@/lib/types';
+import type { Vehicle, Expense } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Truck, CircleDollarSign, Fuel, Wrench, Lightbulb, AlertTriangle } from 'lucide-react';
 import { getVehicleInsights, VehicleInsightsOutput } from '@/ai/flows/vehicle-insights';
@@ -9,16 +10,23 @@ import { Skeleton } from '../ui/skeleton';
 
 type FleetSummaryProps = {
   vehicles: Vehicle[];
+  expenses: Expense[];
 };
 
-export function FleetSummary({ vehicles }: FleetSummaryProps) {
+export function FleetSummary({ vehicles, expenses }: FleetSummaryProps) {
   const [insights, setInsights] = useState<VehicleInsightsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const totalExpenses = expenses.reduce((acc, exp) => acc + exp.amount, 0);
+  const fuelConsumption = expenses
+    .filter(exp => exp.type === 'Fuel')
+    .reduce((acc, exp) => acc + exp.amount, 0); // Simplified: assuming amount is a proxy for consumption
+
 
   const summary = {
     totalVehicles: vehicles.length,
     onTrip: vehicles.filter(v => v.status === 'On Trip').length,
-    idle: vehicles.filter(v => v.status === 'Idle').length,
+    totalExpenses: totalExpenses,
     maintenance: vehicles.filter(v => v.status === 'Maintenance').length,
   };
 
@@ -29,9 +37,8 @@ export function FleetSummary({ vehicles }: FleetSummaryProps) {
         const result = await getVehicleInsights({
           totalVehicles: summary.totalVehicles,
           ongoingTrips: summary.onTrip,
-          // These are placeholder values for demonstration
-          totalExpenses: 12500, 
-          fuelConsumption: 8500,
+          totalExpenses: summary.totalExpenses, 
+          fuelConsumption: fuelConsumption, // Using calculated fuel consumption
         });
         setInsights(result);
       } catch (error) {
@@ -42,14 +49,14 @@ export function FleetSummary({ vehicles }: FleetSummaryProps) {
       }
     }
     fetchInsights();
-  }, [vehicles]);
+  }, [vehicles, expenses]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <SummaryCard icon={Truck} title="Total Vehicles" value={summary.totalVehicles} />
-      <SummaryCard icon={CircleDollarSign} title="Ongoing Trips" value={summary.onTrip} />
-      <SummaryCard icon={Fuel} title="Idle Vehicles" value={summary.idle} />
+      <SummaryCard icon={CircleDollarSign} title="Total Expenses" value={`$${summary.totalExpenses.toFixed(2)}`} />
       <SummaryCard icon={Wrench} title="In Maintenance" value={summary.maintenance} />
+      <SummaryCard icon={Fuel} title="Ongoing Trips" value={summary.onTrip} />
 
       <Card className="md:col-span-2 lg:col-span-4">
         <CardHeader>
@@ -74,6 +81,9 @@ export function FleetSummary({ vehicles }: FleetSummaryProps) {
                 iconColor="text-orange-500"
               />
             </>
+          )}
+           {!isLoading && !insights && (
+            <div className="text-sm text-muted-foreground">Could not load AI insights.</div>
           )}
         </CardContent>
       </Card>

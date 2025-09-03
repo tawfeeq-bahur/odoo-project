@@ -10,10 +10,15 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
-  const { vehicles, updateVehicleStatus, deleteVehicle, user } = useSharedState();
+  const { vehicles, expenses, updateVehicleStatus, deleteVehicle, user } = useSharedState();
 
   const employeeVehicle = vehicles.find(v => v.id === '2');
   const displayVehicles = user?.role === 'admin' ? vehicles : (employeeVehicle ? [employeeVehicle] : []);
+  
+  // For now, let's assume all expenses are for the employee if logged in as employee.
+  // In a real app, expenses would be linked to users.
+  const displayExpenses = user?.role === 'admin' ? expenses : expenses;
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -23,7 +28,7 @@ export default function DashboardPage() {
         </h1>
       </div>
       
-      <FleetSummary vehicles={displayVehicles} />
+      <FleetSummary vehicles={displayVehicles} expenses={displayExpenses} />
 
       <div className="mt-8">
          <div className="flex items-center justify-between">

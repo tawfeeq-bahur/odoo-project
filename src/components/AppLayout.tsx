@@ -93,11 +93,40 @@ const initialVehicles: Vehicle[] = [
   },
 ];
 
+// Simulate a global database for expenses
+let globalExpenses: Expense[] = [];
+const expenseListeners: React.Dispatch<React.SetStateAction<Expense[]>>[] = [];
+
+const useGlobalExpenses = () => {
+    const [expenses, setExpenses] = useState(globalExpenses);
+
+    React.useEffect(() => {
+        expenseListeners.push(setExpenses);
+        return () => {
+            const index = expenseListeners.indexOf(setExpenses);
+            if (index > -1) {
+                expenseListeners.splice(index, 1);
+            }
+        };
+    }, []);
+
+    const setGlobalExpenses = (newExpenses: Expense[] | ((prev: Expense[]) => Expense[])) => {
+        if (typeof newExpenses === 'function') {
+            globalExpenses = newExpenses(globalExpenses);
+        } else {
+            globalExpenses = newExpenses;
+        }
+        expenseListeners.forEach(listener => listener(globalExpenses));
+    };
+
+    return [expenses, setGlobalExpenses] as const;
+};
+
 
 // Create the provider component
 export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenses, setExpenses] = useGlobalExpenses();
   const [user, setUser] = useState<UserType | null>(null);
 
   const login = (username: string, role: 'admin' | 'employee') => {
