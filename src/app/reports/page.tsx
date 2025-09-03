@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useSharedState } from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,9 +10,11 @@ import { Button } from '@/components/ui/button';
 import { FileDown, CheckCircle, XCircle } from 'lucide-react';
 import type { Expense } from '@/lib/types';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ReportsPage() {
     const { expenses, vehicles, updateExpenseStatus, user } = useSharedState();
+    const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
 
     if (user?.role !== 'admin') {
         return (
@@ -44,6 +47,41 @@ export default function ReportsPage() {
                 return <Badge variant="destructive">Rejected</Badge>;
         }
     };
+    
+    const employees = [...new Set(vehicles.map(v => v.assignedTo).filter(Boolean))];
+
+    const filteredExpenses = expenses.filter(expense => {
+        if (selectedEmployee === 'all') return true;
+        return getEmployeeName(expense.tripId) === selectedEmployee;
+    });
+
+    const downloadCSV = () => {
+        const headers = ["Employee", "Date", "Type", "Amount", "Status"];
+        const csvRows = [
+            headers.join(','),
+            ...filteredExpenses.map(exp => [
+                getEmployeeName(exp.tripId),
+                format(new Date(exp.date), 'yyyy-MM-dd'),
+                exp.type,
+                exp.amount.toFixed(2),
+                exp.status
+            ].join(','))
+        ];
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            const fileName = selectedEmployee === 'all' ? 'all-expenses.csv' : `expenses-${selectedEmployee}.csv`;
+            link.setAttribute('download', fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
 
 
     return (
@@ -53,10 +91,23 @@ export default function ReportsPage() {
                     <h1 className="text-3xl font-bold tracking-tight font-headline">Reports & Analytics</h1>
                     <p className="text-muted-foreground">Review, approve, and manage all submitted expenses.</p>
                 </div>
-                <Button variant="outline">
-                    <FileDown className="mr-2" />
-                    Export to CSV
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter by employee" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Employees</SelectItem>
+                            {employees.map(emp => (
+                                <SelectItem key={emp} value={emp!}>{emp}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" onClick={downloadCSV}>
+                        <FileDown className="mr-2" />
+                        Export to CSV
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -77,7 +128,7 @@ export default function ReportsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {expenses.map((expense) => (
+                            {filteredExpenses.map((expense) => (
                                 <TableRow key={expense.id}>
                                     <TableCell>{getEmployeeName(expense.tripId)}</TableCell>
                                     <TableCell>{format(new Date(expense.date), 'PPP')}</TableCell>
@@ -100,9 +151,9 @@ export default function ReportsPage() {
                             ))}
                         </TableBody>
                     </Table>
-                    {expenses.length === 0 && (
+                    {filteredExpenses.length === 0 && (
                         <div className="text-center p-10 text-muted-foreground">
-                            No expenses have been submitted yet.
+                            No expenses have been submitted for the selected employee.
                         </div>
                     )}
                 </CardContent>
