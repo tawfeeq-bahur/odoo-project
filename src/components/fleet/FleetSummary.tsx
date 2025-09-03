@@ -54,7 +54,7 @@ export function FleetSummary({ vehicles, expenses }: FleetSummaryProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <SummaryCard icon={Truck} title="Total Vehicles" value={summary.totalVehicles} />
-      <SummaryCard icon={CircleDollarSign} title="Total Expenses" value={`$${summary.totalExpenses.toFixed(2)}`} />
+      <SummaryCard icon={CircleDollarSign} title="Total Expenses" value={`₹${summary.totalExpenses.toFixed(2)}`} />
       <SummaryCard icon={Wrench} title="In Maintenance" value={summary.maintenance} />
       <SummaryCard icon={Fuel} title="Ongoing Trips" value={summary.onTrip} />
 

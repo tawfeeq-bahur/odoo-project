@@ -100,7 +100,7 @@ export default function ScannerPage() {
     });
     toast({
       title: 'Expense Added!',
-      description: `The ${expense.type} expense of $${expense.amount.toFixed(2)} has been logged for approval.`,
+      description: `The ${expense.type} expense of ₹${expense.amount.toFixed(2)} has been logged for approval.`,
     });
     setParsedExpenses(prev => prev ? prev.filter(e => e !== expense) : null);
   };
@@ -112,7 +112,7 @@ export default function ScannerPage() {
     });
     toast({
       title: "Expense Logged",
-      description: `Your ${values.type} expense of $${values.amount.toFixed(2)} has been submitted for approval.`
+      description: `Your ${values.type} expense of ₹${values.amount.toFixed(2)} has been submitted for approval.`
     });
     form.reset();
     form.setValue('date', format(new Date(), 'yyyy-MM-dd'));
@@ -208,7 +208,7 @@ export default function ScannerPage() {
                                     name="amount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Amount ($)</FormLabel>
+                                            <FormLabel>Amount (₹)</FormLabel>
                                             <FormControl>
                                                 <Input type="number" step="0.01" placeholder="e.g., 25.50" {...field} />
                                             </FormControl>
@@ -278,7 +278,7 @@ export default function ScannerPage() {
                            <Badge variant="outline">{exp.type}</Badge>
                          </div>
                          <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                           <DollarSign className="w-3 h-3" /> ${exp.amount.toFixed(2)}
+                           <DollarSign className="w-3 h-3" /> ₹{exp.amount.toFixed(2)}
                            <Calendar className="w-3 h-3 ml-2" /> {exp.date}
                          </p>
                        </div>

@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const VehicleInsightsInputSchema = z.object({
   totalVehicles: z.number().describe('The total number of vehicles in the fleet.'),
@@ -35,13 +35,13 @@ const prompt = ai.definePrompt({
   name: 'vehicleInsightsPrompt',
   input: { schema: VehicleInsightsInputSchema },
   output: { schema: VehicleInsightsOutputSchema },
-  model: 'googleai/gemini-2.0-flash-preview',
+  model: 'googleai/gemini-2.5-flash',
   prompt: `
     You are a fleet management analyst AI. Based on the following summary data for the current month, provide actionable insights.
 
     - Total Vehicles: {{totalVehicles}}
     - Ongoing Trips: {{ongoingTrips}}
-    - Total Expenses: $ {{totalExpenses}}
+    - Total Expenses: ₹{{totalExpenses}}
     - Fuel Consumption: {{fuelConsumption}} Liters
 
     Analyze this data and generate:

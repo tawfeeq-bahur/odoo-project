@@ -111,8 +111,8 @@ export default function TripPlannerPage() {
               <div className="grid md:grid-cols-4 gap-6 text-center">
                  <InfoCard icon={Map} title="Distance" content={plan.distance} />
                  <InfoCard icon={Clock} title="Duration" content={plan.duration} />
-                 <InfoCard icon={Fuel} title="Fuel Cost" content={`$${plan.estimatedFuelCost.toFixed(2)}`} />
-                 <InfoCard icon={Milestone} title="Toll Cost" content={`$${plan.estimatedTollCost.toFixed(2)}`} />
+                 <InfoCard icon={Fuel} title="Fuel Cost" content={`₹${plan.estimatedFuelCost.toFixed(2)}`} />
+                 <InfoCard icon={Milestone} title="Toll Cost" content={`₹${plan.estimatedTollCost.toFixed(2)}`} />
               </div>
                <Separator />
                <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800/40 dark:text-blue-300">

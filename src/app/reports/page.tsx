@@ -140,7 +140,7 @@ export default function ReportsPage() {
                                     <TableCell>{getEmployeeName(expense.tripId)}</TableCell>
                                     <TableCell>{format(new Date(expense.date), 'PPP')}</TableCell>
                                     <TableCell><Badge variant="secondary">{expense.type}</Badge></TableCell>
-                                    <TableCell className="font-medium">${expense.amount.toFixed(2)}</TableCell>
+                                    <TableCell className="font-medium">₹{expense.amount.toFixed(2)}</TableCell>
                                     <TableCell>{getStatusBadge(expense.status)}</TableCell>
                                     <TableCell className="text-right">
                                        {expense.status === 'pending' && (
