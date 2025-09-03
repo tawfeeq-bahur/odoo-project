@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Upload, AlertTriangle, ScanLine, PlusCircle, LoaderCircle, CheckCircle, XCircle, DollarSign, Calendar } from 'lucide-react';
+import { Upload, AlertTriangle, ScanLine, PlusCircle, LoaderCircle, CheckCircle, XCircle, DollarSign, Calendar, Fuel, Milestone, Truck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useSharedState } from '@/components/AppLayout';
