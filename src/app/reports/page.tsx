@@ -48,7 +48,7 @@ export default function ReportsPage() {
         }
     };
     
-    const employees = [...new Set(vehicles.map(v => v.assignedTo).filter(Boolean))];
+    const employees = [...new Set(vehicles.map(v => v.assignedTo).filter(Boolean) as string[])];
 
     const filteredExpenses = expenses.filter(expense => {
         if (selectedEmployee === 'all') return true;
@@ -60,7 +60,7 @@ export default function ReportsPage() {
         const csvRows = [
             headers.join(','),
             ...filteredExpenses.map(exp => [
-                getEmployeeName(exp.tripId),
+                `"${getEmployeeName(exp.tripId)}"`,
                 format(new Date(exp.date), 'yyyy-MM-dd'),
                 exp.type,
                 exp.amount.toFixed(2),
@@ -74,7 +74,7 @@ export default function ReportsPage() {
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            const fileName = selectedEmployee === 'all' ? 'all-expenses.csv' : `expenses-${selectedEmployee}.csv`;
+            const fileName = selectedEmployee === 'all' ? 'all-expenses.csv' : `expenses-${selectedEmployee.replace(' ', '_')}.csv`;
             link.setAttribute('download', fileName);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
@@ -99,7 +99,7 @@ export default function ReportsPage() {
                         <SelectContent>
                             <SelectItem value="all">All Employees</SelectItem>
                             {employees.map(emp => (
-                                <SelectItem key={emp} value={emp!}>{emp}</SelectItem>
+                                <SelectItem key={emp} value={emp}>{emp}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -112,8 +112,15 @@ export default function ReportsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>All Expenses</CardTitle>
-                    <CardDescription>A complete log of all expenses submitted by your drivers.</CardDescription>
+                    <CardTitle>
+                        {selectedEmployee === 'all' ? 'All Submitted Expenses' : `Expenses for ${selectedEmployee}`}
+                    </CardTitle>
+                    <CardDescription>
+                        {selectedEmployee === 'all' 
+                            ? 'A complete log of all expenses submitted by your drivers.'
+                            : `A complete log of all expenses submitted by ${selectedEmployee}.`
+                        }
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                      <Table>
@@ -138,10 +145,10 @@ export default function ReportsPage() {
                                     <TableCell className="text-right">
                                        {expense.status === 'pending' && (
                                             <div className="flex gap-2 justify-end">
-                                                <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700" onClick={() => updateExpenseStatus(expense.id, 'approved')}>
+                                                <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-100 hover:text-green-700 dark:hover:bg-green-900/40" onClick={() => updateExpenseStatus(expense.id, 'approved')}>
                                                     <CheckCircle className="mr-2 h-4 w-4"/> Approve
                                                 </Button>
-                                                <Button size="sm" variant="outline" className="text-red-600 border-red-600 hover:bg-red-100 hover:text-red-700" onClick={() => updateExpenseStatus(expense.id, 'rejected')}>
+                                                <Button size="sm" variant="outline" className="text-red-600 border-red-600 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/40" onClick={() => updateExpenseStatus(expense.id, 'rejected')}>
                                                     <XCircle className="mr-2 h-4 w-4"/> Reject
                                                 </Button>
                                             </div>
@@ -153,7 +160,10 @@ export default function ReportsPage() {
                     </Table>
                     {filteredExpenses.length === 0 && (
                         <div className="text-center p-10 text-muted-foreground">
-                            No expenses have been submitted for the selected employee.
+                            {selectedEmployee === 'all' 
+                                ? 'No expenses have been submitted yet.'
+                                : `No expenses have been submitted for ${selectedEmployee}.`
+                            }
                         </div>
                     )}
                 </CardContent>
@@ -161,3 +171,5 @@ export default function ReportsPage() {
         </div>
     );
 }
+
+    
