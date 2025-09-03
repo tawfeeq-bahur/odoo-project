@@ -184,11 +184,10 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, assignedTo } : v));
   };
 
-  const addExpense = (expense: Omit<Expense, "id" | "tripId"> & { id?: string, tripId?: string }) => {
+  const addExpense = (expense: Omit<Expense, "id">) => {
     const newExpense: Expense = {
       ...expense,
-      id: expense.id || new Date().toISOString(),
-      tripId: expense.tripId, // Pass the vehicle ID as tripId
+      id: new Date().toISOString(),
     };
     setExpenses(prev => [...prev, newExpense]);
   }

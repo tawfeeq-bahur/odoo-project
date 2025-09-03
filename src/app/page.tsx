@@ -5,12 +5,11 @@ import { useSharedState } from "@/components/AppLayout";
 import { VehicleList } from "@/components/fleet/VehicleList";
 import { FleetSummary } from "@/components/fleet/FleetSummary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, PlusCircle, DollarSign, List } from "lucide-react";
-import { BarChart as BarChartIcon, AreaChart as AreaChartIcon, PieChart as PieChartIcon } from "lucide-react";
+import { Truck, PlusCircle, DollarSign, List, BarChart as BarChartIcon, AreaChart as AreaChartIcon, PieChart as PieChartIcon } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, AreaChart, PieChart, Area as RechartsArea, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Pie as RechartsPie, Cell } from "recharts";
+import { Bar, BarChart, AreaChart, Pie, PieChart as RechartsPieChart, Area as RechartsArea, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +25,7 @@ export default function DashboardPage() {
   // Employee sees expenses linked to their vehicle, admin sees all
   const displayExpenses = user?.role === 'admin' 
     ? expenses 
-    : expenses.filter(e => e.tripId === employeeVehicle?.id);
+    : expenses.filter(e => e.tripId === user?.assignedVehicleId);
 
   // Data for charts
   const tripsPerVehicle = vehicles.map(v => ({ name: v.plateNumber, trips: Math.floor(Math.random() * 10) + 1 }));
@@ -186,13 +185,13 @@ export default function DashboardPage() {
                                 {employeeExpenseTypes.length > 0 ? (
                                      <ChartContainer config={{}} className="h-[250px] w-full">
                                          <ResponsiveContainer>
-                                            <PieChart>
-                                                <RechartsPie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
+                                            <RechartsPieChart>
+                                                <Pie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
                                                     {employeeExpenseTypes.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
-                                                </RechartsPie>
-                                            </PieChart>
+                                                </Pie>
+                                            </RechartsPieChart>
                                          </ResponsiveContainer>
                                      </ChartContainer>
                                 ) : (
@@ -211,5 +210,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

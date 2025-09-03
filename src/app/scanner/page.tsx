@@ -75,7 +75,6 @@ export default function ScannerPage() {
   const handleAddExpense = (expense: ParsedExpense) => {
     addExpense({
       ...expense,
-      id: new Date().toISOString(),
       tripId: user?.role === 'employee' ? user.assignedVehicleId : undefined,
     })
     toast({
