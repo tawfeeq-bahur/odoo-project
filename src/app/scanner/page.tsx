@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Upload, AlertTriangle, ScanLine, PlusCircle, LoaderCircle, CheckCircle, XCircle, DollarSign, Calendar, Fuel, Milestone, Truck } from 'lucide-react';
+import { Upload, AlertTriangle, ScanLine, PlusCircle, LoaderCircle, CheckCircle, XCircle, DollarSign, Calendar, Fuel, Milestone, Wrench } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useSharedState } from '@/components/AppLayout';
@@ -78,8 +78,8 @@ export default function ScannerPage() {
       tripId: user?.role === 'employee' ? user.assignedVehicleId : undefined,
     })
     toast({
-      title: "Expense Added",
-      description: `A ${expense.type} expense of $${expense.amount.toFixed(2)} has been logged.`
+      title: "Expense Logged",
+      description: `Your ${expense.type} expense of $${expense.amount.toFixed(2)} has been submitted for approval.`
     })
   }
 
@@ -164,7 +164,7 @@ export default function ScannerPage() {
                        <div className="p-2 bg-muted rounded-md">
                          {exp.type === "Fuel" && <Fuel className="w-5 h-5 text-primary" />}
                          {exp.type === "Toll" && <Milestone className="w-5 h-5 text-primary" />}
-                         {exp.type === "Maintenance" && <Truck className="w-5 h-5 text-primary" />}
+                         {exp.type === "Maintenance" && <Wrench className="w-5 h-5 text-primary" />}
                        </div>
                        <div>
                          <div className="font-semibold flex items-center gap-2">

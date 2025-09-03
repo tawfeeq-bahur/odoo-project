@@ -17,6 +17,7 @@ export type Expense = {
   amount: number;
   date: string; // YYYY-MM-DD
   tripId?: string; // Optional: link to a specific trip or vehicle
+  status: 'pending' | 'approved' | 'rejected';
 };
 
 export type Trip = {

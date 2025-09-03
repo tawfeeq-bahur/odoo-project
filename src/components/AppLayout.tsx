@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut } from "lucide-react";
+import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -27,6 +27,7 @@ const adminMenuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Trip Planner", icon: Map },
   { href: "/vehicles", label: "Vehicle Management", icon: Truck },
+  { href: "/reports", label: "Reports & Analytics", icon: BarChart },
 ];
 
 const employeeMenuItems = [
@@ -46,7 +47,8 @@ interface SharedState {
   updateVehicleStatus: (vehicleId: string, status: Vehicle['status']) => void;
   deleteVehicle: (vehicleId: string) => void;
   assignVehicle: (vehicleId: string, assignedTo: string | null) => void;
-  addExpense: (expense: Omit<Expense, "id" | "tripId"> & { id?: string; tripId?: string }) => void;
+  addExpense: (expense: Omit<Expense, "id" | "status">) => void;
+  updateExpenseStatus: (expenseId: string, status: Expense['status']) => void;
 }
 
 // Create the context
@@ -96,10 +98,10 @@ const initialVehicles: Vehicle[] = [
 ];
 
 const initialExpenses: Expense[] = [
-    {id: 'exp1', type: 'Fuel', amount: 150.75, date: new Date('2024-07-28').toISOString(), tripId: '1'},
-    {id: 'exp2', type: 'Toll', amount: 25.00, date: new Date('2024-07-28').toISOString(), tripId: '1'},
-    {id: 'exp3', type: 'Maintenance', amount: 350.00, date: new Date('2024-07-25').toISOString(), tripId: '2'},
-    {id: 'exp4', type: 'Fuel', amount: 120.50, date: new Date('2024-07-22').toISOString(), tripId: '2'},
+    {id: 'exp1', type: 'Fuel', amount: 150.75, date: new Date('2024-07-28').toISOString(), tripId: '1', status: 'approved'},
+    {id: 'exp2', type: 'Toll', amount: 25.00, date: new Date('2024-07-28').toISOString(), tripId: '1', status: 'approved'},
+    {id: 'exp3', type: 'Maintenance', amount: 350.00, date: new Date('2024-07-25').toISOString(), tripId: '2', status: 'rejected'},
+    {id: 'exp4', type: 'Fuel', amount: 120.50, date: new Date('2024-07-22').toISOString(), tripId: '2', status: 'pending'},
 ]
 
 // Simulate a global database for expenses
@@ -183,12 +185,17 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, assignedTo } : v));
   };
 
-  const addExpense = (expense: Omit<Expense, "id">) => {
+  const addExpense = (expense: Omit<Expense, "id" | "status">) => {
     const newExpense: Expense = {
       ...expense,
       id: new Date().toISOString(),
+      status: 'pending'
     };
     setExpenses(prev => [...prev, newExpense]);
+  }
+
+  const updateExpenseStatus = (expenseId: string, status: Expense['status']) => {
+    setExpenses(prev => prev.map(e => e.id === expenseId ? { ...e, status } : e));
   }
 
   const value = {
@@ -202,6 +209,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     deleteVehicle,
     assignVehicle,
     addExpense,
+    updateExpenseStatus
   };
 
   return (
