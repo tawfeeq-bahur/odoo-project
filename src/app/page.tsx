@@ -12,12 +12,12 @@ import { Button } from "@/components/ui/button";
 export default function DashboardPage() {
   const { vehicles, expenses, updateVehicleStatus, deleteVehicle, user } = useSharedState();
 
-  const employeeVehicle = vehicles.find(v => v.id === '2');
+  const employeeVehicle = vehicles.find(v => v.assignedTo === 'employee');
   const displayVehicles = user?.role === 'admin' ? vehicles : (employeeVehicle ? [employeeVehicle] : []);
   
   // For now, let's assume all expenses are for the employee if logged in as employee.
   // In a real app, expenses would be linked to users.
-  const displayExpenses = user?.role === 'admin' ? expenses : expenses;
+  const displayExpenses = user?.role === 'admin' ? expenses : expenses.filter(e => e.tripId === employeeVehicle?.id); // A simple way to filter expenses
 
 
   return (
@@ -60,7 +60,7 @@ export default function DashboardPage() {
                   </div>
                   <h3 className="text-xl font-semibold">No Vehicles Found</h3>
                   <p className="text-muted-foreground max-w-sm">
-                    There are no vehicles assigned or available to display.
+                    {user?.role === 'admin' ? 'There are no vehicles in your fleet.' : 'You have not been assigned a vehicle.'}
                   </p>
                  {user?.role === 'admin' && (
                     <Button asChild className="mt-2">

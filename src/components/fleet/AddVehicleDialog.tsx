@@ -35,6 +35,7 @@ const formSchema = z.object({
   status: z.enum(['Idle', 'On Trip', 'Maintenance']),
   fuelLevel: z.coerce.number().min(0).max(100, { message: 'Fuel level must be between 0 and 100.' }),
   lastMaintenance: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date format' }),
+  assignedTo: z.enum(['employee', 'none']).optional(),
 });
 
 type AddVehicleDialogProps = {
@@ -54,6 +55,7 @@ export function AddVehicleDialog({ children, onAddVehicle }: AddVehicleDialogPro
       status: 'Idle',
       fuelLevel: 100,
       lastMaintenance: format(new Date(), 'yyyy-MM-dd'),
+      assignedTo: 'none',
     },
   });
 
@@ -61,6 +63,7 @@ export function AddVehicleDialog({ children, onAddVehicle }: AddVehicleDialogPro
     onAddVehicle({
       ...values,
       lastMaintenance: new Date(values.lastMaintenance).toISOString(),
+      assignedTo: values.assignedTo === 'employee' ? 'employee' : null,
     });
     form.reset();
     setIsOpen(false);
@@ -168,6 +171,28 @@ export function AddVehicleDialog({ children, onAddVehicle }: AddVehicleDialogPro
                         <FormMessage />
                     </FormItem>
                 )}
+            />
+
+            <FormField
+              control={form.control}
+              name="assignedTo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assign To</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a user to assign" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="employee">Employee</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
             <DialogFooter className="pt-4">

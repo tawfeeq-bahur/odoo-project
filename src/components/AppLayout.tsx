@@ -47,6 +47,7 @@ interface SharedState {
   addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
   updateVehicleStatus: (vehicleId: string, status: Vehicle['status']) => void;
   deleteVehicle: (vehicleId: string) => void;
+  assignVehicle: (vehicleId: string, assignedTo: 'employee' | null) => void;
   addExpense: (expense: Omit<Expense, "id"> & { id?: string }) => void;
 }
 
@@ -71,7 +72,8 @@ const initialVehicles: Vehicle[] = [
     model: "VNL 860",
     status: "On Trip",
     fuelLevel: 75,
-    lastMaintenance: new Date('2024-06-15').toISOString()
+    lastMaintenance: new Date('2024-06-15').toISOString(),
+    assignedTo: 'employee'
   },
   {
     id: "2",
@@ -80,7 +82,8 @@ const initialVehicles: Vehicle[] = [
     model: "Transit-250",
     status: "Idle",
     fuelLevel: 90,
-    lastMaintenance: new Date('2024-07-20').toISOString()
+    lastMaintenance: new Date('2024-07-20').toISOString(),
+    assignedTo: null
   },
   {
     id: "3",
@@ -89,7 +92,8 @@ const initialVehicles: Vehicle[] = [
     model: "P-series",
     status: "Maintenance",
     fuelLevel: 20,
-    lastMaintenance: new Date().toISOString()
+    lastMaintenance: new Date().toISOString(),
+    assignedTo: null
   },
 ];
 
@@ -153,6 +157,10 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setVehicles(prev => prev.filter(v => v.id !== vehicleId));
   };
   
+  const assignVehicle = (vehicleId: string, assignedTo: 'employee' | null) => {
+    setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, assignedTo } : v));
+  };
+
   const addExpense = (expense: Omit<Expense, "id"> & { id?: string }) => {
     const newExpense: Expense = {
       ...expense,
@@ -170,6 +178,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     addVehicle,
     updateVehicleStatus,
     deleteVehicle,
+    assignVehicle,
     addExpense,
   };
 

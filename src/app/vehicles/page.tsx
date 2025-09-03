@@ -6,7 +6,7 @@ import { useSharedState } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, MoreHorizontal, Trash2, Edit, Truck, Fuel, Wrench } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Trash2, Edit, Truck, Fuel, Wrench, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -20,7 +20,7 @@ import type { Vehicle } from '@/lib/types';
 import { format } from 'date-fns';
 
 export default function VehicleManagementPage() {
-  const { vehicles, addVehicle, deleteVehicle, updateVehicleStatus, user } = useSharedState();
+  const { vehicles, addVehicle, deleteVehicle, updateVehicleStatus, user, assignVehicle } = useSharedState();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   if (user?.role !== 'admin') {
@@ -75,7 +75,7 @@ export default function VehicleManagementPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Vehicle</TableHead>
-                <TableHead>Plate Number</TableHead>
+                <TableHead>Assigned To</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Fuel Level</TableHead>
                 <TableHead>Last Maintenance</TableHead>
@@ -87,9 +87,15 @@ export default function VehicleManagementPage() {
                 <TableRow key={vehicle.id}>
                   <TableCell className="font-medium">
                     <div className="font-medium">{vehicle.name}</div>
-                    <div className="text-sm text-muted-foreground">{vehicle.model}</div>
+                    <div className="text-sm text-muted-foreground">{vehicle.plateNumber}</div>
                   </TableCell>
-                  <TableCell>{vehicle.plateNumber}</TableCell>
+                  <TableCell>
+                    {vehicle.assignedTo ? (
+                      <Badge variant="secondary" className="capitalize flex w-fit items-center gap-1.5"><User className="h-3 w-3" />{vehicle.assignedTo}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
                   <TableCell>
                      <div className="flex items-center gap-2">
@@ -110,6 +116,17 @@ export default function VehicleManagementPage() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                          </DropdownMenuItem>
+                          {vehicle.assignedTo === 'employee' ? (
+                            <DropdownMenuItem onClick={() => assignVehicle(vehicle.id, null)}>
+                                <User className="mr-2 h-4 w-4" />
+                                Unassign
+                            </DropdownMenuItem>
+                          ) : (
+                             <DropdownMenuItem onClick={() => assignVehicle(vehicle.id, 'employee')}>
+                                <User className="mr-2 h-4 w-4" />
+                                Assign to Employee
+                            </DropdownMenuItem>
+                          )}
                          <DropdownMenuItem onClick={() => updateVehicleStatus(vehicle.id, 'Maintenance')}>
                             <Wrench className="mr-2 h-4 w-4" />
                             Send to Maintenance
@@ -150,4 +167,3 @@ export default function VehicleManagementPage() {
     </div>
   );
 }
-
