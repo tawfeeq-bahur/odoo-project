@@ -167,9 +167,9 @@ export default function ScannerPage() {
                          {exp.type === "Maintenance" && <Truck className="w-5 h-5 text-primary" />}
                        </div>
                        <div>
-                         <p className="font-semibold flex items-center gap-2">
+                         <div className="font-semibold flex items-center gap-2">
                            <Badge variant="outline">{exp.type}</Badge>
-                         </p>
+                         </div>
                          <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                            <DollarSign className="w-3 h-3" /> ${exp.amount.toFixed(2)}
                            <Calendar className="w-3 h-3 ml-2" /> {exp.date}
