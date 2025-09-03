@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useSharedState } from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,9 +28,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 
-const mockTrips: Trip[] = [
+const initialTrips: Trip[] = [
     {
         id: 'trip1',
         vehicleId: '1',
@@ -72,6 +74,8 @@ const mockTrips: Trip[] = [
 
 export default function TripsPage() {
     const { user } = useSharedState();
+    const [trips, setTrips] = useState(initialTrips);
+    const { toast } = useToast();
     
     if (user?.role !== 'employee') {
         return (
@@ -88,10 +92,26 @@ export default function TripsPage() {
         )
     }
 
-    const employeeTrips = mockTrips.filter(trip => trip.vehicleId === user.assignedVehicleId);
+    const employeeTrips = trips.filter(trip => trip.vehicleId === user.assignedVehicleId);
 
     const ongoingTrips = employeeTrips.filter(t => t.status === 'Ongoing' || t.status === 'Planned');
     const completedTrips = employeeTrips.filter(t => t.status === 'Completed');
+
+    const handleEndTrip = (tripId: string) => {
+        setTrips(prevTrips => prevTrips.map(t => 
+            t.id === tripId 
+            ? { ...t, status: 'Completed', endDate: new Date().toISOString() } 
+            : t
+        ));
+        toast({
+            title: "Trip Completed",
+            description: `Trip has been marked as completed.`
+        });
+    };
+    
+    const handleViewDetails = (trip: Trip) => {
+        alert(`Trip Details:\n\nRoute: ${trip.source} to ${trip.destination}\nStatus: ${trip.status}\nStart Date: ${format(new Date(trip.startDate), 'PPP')}`);
+    }
 
     const getStatusBadge = (status: Trip['status']) => {
         switch (status) {
@@ -117,7 +137,7 @@ export default function TripsPage() {
                     <CardDescription>These are your currently active or upcoming trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <TripTable trips={ongoingTrips} getStatusBadge={getStatusBadge} />
+                     <TripTable trips={ongoingTrips} getStatusBadge={getStatusBadge} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
                 </CardContent>
             </Card>
 
@@ -127,7 +147,7 @@ export default function TripsPage() {
                     <CardDescription>A history of all your completed trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripTable trips={completedTrips} getStatusBadge={getStatusBadge} />
+                    <TripTable trips={completedTrips} getStatusBadge={getStatusBadge} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
                 </CardContent>
             </Card>
 
@@ -135,7 +155,15 @@ export default function TripsPage() {
     )
 }
 
-const TripTable = ({trips, getStatusBadge}: {trips: Trip[], getStatusBadge: (status: Trip['status']) => React.ReactNode}) => (
+interface TripTableProps {
+    trips: Trip[];
+    getStatusBadge: (status: Trip['status']) => React.ReactNode;
+    onEndTrip: (tripId: string) => void;
+    onViewDetails: (trip: Trip) => void;
+}
+
+
+const TripTable = ({trips, getStatusBadge, onEndTrip, onViewDetails}: TripTableProps) => (
     <>
         <Table>
             <TableHeader>
@@ -168,8 +196,8 @@ const TripTable = ({trips, getStatusBadge}: {trips: Trip[], getStatusBadge: (sta
                                </DropdownMenuTrigger>
                                <DropdownMenuContent align="end">
                                    {trip.status === 'Planned' && <DropdownMenuItem>Start Trip</DropdownMenuItem>}
-                                   {trip.status === 'Ongoing' && <DropdownMenuItem>End Trip</DropdownMenuItem>}
-                                   {trip.status === 'Completed' && <DropdownMenuItem>View Details</DropdownMenuItem>}
+                                   {trip.status === 'Ongoing' && <DropdownMenuItem onClick={() => onEndTrip(trip.id)}>End Trip</DropdownMenuItem>}
+                                   {trip.status === 'Completed' && <DropdownMenuItem onClick={() => onViewDetails(trip)}>View Details</DropdownMenuItem>}
                                    {(trip.status === 'Planned' || trip.status === 'Ongoing') && (
                                        <AlertDialog>
                                             <AlertDialogTrigger asChild>
