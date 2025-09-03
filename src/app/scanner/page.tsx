@@ -86,7 +86,26 @@ export default function ScannerPage() {
       } else {
         setError('No expenses could be identified in the image. Please try a clearer picture.');
       }
-    } catch (err)      const handleManualSubmit = (values: z.infer<typeof manualExpenseSchema>) => {
+    } catch (err) {
+      setError('An unexpected error occurred during analysis. The AI model may be temporarily unavailable.');
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleAddExpense = (expense: ParsedExpense) => {
+    addExpense({
+      ...expense,
+      tripId: user?.role === 'employee' ? user.assignedVehicleId : undefined,
+    });
+    toast({
+      title: 'Expense Added!',
+      description: `The ${expense.type} expense of $${expense.amount.toFixed(2)} has been logged for approval.`,
+    });
+    setParsedExpenses(prev => prev ? prev.filter(e => e !== expense) : null);
+  };
+  
+  const handleManualSubmit = (values: z.infer<typeof manualExpenseSchema>) => {
     addExpense({
       ...values,
       tripId: user?.role === 'employee' ? user.assignedVehicleId : undefined,
@@ -295,5 +314,3 @@ const ResultsSkeleton = () => (
       ))}
     </div>
 );
-
-    
