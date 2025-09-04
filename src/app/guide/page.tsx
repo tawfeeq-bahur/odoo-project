@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -78,172 +79,172 @@ export default function TripPlannerPage() {
 
         <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 flex flex-col gap-8">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Plan a New Trip</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="source"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Source</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., Chennai, TN" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                            <FormField
-                                control={form.control}
-                                name="destination"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Destination</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g., Bengaluru, KA" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                            <Button type="submit" disabled={isLoading} className="w-full">
-                                <Route className="mr-2"/>
-                            {isLoading ? 'Generating Plan...' : 'Generate Trip Plan'}
-                            </Button>
-                        </form>
-                        </Form>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5"/> Vehicle Information</CardTitle>
-                    </CardHeader>
-                     <CardContent className="space-y-4">
-                         <FormField
-                            control={form.control}
-                            name="vehicleType"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Vehicle Type</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="car">Car</SelectItem>
-                                        <SelectItem value="bike">Bike/Motorcycle</SelectItem>
-                                        <SelectItem value="bus">Bus</SelectItem>
-                                        <SelectItem value="truck">Truck</SelectItem>
-                                        <SelectItem value="electric">Electric Vehicle</SelectItem>
-                                        <SelectItem value="hybrid">Hybrid Vehicle</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                </FormItem>
-                            )}
-                            />
-                        <FormField
-                            control={form.control}
-                            name="fuelType"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Fuel Type</FormLabel>
-                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="petrol">Petrol/Gasoline</SelectItem>
-                                        <SelectItem value="diesel">Diesel</SelectItem>
-                                        <SelectItem value="cng">CNG</SelectItem>
-                                        <SelectItem value="electric">Electric</SelectItem>
-                                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                </FormItem>
-                            )}
-                            />
-                         <FormField
-                            control={form.control}
-                            name="modelYear"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Model Year</FormLabel>
-                                <FormControl><Input type="number" placeholder="e.g., 2022" {...field} /></FormControl>
-                                </FormItem>
-                            )}
-                            />
-                         <FormField
-                            control={form.control}
-                            name="engineSizeLiters"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Engine Size (Liters)</FormLabel>
-                                <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} /></FormControl>
-                                </FormItem>
-                            )}
-                            />
-                     </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5"/> Trip Conditions</CardTitle>
-                    </CardHeader>
-                     <CardContent className="space-y-4">
-                         <FormField
-                            control={form.control}
-                            name="routeType"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Route Type</FormLabel>
-                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger><SelectValue placeholder="Select route type" /></SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="city">City</SelectItem>
-                                        <SelectItem value="highway">Highway</SelectItem>
-                                        <SelectItem value="city_and_highway">City & Highway</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                </FormItem>
-                            )}
-                            />
-                         <FormField
-                            control={form.control}
-                            name="traffic"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Expected Traffic</FormLabel>
-                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger><SelectValue placeholder="Select traffic condition" /></SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="normal">Normal</SelectItem>
-                                        <SelectItem value="stop_and_go">Stop & Go</SelectItem>
-                                        <SelectItem value="light">Light</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                </FormItem>
-                            )}
-                            />
-                           <FormField
-                            control={form.control}
-                            name="loadKg"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Load in kg (Optional)</FormLabel>
-                                <FormControl><Input type="number" placeholder="e.g., 5000" {...field} /></FormControl>
-                                </FormItem>
-                            )}
-                            />
-                     </CardContent>
-                </Card>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Plan a New Trip</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="source"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Source</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., Chennai, TN" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={form.control}
+                                    name="destination"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Destination</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., Bengaluru, KA" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                <Button type="submit" disabled={isLoading} className="w-full">
+                                    <Route className="mr-2"/>
+                                {isLoading ? 'Generating Plan...' : 'Generate Trip Plan'}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5"/> Vehicle Information</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="vehicleType"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Vehicle Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="car">Car</SelectItem>
+                                                <SelectItem value="bike">Bike/Motorcycle</SelectItem>
+                                                <SelectItem value="bus">Bus</SelectItem>
+                                                <SelectItem value="truck">Truck</SelectItem>
+                                                <SelectItem value="electric">Electric Vehicle</SelectItem>
+                                                <SelectItem value="hybrid">Hybrid Vehicle</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={form.control}
+                                    name="fuelType"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Fuel Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="petrol">Petrol/Gasoline</SelectItem>
+                                                <SelectItem value="diesel">Diesel</SelectItem>
+                                                <SelectItem value="cng">CNG</SelectItem>
+                                                <SelectItem value="electric">Electric</SelectItem>
+                                                <SelectItem value="hybrid">Hybrid</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={form.control}
+                                    name="modelYear"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Model Year</FormLabel>
+                                        <FormControl><Input type="number" placeholder="e.g., 2022" {...field} /></FormControl>
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={form.control}
+                                    name="engineSizeLiters"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Engine Size (Liters)</FormLabel>
+                                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} /></FormControl>
+                                        </FormItem>
+                                    )}
+                                    />
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5"/> Trip Conditions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="routeType"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Route Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select route type" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="city">City</SelectItem>
+                                                <SelectItem value="highway">Highway</SelectItem>
+                                                <SelectItem value="city_and_highway">City & Highway</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={form.control}
+                                    name="traffic"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Expected Traffic</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Select traffic condition" /></SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="normal">Normal</SelectItem>
+                                                <SelectItem value="stop_and_go">Stop & Go</SelectItem>
+                                                <SelectItem value="light">Light</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={form.control}
+                                    name="loadKg"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Load in kg (Optional)</FormLabel>
+                                        <FormControl><Input type="number" placeholder="e.g., 5000" {...field} /></FormControl>
+                                        </FormItem>
+                                    )}
+                                    />
+                            </CardContent>
+                        </Card>
+                    </form>
+                </Form>
             </div>
             <div className="lg:col-span-2">
                 {isLoading && <PlanSkeleton />}
@@ -374,3 +375,5 @@ const PlanSkeleton = () => (
         </Card>
     </div>
 );
+
+    
