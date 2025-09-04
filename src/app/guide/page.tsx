@@ -296,7 +296,7 @@ export default function TripPlannerPage() {
                             <AlertTitle>Disclaimer</AlertTitle>
                             <AlertDescription>
                                 {plan.disclaimer}
-                            </Aler tDescription>
+                            </AlertDescription>
                         </Alert>
                         </CardContent>
                     </Card>
@@ -362,4 +362,5 @@ const PlanSkeleton = () => (
     </div>
 );
 
+    
     
