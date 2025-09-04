@@ -9,12 +9,14 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const TripPlannerInputSchema = z.object({
   source: z.string().describe('The starting point of the trip.'),
   destination: z.string().describe('The final destination of the trip.'),
   vehicleType: z.string().optional().describe('The type of vehicle (e.g., "Truck", "Van", "Car").'),
+  vehicleModel: z.string().optional().describe("The vehicle's make and model (e.g., 'Volvo VNL 860')."),
+  loadKg: z.number().optional().describe("The weight of the load in kilograms."),
 });
 export type TripPlannerInput = z.infer<typeof TripPlannerInputSchema>;
 
@@ -49,11 +51,17 @@ const prompt = ai.definePrompt({
     {{#if vehicleType}}
     Vehicle Type: {{vehicleType}}
     {{/if}}
+    {{#if vehicleModel}}
+    Vehicle Model: {{vehicleModel}}
+    {{/if}}
+    {{#if loadKg}}
+    Load: {{loadKg}} kg
+    {{/if}}
 
-    Calculate and provide the following details:
+    Calculate and provide the following details, taking the vehicle's details and load into account for fuel efficiency:
     - Total distance in kilometers.
     - Estimated duration of the trip.
-    - Estimated fuel cost (assume an average fuel efficiency and a standard fuel price).
+    - Estimated fuel cost (assume an average fuel efficiency and a standard fuel price, adjusted for vehicle type and load).
     - Estimated toll costs along the most common route.
     - A brief summary of the suggested route.
 

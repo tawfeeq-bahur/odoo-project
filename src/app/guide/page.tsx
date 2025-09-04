@@ -19,6 +19,9 @@ import { Separator } from '@/components/ui/separator';
 const formSchema = z.object({
   source: z.string().min(2, { message: 'Source must be at least 2 characters.' }),
   destination: z.string().min(2, { message: 'Destination must be at least 2 characters.' }),
+  vehicleType: z.string().optional(),
+  vehicleModel: z.string().optional(),
+  loadKg: z.coerce.number().optional(),
 });
 
 export default function TripPlannerPage() {
@@ -31,6 +34,9 @@ export default function TripPlannerPage() {
     defaultValues: {
       source: '',
       destination: '',
+      vehicleType: '',
+      vehicleModel: '',
+      loadKg: undefined,
     },
   });
 
@@ -53,7 +59,7 @@ export default function TripPlannerPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight font-headline">Trip Planner</h1>
           <p className="text-muted-foreground">
-            Enter a source and destination to get an AI-powered trip plan and cost estimation.
+            Enter trip details to get an AI-powered plan and cost estimation.
           </p>
         </div>
 
@@ -63,33 +69,76 @@ export default function TripPlannerPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col md:flex-row items-end gap-4">
-                <FormField
-                  control={form.control}
-                  name="source"
-                  render={({ field }) => (
-                    <FormItem className="flex-1 w-full">
-                      <FormLabel>Source</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Los Angeles, CA" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="destination"
-                  render={({ field }) => (
-                    <FormItem className="flex-1 w-full">
-                      <FormLabel>Destination</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., New York, NY" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                 <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="source"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Source</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Chennai, TN" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="destination"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Destination</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Bengaluru, KA" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                 </div>
+                 <div className="grid md:grid-cols-3 gap-4">
+                     <FormField
+                      control={form.control}
+                      name="vehicleType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vehicle Type (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Truck" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="vehicleModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Make/Model (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Volvo VNL 860" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="loadKg"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Load in kg (Optional)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="e.g., 5000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                 </div>
                 <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
                   {isLoading ? 'Generating...' : 'Get Plan'}
                 </Button>
