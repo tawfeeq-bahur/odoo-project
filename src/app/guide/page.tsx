@@ -76,6 +76,11 @@ export default function TripPlannerPage() {
   
   const availableEmployees = vehicles.filter(v => v.assignedTo);
 
+  const pageTitle = user?.role === 'admin' ? "Assign a Trip" : "AI Trip Planner";
+  const pageDescription = user?.role === 'admin' 
+    ? "Generate a detailed trip plan and assign it to an employee."
+    : "Enter detailed trip information to get an optimized plan, cost estimation, and points of interest.";
+
 
   async function onPlannerSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -121,9 +126,9 @@ export default function TripPlannerPage() {
   return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">AI Trip Planner</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">{pageTitle}</h1>
           <p className="text-muted-foreground">
-            Enter detailed trip information to get an optimized plan, cost estimation, and points of interest.
+            {pageDescription}
           </p>
         </div>
       <Form {...plannerForm}>
@@ -339,7 +344,7 @@ export default function TripPlannerPage() {
                             <AlertDescription>
                                 {plan.disclaimer}
                             </AlertDescription>
-                        </Alert>
+                         </Alert>
                         </CardContent>
                     </Card>
                    <MapDisplay plan={plan} traffic={currentTraffic} />
