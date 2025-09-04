@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import type { Vehicle, Expense, User as UserType } from "@/lib/types";
+import type { Vehicle, Expense, User as UserType, Trip } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
 import LoginPage from "@/app/login/page";
 import {
@@ -52,6 +52,7 @@ const employeeMenuItems = [
 interface SharedState {
   vehicles: Vehicle[];
   expenses: Expense[];
+  trips: Trip[];
   user: UserType | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
@@ -61,6 +62,8 @@ interface SharedState {
   assignVehicle: (vehicleId: string, assignedTo: string | null) => void;
   addExpense: (expense: Omit<Expense, "id" | "status">) => void;
   updateExpenseStatus: (expenseId: string, status: Expense['status']) => void;
+  addTrip: (trip: Omit<Trip, 'id' | 'status' | 'expenses'>) => void;
+  updateTripStatus: (tripId: string, status: Trip['status']) => void;
 }
 
 // Create the context
@@ -82,7 +85,7 @@ const initialVehicles: Vehicle[] = [
     name: "Volvo Prime Mover",
     plateNumber: "TRK-001",
     model: "VNL 860",
-    status: "On Trip",
+    status: "Idle",
     fuelLevel: 75,
     lastMaintenance: new Date('2024-06-15').toISOString(),
     assignedTo: 'Raja'
@@ -116,7 +119,8 @@ const initialExpenses: Expense[] = [
     {id: 'exp4', type: 'Fuel', amount: 12050, date: new Date('2024-07-22').toISOString(), tripId: '2', status: 'pending'},
 ]
 
-// Simulate a global database for expenses
+// Simulate a global database for state that needs to be shared across components
+// This is a workaround for the lack of a real backend.
 let globalExpenses: Expense[] = initialExpenses;
 const expenseListeners: React.Dispatch<React.SetStateAction<Expense[]>>[] = [];
 
@@ -146,10 +150,41 @@ const useGlobalExpenses = () => {
 };
 
 
+let globalTrips: Trip[] = [];
+const tripListeners: React.Dispatch<React.SetStateAction<Trip[]>>[] = [];
+
+const useGlobalTrips = () => {
+    const [trips, setTrips] = useState(globalTrips);
+
+    React.useEffect(() => {
+        tripListeners.push(setTrips);
+        return () => {
+            const index = tripListeners.indexOf(setTrips);
+            if (index > -1) {
+                tripListeners.splice(index, 1);
+            }
+        };
+    }, []);
+
+    const setGlobalTrips = (newTrips: Trip[] | ((prev: Trip[]) => Trip[])) => {
+        if (typeof newTrips === 'function') {
+            globalTrips = newTrips(globalTrips);
+        } else {
+            globalTrips = newTrips;
+        }
+        tripListeners.forEach(listener => listener(globalTrips));
+    };
+
+    return [trips, setGlobalTrips] as const;
+};
+
+
+
 // Create the provider component
 export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [expenses, setExpenses] = useGlobalExpenses();
+  const [trips, setTrips] = useGlobalTrips();
   const [user, setUser] = useState<UserType | null>(null);
 
   const login = (username: string, password: string): boolean => {
@@ -159,6 +194,18 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
       return true;
     }
     
+    // Employee login (using assigned name as username)
+    const employee = vehicles.find(v => v.assignedTo?.toLowerCase() === username.toLowerCase());
+    if(employee && password === '123') {
+       setUser({ 
+            username: employee.assignedTo!, 
+            role: 'employee',
+            assignedVehicleId: employee.id
+        });
+        return true;
+    }
+
+
     // Employee login (using plate number as username)
     const assignedVehicle = vehicles.find(v => v.plateNumber.toLowerCase() === username.toLowerCase() && v.assignedTo);
     if (assignedVehicle && password === '123') {
@@ -210,9 +257,37 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setExpenses(prev => prev.map(e => e.id === expenseId ? { ...e, status } : e));
   }
 
+  const addTrip = (trip: Omit<Trip, 'id' | 'status' | 'expenses'>) => {
+      const newTrip: Trip = {
+          ...trip,
+          id: new Date().toISOString(),
+          status: 'Planned',
+          expenses: []
+      };
+      setTrips(prev => [...prev, newTrip]);
+      updateVehicleStatus(trip.vehicleId, 'On Trip');
+  }
+
+  const updateTripStatus = (tripId: string, status: Trip['status']) => {
+      setTrips(prev => prev.map(t => {
+          if (t.id === tripId) {
+              const vehicleId = t.vehicleId;
+              if (status === 'Completed' || status === 'Cancelled') {
+                  updateVehicleStatus(vehicleId, 'Idle');
+              }
+               if (status === 'Ongoing') {
+                  updateVehicleStatus(vehicleId, 'On Trip');
+              }
+              return { ...t, status, endDate: new Date().toISOString() };
+          }
+          return t;
+      }));
+  }
+
   const value = {
     vehicles,
     expenses,
+    trips,
     user,
     login,
     logout,
@@ -221,7 +296,9 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     deleteVehicle,
     assignVehicle,
     addExpense,
-    updateExpenseStatus
+    updateExpenseStatus,
+    addTrip,
+    updateTripStatus
   };
 
   return (
@@ -241,7 +318,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const menuItems = user.role === 'admin' ? adminMenuItems : employeeMenuItems;
-  const userEmail = user.role === 'admin' ? 'admin@fleetflow.com' : `${user.username.toLowerCase()}@fleetflow.com`;
+  const userEmail = user.role === 'admin' ? 'admin@fleetflow.com' : `${user.username.toLowerCase().replace(' ', '.')}@fleetflow.com`;
   const userName = user.username;
   const userFallback = userName.substring(0, 2).toUpperCase();
 

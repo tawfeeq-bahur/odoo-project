@@ -23,6 +23,7 @@ export type Expense = {
 export type Trip = {
   id: string;
   vehicleId: string;
+  employeeName: string;
   source: string;
   destination: string;
   startDate: string; // ISO Date

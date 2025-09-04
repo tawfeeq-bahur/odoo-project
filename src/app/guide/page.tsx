@@ -13,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTripPlan, TripPlannerOutput } from '@/ai/flows/trip-planner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Map, Milestone, Fuel, Clock, AlertTriangle, Route, Truck, Settings } from 'lucide-react';
+import { Map, Milestone, Fuel, Clock, AlertTriangle, Route, Truck, Settings, Send } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import dynamic from 'next/dynamic';
+import { useSharedState } from '@/components/AppLayout';
+import { useToast } from '@/hooks/use-toast';
 
 const MapDisplay = dynamic(
   () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -38,12 +40,18 @@ const formSchema = z.object({
   loadKg: z.coerce.number().optional(),
 });
 
+const assignTripSchema = z.object({
+    assignedTo: z.string().min(1, "Please select an employee."),
+});
+
 export default function TripPlannerPage() {
   const [plan, setPlan] = useState<TripPlannerOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user, vehicles, addTrip } = useSharedState();
+  const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const plannerForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
     defaultValues: {
@@ -58,12 +66,18 @@ export default function TripPlannerPage() {
       loadKg: undefined,
     },
   });
+  
+  const assignForm = useForm<z.infer<typeof assignTripSchema>>({
+      resolver: zodResolver(assignTripSchema),
+  });
 
-  const isFormValid = form.formState.isValid;
-  const currentTraffic = form.watch('traffic');
+  const isFormValid = plannerForm.formState.isValid;
+  const currentTraffic = plannerForm.watch('traffic');
+  
+  const availableEmployees = vehicles.filter(v => v.assignedTo);
 
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onPlannerSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setError(null);
     setPlan(null);
@@ -76,6 +90,33 @@ export default function TripPlannerPage() {
       setIsLoading(false);
     }
   }
+
+  function onAssignSubmit(values: z.infer<typeof assignTripSchema>) {
+      const employeeName = values.assignedTo;
+      const vehicle = vehicles.find(v => v.assignedTo === employeeName);
+      if (!plan || !vehicle) {
+          toast({
+              title: "Assignment Failed",
+              description: "Could not find the vehicle or plan to assign.",
+              variant: "destructive"
+          })
+          return;
+      }
+
+      addTrip({
+          source: plan.source,
+          destination: plan.destination,
+          startDate: new Date().toISOString(),
+          vehicleId: vehicle.id,
+          employeeName: employeeName,
+      });
+
+      toast({
+          title: "Trip Assigned!",
+          description: `${employeeName} has been assigned the trip from ${plan.source} to ${plan.destination}.`
+      })
+      setPlan(null); // Clear the plan after assigning
+  }
   
   return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -85,10 +126,10 @@ export default function TripPlannerPage() {
             Enter detailed trip information to get an optimized plan, cost estimation, and points of interest.
           </p>
         </div>
-      <Form {...form}>
+      <Form {...plannerForm}>
         <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 flex flex-col gap-8">
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <form onSubmit={plannerForm.handleSubmit(onPlannerSubmit)} className="space-y-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Plan a New Trip</CardTitle>
@@ -96,7 +137,7 @@ export default function TripPlannerPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="source"
                                     render={({ field }) => (
                                         <FormItem>
@@ -109,7 +150,7 @@ export default function TripPlannerPage() {
                                     )}
                                     />
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="destination"
                                     render={({ field }) => (
                                         <FormItem>
@@ -130,7 +171,7 @@ export default function TripPlannerPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="vehicleType"
                                     render={({ field }) => (
                                         <FormItem>
@@ -153,7 +194,7 @@ export default function TripPlannerPage() {
                                     )}
                                     />
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="fuelType"
                                     render={({ field }) => (
                                         <FormItem>
@@ -175,7 +216,7 @@ export default function TripPlannerPage() {
                                     )}
                                     />
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="modelYear"
                                     render={({ field }) => (
                                         <FormItem>
@@ -186,7 +227,7 @@ export default function TripPlannerPage() {
                                     )}
                                     />
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="engineSizeLiters"
                                     render={({ field }) => (
                                         <FormItem>
@@ -205,7 +246,7 @@ export default function TripPlannerPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="routeType"
                                     render={({ field }) => (
                                         <FormItem>
@@ -225,7 +266,7 @@ export default function TripPlannerPage() {
                                     )}
                                     />
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="traffic"
                                     render={({ field }) => (
                                         <FormItem>
@@ -245,7 +286,7 @@ export default function TripPlannerPage() {
                                     )}
                                     />
                                 <FormField
-                                    control={form.control}
+                                    control={plannerForm.control}
                                     name="loadKg"
                                     render={({ field }) => (
                                         <FormItem>
@@ -292,8 +333,8 @@ export default function TripPlannerPage() {
                             <InfoCard icon={Milestone} title="Toll Cost" content={`₹${plan.estimatedTollCost.toFixed(2)}`} />
                         </div>
                         <Separator />
-                        <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800/40 dark:text-blue-300">
-                            <AlertTriangle className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                         <Alert>
+                            <AlertTriangle className="h-5 w-5" />
                             <AlertTitle>Disclaimer</AlertTitle>
                             <AlertDescription>
                                 {plan.disclaimer}
@@ -302,6 +343,46 @@ export default function TripPlannerPage() {
                         </CardContent>
                     </Card>
                    <MapDisplay plan={plan} traffic={currentTraffic} />
+
+                   {user?.role === 'admin' && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Assign Trip to Employee</CardTitle>
+                                <CardDescription>Select an employee to assign this trip to. This will add it to their "My Trips" page.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Form {...assignForm}>
+                                    <form onSubmit={assignForm.handleSubmit(onAssignSubmit)} className="flex items-end gap-4">
+                                        <FormField
+                                            control={assignForm.control}
+                                            name="assignedTo"
+                                            render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel>Employee</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select an employee" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {availableEmployees.map(emp => (
+                                                                <SelectItem key={emp.id} value={emp.assignedTo!}>{emp.assignedTo}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <Button type="submit">
+                                            <Send className="mr-2"/> Assign Trip
+                                        </Button>
+                                    </form>
+                                </Form>
+                            </CardContent>
+                        </Card>
+                   )}
                 </div>
                 )}
             </div>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Route, CircleCheck, CircleX, Clock, MoreHorizontal, AlertTriangle, Edit } from 'lucide-react';
+import { Route, CircleCheck, CircleX, Clock, MoreHorizontal, AlertTriangle, Play } from 'lucide-react';
 import type { Trip } from '@/lib/types';
 import { format } from 'date-fns';
 import {
@@ -30,51 +30,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
-
-const initialTrips: Trip[] = [
-    {
-        id: 'trip1',
-        vehicleId: '1',
-        source: 'Chennai, TN',
-        destination: 'Bengaluru, KA',
-        startDate: new Date('2024-07-28').toISOString(),
-        status: 'Ongoing',
-        expenses: []
-    },
-    {
-        id: 'trip2',
-        vehicleId: '1',
-        source: 'Bengaluru, KA',
-        destination: 'Hyderabad, TS',
-        startDate: new Date('2024-07-25').toISOString(),
-        endDate: new Date('2024-07-26').toISOString(),
-        status: 'Completed',
-        expenses: []
-    },
-    {
-        id: 'trip3',
-        vehicleId: '2',
-        source: 'Mumbai, MH',
-        destination: 'Pune, MH',
-        startDate: new Date('2024-07-29').toISOString(),
-        status: 'Planned',
-        expenses: []
-    },
-    {
-        id: 'trip4',
-        vehicleId: '2',
-        source: 'Pune, MH',
-        destination: 'Mumbai, MH',
-        startDate: new Date('2024-07-27').toISOString(),
-        endDate: new Date('2024-07-27').toISOString(),
-        status: 'Completed',
-        expenses: []
-    }
-];
-
 export default function TripsPage() {
-    const { user } = useSharedState();
-    const [trips, setTrips] = useState(initialTrips);
+    const { user, trips, updateTripStatus, vehicles } = useSharedState();
     const { toast } = useToast();
     
     if (user?.role !== 'employee') {
@@ -92,17 +49,18 @@ export default function TripsPage() {
         )
     }
 
-    const employeeTrips = trips.filter(trip => trip.vehicleId === user.assignedVehicleId);
+    const employeeTrips = trips.filter(trip => trip.employeeName === user.username);
 
     const ongoingTrips = employeeTrips.filter(t => t.status === 'Ongoing' || t.status === 'Planned');
     const completedTrips = employeeTrips.filter(t => t.status === 'Completed');
 
+    const handleStartTrip = (tripId: string) => {
+        updateTripStatus(tripId, 'Ongoing');
+        toast({ title: "Trip Started", description: "The trip is now marked as ongoing." });
+    }
+
     const handleEndTrip = (tripId: string) => {
-        setTrips(prevTrips => prevTrips.map(t => 
-            t.id === tripId 
-            ? { ...t, status: 'Completed', endDate: new Date().toISOString() } 
-            : t
-        ));
+        updateTripStatus(tripId, 'Completed');
         toast({
             title: "Trip Completed",
             description: `Trip has been marked as completed.`
@@ -137,7 +95,7 @@ export default function TripsPage() {
                     <CardDescription>These are your currently active or upcoming trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                     <TripTable trips={ongoingTrips} getStatusBadge={getStatusBadge} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
+                     <TripTable trips={ongoingTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
                 </CardContent>
             </Card>
 
@@ -147,7 +105,7 @@ export default function TripsPage() {
                     <CardDescription>A history of all your completed trips.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <TripTable trips={completedTrips} getStatusBadge={getStatusBadge} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
+                    <TripTable trips={completedTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
                 </CardContent>
             </Card>
 
@@ -158,12 +116,13 @@ export default function TripsPage() {
 interface TripTableProps {
     trips: Trip[];
     getStatusBadge: (status: Trip['status']) => React.ReactNode;
+    onStartTrip: (tripId: string) => void;
     onEndTrip: (tripId: string) => void;
     onViewDetails: (trip: Trip) => void;
 }
 
 
-const TripTable = ({trips, getStatusBadge, onEndTrip, onViewDetails}: TripTableProps) => (
+const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails}: TripTableProps) => (
     <>
         <Table>
             <TableHeader>
@@ -195,8 +154,8 @@ const TripTable = ({trips, getStatusBadge, onEndTrip, onViewDetails}: TripTableP
                                    </Button>
                                </DropdownMenuTrigger>
                                <DropdownMenuContent align="end">
-                                   {trip.status === 'Planned' && <DropdownMenuItem>Start Trip</DropdownMenuItem>}
-                                   {trip.status === 'Ongoing' && <DropdownMenuItem onClick={() => onEndTrip(trip.id)}>End Trip</DropdownMenuItem>}
+                                   {trip.status === 'Planned' && <DropdownMenuItem onClick={() => onStartTrip(trip.id)}><Play className="mr-2"/>Start Trip</DropdownMenuItem>}
+                                   {trip.status === 'Ongoing' && <DropdownMenuItem onClick={() => onEndTrip(trip.id)}><CircleCheck className="mr-2"/>End Trip</DropdownMenuItem>}
                                    {trip.status === 'Completed' && <DropdownMenuItem onClick={() => onViewDetails(trip)}>View Details</DropdownMenuItem>}
                                    {(trip.status === 'Planned' || trip.status === 'Ongoing') && (
                                        <AlertDialog>
