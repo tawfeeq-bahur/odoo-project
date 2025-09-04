@@ -6,7 +6,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,8 +31,8 @@ const formSchema = z.object({
   destination: z.string().min(2, { message: 'Destination must be at least 2 characters.' }),
   vehicleType: z.string({required_error: "Vehicle type is required."}).min(1, "Vehicle type is required."),
   fuelType: z.string({required_error: "Fuel type is required."}).min(1, "Fuel type is required."),
-  modelYear: z.coerce.number({required_error: "Model year is required."}).min(1980, "Enter a valid year."),
-  engineSizeLiters: z.coerce.number({required_error: "Engine size is required."}).min(0.1, "Enter a valid size."),
+  modelYear: z.coerce.number({required_error: "Model year is required."}).min(1980, "Enter a valid year.").max(new Date().getFullYear() + 1),
+  engineSizeLiters: z.coerce.number({required_error: "Engine size is required."}).min(0.1, "Enter a valid size.").max(20),
   routeType: z.string({required_error: "Route type is required."}).min(1, "Route type is required."),
   traffic: z.string({required_error: "Traffic condition is required."}).min(1, "Traffic condition is required."),
   loadKg: z.coerce.number().optional(),
@@ -49,17 +49,16 @@ export default function TripPlannerPage() {
     defaultValues: {
       source: '',
       destination: '',
-      vehicleType: 'truck',
-      fuelType: 'diesel',
-      routeType: 'highway',
-      traffic: 'normal',
-      modelYear: 2022,
-      engineSizeLiters: 2.5,
+      vehicleType: '',
+      fuelType: '',
+      routeType: '',
+      traffic: '',
+      modelYear: undefined,
+      engineSizeLiters: undefined,
       loadKg: undefined,
     },
   });
 
-  const watchedValues = useWatch({ control: form.control });
   const isFormValid = form.formState.isValid;
 
 
@@ -85,14 +84,14 @@ export default function TripPlannerPage() {
             Enter detailed trip information to get an optimized plan, cost estimation, and points of interest.
           </p>
         </div>
-
+      <Form {...form}>
         <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 flex flex-col gap-8">
-                <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Plan a New Trip</CardTitle>
+                                <CardDescription>Start by entering the source and destination for your trip.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
@@ -121,15 +120,12 @@ export default function TripPlannerPage() {
                                         </FormItem>
                                     )}
                                     />
-                                <Button type="submit" disabled={isLoading || !isFormValid} className="w-full">
-                                    <Route className="mr-2"/>
-                                {isLoading ? 'Generating Plan...' : 'Generate Trip Plan'}
-                                </Button>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5"/> Vehicle Information</CardTitle>
+                                <CardDescription>Provide details about the vehicle being used for the trip.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
@@ -183,7 +179,7 @@ export default function TripPlannerPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                         <FormLabel>Model Year</FormLabel>
-                                        <FormControl><Input type="number" placeholder="e.g., 2022" {...field} /></FormControl>
+                                        <FormControl><Input type="number" placeholder="e.g., 2022" {...field} value={field.value ?? ''} /></FormControl>
                                         <FormMessage />
                                         </FormItem>
                                     )}
@@ -194,7 +190,7 @@ export default function TripPlannerPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                         <FormLabel>Engine Size (Liters)</FormLabel>
-                                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} /></FormControl>
+                                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} value={field.value ?? ''} /></FormControl>
                                         <FormMessage />
                                         </FormItem>
                                     )}
@@ -204,6 +200,7 @@ export default function TripPlannerPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5"/> Trip Conditions</CardTitle>
+                                <CardDescription>Describe the conditions expected for this trip.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
@@ -259,8 +256,11 @@ export default function TripPlannerPage() {
                                     />
                             </CardContent>
                         </Card>
+                         <Button type="submit" disabled={isLoading || !isFormValid} className="w-full">
+                            <Route className="mr-2"/>
+                            {isLoading ? 'Generating Plan...' : 'Generate Trip Plan'}
+                        </Button>
                     </form>
-                </Form>
             </div>
             <div className="lg:col-span-2">
                 {isLoading && <PlanSkeleton />}
@@ -271,7 +271,7 @@ export default function TripPlannerPage() {
                         <CardContent className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-8">
                             <Map className="h-24 w-24 mb-4 text-primary/50" />
                             <h2 className="text-2xl font-semibold">Your Trip Plan Will Appear Here</h2>
-                            <p className="max-w-md mt-2">Fill out the form on the left and click "Generate Trip Plan" to see your estimated route, costs, and points of interest on the map.</p>
+                            <p className="max-w-md mt-2">Fill out all the required fields in the form and click "Generate Trip Plan" to see your estimated route, costs, and points of interest on the map.</p>
                         </CardContent>
                     </Card>
                 )}
@@ -296,7 +296,7 @@ export default function TripPlannerPage() {
                             <AlertTitle>Disclaimer</AlertTitle>
                             <AlertDescription>
                                 {plan.disclaimer}
-                            </AlertDescription>
+                            </Aler tDescription>
                         </Alert>
                         </CardContent>
                     </Card>
@@ -305,6 +305,7 @@ export default function TripPlannerPage() {
                 )}
             </div>
         </div>
+    </Form>
       </div>
   );
 }
@@ -360,3 +361,5 @@ const PlanSkeleton = () => (
         </Card>
     </div>
 );
+
+    
