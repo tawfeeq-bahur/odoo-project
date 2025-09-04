@@ -31,7 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 export default function TripsPage() {
-    const { user, trips, updateTripStatus, vehicles } = useSharedState();
+    const { user, trips, updateTripStatus } = useSharedState();
     const { toast } = useToast();
     
     if (user?.role !== 'employee') {
@@ -52,7 +52,7 @@ export default function TripsPage() {
     const employeeTrips = trips.filter(trip => trip.employeeName === user.username);
 
     const ongoingTrips = employeeTrips.filter(t => t.status === 'Ongoing' || t.status === 'Planned');
-    const completedTrips = employeeTrips.filter(t => t.status === 'Completed');
+    const completedTrips = employeeTrips.filter(t => t.status === 'Completed' || t.status === 'Cancelled');
 
     const handleStartTrip = (tripId: string) => {
         updateTripStatus(tripId, 'Ongoing');
@@ -79,6 +79,8 @@ export default function TripsPage() {
                 return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border-green-200 dark:border-green-700">Completed</Badge>;
             case 'Planned':
                 return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700">Planned</Badge>;
+            case 'Cancelled':
+                 return <Badge variant="destructive">Cancelled</Badge>;
         }
     };
 
@@ -194,3 +196,5 @@ const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails
         )}
     </>
 )
+
+    

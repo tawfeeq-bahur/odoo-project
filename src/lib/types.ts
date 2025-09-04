@@ -28,7 +28,7 @@ export type Trip = {
   destination: string;
   startDate: string; // ISO Date
   endDate?: string; // ISO Date
-  status: "Ongoing" | "Completed" | "Planned";
+  status: "Ongoing" | "Completed" | "Planned" | "Cancelled";
   expenses: Expense[];
 };
 
@@ -57,3 +57,5 @@ export type User = {
   role: 'admin' | 'employee';
   assignedVehicleId?: string | null;
 }
+
+    

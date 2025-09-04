@@ -278,7 +278,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
                if (status === 'Ongoing') {
                   updateVehicleStatus(vehicleId, 'On Trip');
               }
-              return { ...t, status, endDate: new Date().toISOString() };
+              return { ...t, status, endDate: ['Completed', 'Cancelled'].includes(status) ? new Date().toISOString() : undefined };
           }
           return t;
       }));
@@ -409,3 +409,5 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+    
