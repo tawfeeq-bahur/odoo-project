@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Provides a detailed plan for a vehicle trip, including cost and time estimates.
@@ -13,12 +14,12 @@ import { z } from 'zod';
 const TripPlannerInputSchema = z.object({
   source: z.string().describe('The starting point of the trip.'),
   destination: z.string().describe('The final destination of the trip.'),
-  vehicleType: z.string().optional().describe('The type of vehicle (e.g., "Truck", "Van", "Car").'),
-  fuelType: z.string().optional().describe('The type of fuel the vehicle uses (e.g., "Diesel", "Petrol").'),
-  modelYear: z.number().optional().describe("The manufacturing year of the vehicle (e.g., 2022)."),
-  engineSizeLiters: z.number().optional().describe("The vehicle's engine size in liters (e.g., 2.5)."),
-  routeType: z.string().optional().describe("The primary type of route (e.g., 'City', 'Highway')."),
-  traffic: z.string().optional().describe("The expected traffic conditions (e.g., 'Normal', 'Stop & Go')."),
+  vehicleType: z.string().describe('The type of vehicle (e.g., "Truck", "Van", "Car").'),
+  fuelType: z.string().describe('The type of fuel the vehicle uses (e.g., "Diesel", "Petrol").'),
+  modelYear: z.number().describe("The manufacturing year of the vehicle (e.g., 2022)."),
+  engineSizeLiters: z.number().describe("The vehicle's engine size in liters (e.g., 2.5)."),
+  routeType: z.string().describe("The primary type of route (e.g., 'City', 'Highway')."),
+  traffic: z.string().describe("The expected traffic conditions (e.g., 'Normal', 'Stop & Go')."),
   loadKg: z.number().optional().describe("The weight of the load in kilograms."),
 });
 export type TripPlannerInput = z.infer<typeof TripPlannerInputSchema>;
@@ -58,24 +59,12 @@ const prompt = ai.definePrompt({
 
     Source: {{source}}
     Destination: {{destination}}
-    {{#if vehicleType}}
     Vehicle Type: {{vehicleType}}
-    {{/if}}
-     {{#if fuelType}}
     Fuel Type: {{fuelType}}
-    {{/if}}
-    {{#if modelYear}}
     Model Year: {{modelYear}}
-    {{/if}}
-    {{#if engineSizeLiters}}
     Engine Size: {{engineSizeLiters}}L
-    {{/if}}
-    {{#if routeType}}
     Route Type: {{routeType}}
-    {{/if}}
-    {{#if traffic}}
     Traffic: {{traffic}}
-    {{/if}}
     {{#if loadKg}}
     Load: {{loadKg}} kg
     {{/if}}

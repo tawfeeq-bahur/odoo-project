@@ -29,12 +29,12 @@ const MapDisplay = dynamic(
 const formSchema = z.object({
   source: z.string().min(2, { message: 'Source must be at least 2 characters.' }),
   destination: z.string().min(2, { message: 'Destination must be at least 2 characters.' }),
-  vehicleType: z.string().optional(),
-  fuelType: z.string().optional(),
-  modelYear: z.coerce.number().optional(),
-  engineSizeLiters: z.coerce.number().optional(),
-  routeType: z.string().optional(),
-  traffic: z.string().optional(),
+  vehicleType: z.string({required_error: "Vehicle type is required."}).min(1, "Vehicle type is required."),
+  fuelType: z.string({required_error: "Fuel type is required."}).min(1, "Fuel type is required."),
+  modelYear: z.coerce.number({required_error: "Model year is required."}).min(1980, "Enter a valid year."),
+  engineSizeLiters: z.coerce.number({required_error: "Engine size is required."}).min(0.1, "Enter a valid size."),
+  routeType: z.string({required_error: "Route type is required."}).min(1, "Route type is required."),
+  traffic: z.string({required_error: "Traffic condition is required."}).min(1, "Traffic condition is required."),
   loadKg: z.coerce.number().optional(),
 });
 
@@ -53,15 +53,14 @@ export default function TripPlannerPage() {
       fuelType: 'diesel',
       routeType: 'highway',
       traffic: 'normal',
-      modelYear: '',
-      engineSizeLiters: '',
-      loadKg: '',
+      modelYear: 2022,
+      engineSizeLiters: 2.5,
+      loadKg: undefined,
     },
   });
 
-  const sourceValue = useWatch({ control: form.control, name: 'source' });
-  const destinationValue = useWatch({ control: form.control, name: 'destination' });
-  const isFormValid = sourceValue && sourceValue.length >= 2 && destinationValue && destinationValue.length >= 2;
+  const watchedValues = useWatch({ control: form.control });
+  const isFormValid = form.formState.isValid;
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -152,6 +151,7 @@ export default function TripPlannerPage() {
                                                 <SelectItem value="hybrid">Hybrid Vehicle</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
                                         </FormItem>
                                     )}
                                     />
@@ -173,6 +173,7 @@ export default function TripPlannerPage() {
                                                 <SelectItem value="hybrid">Hybrid</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
                                         </FormItem>
                                     )}
                                     />
@@ -182,7 +183,8 @@ export default function TripPlannerPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                         <FormLabel>Model Year</FormLabel>
-                                        <FormControl><Input type="number" placeholder="e.g., 2022" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormControl><Input type="number" placeholder="e.g., 2022" {...field} /></FormControl>
+                                        <FormMessage />
                                         </FormItem>
                                     )}
                                     />
@@ -192,7 +194,8 @@ export default function TripPlannerPage() {
                                     render={({ field }) => (
                                         <FormItem>
                                         <FormLabel>Engine Size (Liters)</FormLabel>
-                                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} /></FormControl>
+                                        <FormMessage />
                                         </FormItem>
                                     )}
                                     />
@@ -219,6 +222,7 @@ export default function TripPlannerPage() {
                                                 <SelectItem value="city_and_highway">City & Highway</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
                                         </FormItem>
                                     )}
                                     />
@@ -238,6 +242,7 @@ export default function TripPlannerPage() {
                                                 <SelectItem value="light">Light</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
                                         </FormItem>
                                     )}
                                     />
@@ -248,6 +253,7 @@ export default function TripPlannerPage() {
                                         <FormItem>
                                         <FormLabel>Load in kg (Optional)</FormLabel>
                                         <FormControl><Input type="number" placeholder="e.g., 5000" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormMessage />
                                         </FormItem>
                                     )}
                                     />
