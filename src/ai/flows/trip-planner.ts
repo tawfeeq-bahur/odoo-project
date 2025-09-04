@@ -37,9 +37,63 @@ const TripPlannerOutputSchema = z.object({
   estimatedFuelCost: z.number().describe('Estimated cost of fuel for the trip.'),
   estimatedTollCost: z.number().describe('Estimated cost of tolls for the trip.'),
   suggestedRoute: z.string().describe('A summary of the suggested route or major highways to take.'),
-  routePolyline: z.array(LatLngSchema).describe("An array of latitude/longitude points representing the simplified route path."),
+  routePolyline: z.array(LatLngSchema).describe("An array of latitude/longitude points representing the simplified route path that follows major roads and highways."),
   disclaimer: z.string().describe('A disclaimer that all values are estimates and subject to change based on real-world conditions.'),
   pointsOfInterest: z.object({
     Hospitals: z.array(z.string()).describe("A list of 2-3 major hospitals near the route."),
     'Fuel Stations': z.array(z.string()).describe("A list of 2-3 major brand fuel stations (e.g., IOCL, BPCL) near the route."),
-    Restaurants: z.array(z\
+    Restaurants: z.array(z.string()).describe("A list of 2-3 restaurants or dhabas suitable for truck drivers along the route."),
+  }),
+});
+export type TripPlannerOutput = z.infer<typeof TripPlannerOutputSchema>;
+
+export async function getTripPlan(input: TripPlannerInput): Promise<TripPlannerOutput> {
+    return tripPlannerFlow(input);
+}
+
+const prompt = ai.definePrompt({
+    name: 'tripPlannerPrompt',
+    input: { schema: TripPlannerInputSchema },
+    output: { schema: TripPlannerOutputSchema },
+    model: 'googleai/gemini-2.5-flash',
+    prompt: `
+        You are an expert trip planner for Indian logistics.
+        
+        Your task is to create a detailed trip plan based on the provided vehicle and route information.
+        
+        Vehicle Information:
+        - Type: {{vehicleType}}
+        - Fuel: {{fuelType}}
+        - Model Year: {{modelYear}}
+        - Engine Size: {{engineSizeLiters}}L
+        - Load: {{loadKg}} kg (if provided)
+
+        Trip Conditions:
+        - Source: {{source}}
+        - Destination: {{destination}}
+        - Route Type: {{routeType}}
+        - Traffic: {{traffic}}
+
+        Instructions:
+        1.  Calculate the estimated distance in kilometers.
+        2.  Estimate the trip duration, accounting for traffic and route type.
+        3.  Estimate the fuel cost. Be realistic, considering the vehicle type, engine size, and load.
+        4.  Estimate the toll charges based on the most likely highway route.
+        5.  Provide a brief summary of the suggested route (e.g., "Take NH44 to Hyderabad...").
+        6.  Generate an accurate, detailed route polyline. This polyline must follow the actual national highways and major roads. It should not be a straight line or a rough guess. It should have enough points to trace the roads on a map.
+        7.  Identify 2-3 of each of the following points of interest along the route: major Hospitals, major brand Fuel Stations (like IOCL, BPCL, HPCL), and Restaurants/Dhabas suitable for drivers.
+        8.  Include a standard disclaimer about the estimates.
+    `,
+});
+
+const tripPlannerFlow = ai.defineFlow(
+    {
+        name: 'tripPlannerFlow',
+        inputSchema: TripPlannerInputSchema,
+        outputSchema: TripPlannerOutputSchema,
+    },
+    async (input) => {
+        const { output } = await prompt(input);
+        return output!;
+    }
+);
