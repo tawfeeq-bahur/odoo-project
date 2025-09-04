@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import dynamic from 'next/dynamic';
 import { useSharedState } from '@/components/AppLayout';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const MapDisplay = dynamic(
   () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -63,10 +64,10 @@ export default function TripPlannerPage() {
   const isFormValid = plannerForm.formState.isValid;
   const currentTraffic = plannerForm.watch('traffic');
   
-  const availableVehicles = vehicles.filter(v => v.status === 'Idle' && v.assignedTo);
+  const availableVehicles = vehicles.filter(v => v.status === 'Idle');
   
-  // Deduplicate employees in case they are assigned to multiple idle vehicles
-  const uniqueEmployees = [...new Map(availableVehicles.map(item => [item.assignedTo, item])).values()];
+  const uniqueEmployees = [...new Map(vehicles.filter(v => v.assignedTo).map(item => [item.assignedTo, item.assignedTo])).values()];
+
 
   const pageTitle = user?.role === 'admin' ? "Assign a Trip" : "AI Trip Planner";
   const pageDescription = user?.role === 'admin' 
@@ -85,8 +86,9 @@ export default function TripPlannerPage() {
         setIsLoading(false);
         return;
     }
-    const selectedEmployee = vehicles.find(v => v.id === values.employeeId);
-    if (!selectedEmployee || !selectedEmployee.assignedTo) {
+    
+    const employeeName = values.employeeId;
+    if (!employeeName) {
         setError('Selected employee not found or is not properly assigned.');
         setIsLoading(false);
         return;
@@ -107,12 +109,12 @@ export default function TripPlannerPage() {
           destination: result.destination,
           startDate: new Date().toISOString(),
           vehicleId: selectedVehicle.id,
-          employeeName: selectedEmployee.assignedTo,
+          employeeName: employeeName,
       });
 
       toast({
           title: "Trip Assigned!",
-          description: `${selectedEmployee.assignedTo} has been assigned the trip from ${result.source} to ${result.destination}.`
+          description: `${employeeName} has been assigned the trip from ${result.source} to ${result.destination}.`
       });
 
       setPlan(result);
@@ -208,7 +210,7 @@ export default function TripPlannerPage() {
                                                 </FormControl>
                                                 <SelectContent>
                                                     {uniqueEmployees.length > 0 ? uniqueEmployees.map(emp => (
-                                                        <SelectItem key={emp.id} value={emp.id}>{emp.assignedTo}</SelectItem>
+                                                        <SelectItem key={emp} value={emp}>{emp}</SelectItem>
                                                     )) : <SelectItem value="none" disabled>No employees available</SelectItem>}
                                                 </SelectContent>
                                             </Select>
@@ -257,7 +259,7 @@ export default function TripPlannerPage() {
                                             <SelectContent>
                                                 <SelectItem value="City">City</SelectItem>
                                                 <SelectItem value="Highway">Highway</SelectItem>
-                                                <SelectItem value="City & Highway">City & Highway</SelectItem>
+                                                <SelectItem value="Mixed">City & Highway</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -402,3 +404,5 @@ const PlanSkeleton = () => (
         </Card>
     </div>
 );
+
+    
