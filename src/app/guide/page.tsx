@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -60,6 +60,7 @@ export default function TripPlannerPage() {
   });
 
   const isFormValid = form.formState.isValid;
+  const currentTraffic = form.watch('traffic');
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -234,9 +235,9 @@ export default function TripPlannerPage() {
                                             <SelectTrigger><SelectValue placeholder="Select traffic condition" /></SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
+                                                <SelectItem value="light">Light</SelectItem>
                                                 <SelectItem value="normal">Normal</SelectItem>
                                                 <SelectItem value="stop_and_go">Stop & Go</SelectItem>
-                                                <SelectItem value="light">Light</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -300,7 +301,7 @@ export default function TripPlannerPage() {
                         </Alert>
                         </CardContent>
                     </Card>
-                   <MapDisplay plan={plan} />
+                   <MapDisplay plan={plan} traffic={currentTraffic} />
                 </div>
                 )}
             </div>
@@ -361,6 +362,3 @@ const PlanSkeleton = () => (
         </Card>
     </div>
 );
-
-    
-    

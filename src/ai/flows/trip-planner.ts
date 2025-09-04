@@ -19,10 +19,15 @@ const TripPlannerInputSchema = z.object({
   modelYear: z.number().describe("The manufacturing year of the vehicle (e.g., 2022)."),
   engineSizeLiters: z.number().describe("The vehicle's engine size in liters (e.g., 2.5)."),
   routeType: z.string().describe("The primary type of route (e.g., 'City', 'Highway')."),
-  traffic: z.string().describe("The expected traffic conditions (e.g., 'Normal', 'Stop & Go')."),
+  traffic: z.string().describe("The expected traffic conditions (e.g., 'Normal', 'Stop & Go', 'Light')."),
   loadKg: z.number().optional().describe("The weight of the load in kilograms."),
 });
 export type TripPlannerInput = z.infer<typeof TripPlannerInputSchema>;
+
+const LatLngSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+});
 
 const TripPlannerOutputSchema = z.object({
   source: z.string(),
@@ -32,6 +37,7 @@ const TripPlannerOutputSchema = z.object({
   estimatedFuelCost: z.number().describe('Estimated cost of fuel for the trip.'),
   estimatedTollCost: z.number().describe('Estimated cost of tolls for the trip.'),
   suggestedRoute: z.string().describe('A summary of the suggested route or major highways to take.'),
+  routePolyline: z.array(LatLngSchema).describe("An array of latitude/longitude points representing the simplified route path."),
   disclaimer: z.string().describe('A disclaimer that all values are estimates and subject to change based on real-world conditions.'),
   pointsOfInterest: z.object({
     Hospitals: z.array(z.string()).describe("A list of 2-3 major hospitals near the route."),
@@ -76,6 +82,7 @@ const prompt = ai.definePrompt({
         - Estimated fuel cost (assume an average fuel price in India, adjusted for vehicle type, age, load, and conditions).
         - Estimated toll costs along the most common national highway route.
         - A brief summary of the suggested route (major highways, key cities).
+        - A simplified polyline for the route as an array of {lat, lng} objects. Generate at least 5-10 intermediate points between the source and destination to create a plausible, simplified route path.
 
     2.  Identify a few key points of interest along the suggested route. For each category (Hospitals, Fuel Stations, Restaurants, Hotels, Restrooms), list 2-3 well-known and reliable options.
 

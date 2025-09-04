@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TripPlannerOutput } from '@/ai/flows/trip-planner';
 import { getCoordinates, GeocodeOutput } from '@/ai/flows/geocoder';
 import L from 'leaflet';
+import { Polyline } from 'react-leaflet';
 import { Hospital, Fuel, Utensils, Bed, Bath } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -13,6 +14,7 @@ import 'leaflet/dist/leaflet.css';
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
 
 const POI_ICONS: { [key: string]: React.ReactNode } = {
   Hospitals: <Hospital className="h-5 w-5 text-red-500" />,
@@ -24,14 +26,28 @@ const POI_ICONS: { [key: string]: React.ReactNode } = {
 
 type MapDisplayProps = {
   plan: TripPlannerOutput;
+  traffic: string;
 };
 
-export function MapDisplay({ plan }: MapDisplayProps) {
+export function MapDisplay({ plan, traffic }: MapDisplayProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const [sourceCoords, setSourceCoords] = useState<GeocodeOutput | null>(null);
   const [destCoords, setDestCoords] = useState<GeocodeOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const getRouteColor = () => {
+    switch (traffic) {
+      case 'stop_and_go':
+        return 'red';
+      case 'normal':
+        return 'yellow';
+      case 'light':
+        return 'green';
+      default:
+        return 'blue';
+    }
+  }
 
   useEffect(() => {
     // Set up default icon paths
@@ -87,7 +103,10 @@ export function MapDisplay({ plan }: MapDisplayProps) {
         const bounds = L.latLngBounds([sourceLatLng, destLatLng]);
         mapInstance.current.fitBounds(bounds, { padding: [50, 50] });
 
-        // In a real app, you would draw the `plan.suggestedRoute` polyline here.
+        if (plan.routePolyline && plan.routePolyline.length > 0) {
+            const positions = plan.routePolyline.map(p => [p.lat, p.lng] as L.LatLngTuple);
+            L.polyline(positions, { color: getRouteColor(), weight: 5 }).addTo(mapInstance.current);
+        }
     }
   }, [sourceCoords, destCoords, plan]);
 
