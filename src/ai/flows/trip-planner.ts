@@ -14,10 +14,7 @@ import { z } from 'zod';
 const TripPlannerInputSchema = z.object({
   source: z.string().describe('The starting point of the trip.'),
   destination: z.string().describe('The final destination of the trip.'),
-  vehicleType: z.string().describe('The type of vehicle (e.g., "Truck", "Van", "Car").'),
-  fuelType: z.string().describe('The type of fuel the vehicle uses (e.g., "Diesel", "Petrol").'),
-  modelYear: z.number().describe("The manufacturing year of the vehicle (e.g., 2022)."),
-  engineSizeLiters: z.number().describe("The vehicle's engine size in liters (e.g., 2.5)."),
+  vehicleModel: z.string().describe('The model of the vehicle (e.g., "VNL 860", "Transit-250").'),
   routeType: z.string().describe("The primary type of route (e.g., 'City', 'Highway')."),
   traffic: z.string().describe("The expected traffic conditions (e.g., 'Normal', 'Stop & Go', 'Light')."),
   loadKg: z.number().optional().describe("The weight of the load in kilograms."),
@@ -62,10 +59,7 @@ const prompt = ai.definePrompt({
         Your task is to create a detailed trip plan based on the provided vehicle and route information.
         
         Vehicle Information:
-        - Type: {{vehicleType}}
-        - Fuel: {{fuelType}}
-        - Model Year: {{modelYear}}
-        - Engine Size: {{engineSizeLiters}}L
+        - Model: {{vehicleModel}}
         - Load: {{loadKg}} kg (if provided)
 
         Trip Conditions:
@@ -77,7 +71,7 @@ const prompt = ai.definePrompt({
         Instructions:
         1.  Calculate the estimated distance in kilometers.
         2.  Estimate the trip duration, accounting for traffic and route type.
-        3.  Estimate the fuel cost. Be realistic, considering the vehicle type, engine size, and load.
+        3.  Estimate the fuel cost. Be realistic, considering the vehicle model and load.
         4.  Estimate the toll charges based on the most likely highway route.
         5.  Provide a brief summary of the suggested route (e.g., "Take NH44 to Hyderabad...").
         6.  Generate an accurate, detailed route polyline. This polyline must follow the actual national highways and major roads. It should not be a straight line or a rough guess. It should have enough points to trace the roads on a map.
