@@ -43,6 +43,9 @@ export default function TripPlannerPage() {
       fuelType: 'diesel',
       routeType: 'highway',
       traffic: 'normal',
+      modelYear: '' as any,
+      engineSizeLiters: '' as any,
+      loadKg: '' as any,
     },
   });
 
@@ -375,5 +378,3 @@ const PlanSkeleton = () => (
         </Card>
     </div>
 );
-
-    
