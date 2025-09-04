@@ -52,8 +52,8 @@ export default function TripPlannerPage() {
     defaultValues: {
       source: '',
       destination: '',
-      routeType: 'city_and_highway',
-      traffic: 'normal',
+      routeType: 'Highway',
+      traffic: 'Normal',
       employeeId: undefined,
       vehicleId: undefined,
       loadKg: undefined,
@@ -63,16 +63,15 @@ export default function TripPlannerPage() {
   const isFormValid = plannerForm.formState.isValid;
   const currentTraffic = plannerForm.watch('traffic');
   
-  const availableEmployees = vehicles.filter(v => v.assignedTo && v.status === 'Idle');
-  const availableVehicles = vehicles.filter(v => v.status === 'Idle');
+  const availableVehicles = vehicles.filter(v => v.status === 'Idle' && v.assignedTo);
   
   // Deduplicate employees in case they are assigned to multiple idle vehicles
-  const uniqueEmployees = [...new Map(availableEmployees.map(item => [item.assignedTo, item])).values()];
+  const uniqueEmployees = [...new Map(availableVehicles.map(item => [item.assignedTo, item])).values()];
 
   const pageTitle = user?.role === 'admin' ? "Assign a Trip" : "AI Trip Planner";
   const pageDescription = user?.role === 'admin' 
     ? "Generate a detailed trip plan and assign it to an available employee and vehicle."
-    : "Enter detailed trip information to get an optimized plan, cost estimation, and points of interest.";
+    : "This feature is for demonstration. Trip plans are generated and assigned by your admin.";
 
 
   async function onPlannerSubmit(values: z.infer<typeof formSchema>) {
@@ -87,8 +86,8 @@ export default function TripPlannerPage() {
         return;
     }
     const selectedEmployee = vehicles.find(v => v.id === values.employeeId);
-    if (!selectedEmployee) {
-        setError('Selected employee not found.');
+    if (!selectedEmployee || !selectedEmployee.assignedTo) {
+        setError('Selected employee not found or is not properly assigned.');
         setIsLoading(false);
         return;
     }
@@ -108,7 +107,7 @@ export default function TripPlannerPage() {
           destination: result.destination,
           startDate: new Date().toISOString(),
           vehicleId: selectedVehicle.id,
-          employeeName: selectedEmployee.assignedTo!,
+          employeeName: selectedEmployee.assignedTo,
       });
 
       toast({
@@ -132,11 +131,11 @@ export default function TripPlannerPage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
            <Card>
                 <CardHeader>
-                    <CardTitle>Trip Planner</CardTitle>
-                    <CardDescription>This feature is for demonstration purposes. Trip assignment is handled by admins.</CardDescription>
+                    <CardTitle>AI Trip Planner</CardTitle>
+                    <CardDescription>{pageDescription}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Please contact your administrator to have a trip planned and assigned to you.</p>
+                    <p>To view your assigned trips, please go to the <Link href="/trips" className="text-primary hover:underline">My Trips</Link> page.</p>
                 </CardContent>
            </Card>
         </div>
@@ -256,9 +255,9 @@ export default function TripPlannerPage() {
                                             <SelectTrigger><SelectValue placeholder="Select route type" /></SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="city">City</SelectItem>
-                                                <SelectItem value="highway">Highway</SelectItem>
-                                                <SelectItem value="city_and_highway">City & Highway</SelectItem>
+                                                <SelectItem value="City">City</SelectItem>
+                                                <SelectItem value="Highway">Highway</SelectItem>
+                                                <SelectItem value="City & Highway">City & Highway</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -276,9 +275,9 @@ export default function TripPlannerPage() {
                                             <SelectTrigger><SelectValue placeholder="Select traffic condition" /></SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="light">Light</SelectItem>
-                                                <SelectItem value="normal">Normal</SelectItem>
-                                                <SelectItem value="stop_and_go">Stop & Go</SelectItem>
+                                                <SelectItem value="Light">Light</SelectItem>
+                                                <SelectItem value="Normal">Normal</SelectItem>
+                                                <SelectItem value="Stop & Go">Stop & Go</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -403,5 +402,3 @@ const PlanSkeleton = () => (
         </Card>
     </div>
 );
-
-    

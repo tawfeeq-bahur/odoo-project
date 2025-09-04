@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export default function TripsPage() {
     const { user, trips, updateTripStatus } = useSharedState();
@@ -42,7 +43,7 @@ export default function TripsPage() {
                         <CardTitle>Access Denied</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p>This page is only available for employees.</p>
+                        <p>This page is only available for employees. Admins manage trips via other pages.</p>
                     </CardContent>
                 </Card>
             </div>
@@ -68,6 +69,7 @@ export default function TripsPage() {
     };
     
     const handleViewDetails = (trip: Trip) => {
+        // In a real app, this would navigate to a detailed trip page.
         alert(`Trip Details:\n\nRoute: ${trip.source} to ${trip.destination}\nStatus: ${trip.status}\nStart Date: ${format(new Date(trip.startDate), 'PPP')}`);
     }
 
@@ -90,26 +92,42 @@ export default function TripsPage() {
                 <h1 className="text-3xl font-bold tracking-tight font-headline">My Trips</h1>
                 <p className="text-muted-foreground">View your assigned, ongoing, and completed trips.</p>
             </div>
+            
+            {employeeTrips.length === 0 && (
+                 <Card>
+                    <CardContent className="flex flex-col items-center justify-center gap-4 text-center h-full min-h-60">
+                        <Route className="w-12 h-12 text-primary" />
+                        <h3 className="text-xl font-semibold">No Trips Assigned</h3>
+                        <p className="text-muted-foreground max-w-sm">
+                           You currently have no trips assigned to you. Your administrator will assign you one soon.
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Clock /> Ongoing & Planned Trips</CardTitle>
-                    <CardDescription>These are your currently active or upcoming trips.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <TripTable trips={ongoingTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
-                </CardContent>
-            </Card>
+            {ongoingTrips.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Clock /> Ongoing & Planned Trips</CardTitle>
+                        <CardDescription>These are your currently active or upcoming trips.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <TripTable trips={ongoingTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
+                    </CardContent>
+                </Card>
+            )}
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><CircleCheck /> Completed Trips</CardTitle>
-                    <CardDescription>A history of all your completed trips.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <TripTable trips={completedTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
-                </CardContent>
-            </Card>
+            {completedTrips.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><CircleCheck /> Completed Trips</CardTitle>
+                        <CardDescription>A history of all your completed trips.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <TripTable trips={completedTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
+                    </CardContent>
+                </Card>
+            )}
 
         </div>
     )
@@ -160,26 +178,11 @@ const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails
                                    {trip.status === 'Ongoing' && <DropdownMenuItem onClick={() => onEndTrip(trip.id)}><CircleCheck className="mr-2"/>End Trip</DropdownMenuItem>}
                                    {trip.status === 'Completed' && <DropdownMenuItem onClick={() => onViewDetails(trip)}>View Details</DropdownMenuItem>}
                                    {(trip.status === 'Planned' || trip.status === 'Ongoing') && (
-                                       <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" className="w-full justify-start text-sm font-normal h-8 px-2 text-destructive focus:text-destructive">
-                                                    <AlertTriangle className="mr-2 h-4 w-4" /> Report Issue
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                           <AlertDialogContent>
-                                               <AlertDialogHeader>
-                                                   <AlertDialogTitle>Report an Issue</AlertDialogTitle>
-                                                   <AlertDialogDescription>
-                                                        Please describe the issue you are facing with this trip. Your admin will be notified.
-                                                   </AlertDialogDescription>
-                                               </AlertDialogHeader>
-                                                <Textarea placeholder="e.g., Vehicle breakdown, health issue, etc." />
-                                               <AlertDialogFooter>
-                                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                   <AlertDialogAction>Submit Report</AlertDialogAction>
-                                               </AlertDialogFooter>
-                                           </AlertDialogContent>
-                                       </AlertDialog>
+                                    <DropdownMenuItem asChild>
+                                      <Link href="/support" className="text-destructive focus:text-destructive">
+                                        <AlertTriangle className="mr-2 h-4 w-4" /> Report Issue
+                                      </Link>
+                                    </DropdownMenuItem>
                                    )}
                                </DropdownMenuContent>
                            </DropdownMenu>
@@ -196,5 +199,3 @@ const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails
         )}
     </>
 )
-
-    

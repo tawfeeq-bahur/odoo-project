@@ -23,10 +23,12 @@ export default function DashboardPage() {
   // Admin sees all data
   const displayVehicles = user?.role === 'admin' ? vehicles : (employeeVehicle ? [employeeVehicle] : []);
   
-  // Employee sees expenses linked to their vehicle, admin sees all
+  // Employee sees expenses linked to their assigned vehicle(s), admin sees all
+  const employeeVehicleIds = vehicles.filter(v => v.assignedTo === user?.username).map(v => v.id);
   const displayExpenses = user?.role === 'admin' 
     ? expenses 
-    : expenses.filter(e => e.tripId === user?.assignedVehicleId);
+    : expenses.filter(e => e.tripId && employeeVehicleIds.includes(e.tripId));
+
 
   // Data for charts
   const tripsPerVehicle = vehicles.map(v => ({ name: v.plateNumber, trips: Math.floor(Math.random() * 10) + 1 }));
@@ -265,5 +267,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
