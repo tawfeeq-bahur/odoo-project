@@ -15,7 +15,16 @@ import { getTripPlan, TripPlannerOutput } from '@/ai/flows/trip-planner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Map, Milestone, Fuel, Clock, AlertTriangle, Route, Truck, Settings } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { MapDisplay } from '@/components/fleet/MapDisplay';
+import dynamic from 'next/dynamic';
+
+const MapDisplay = dynamic(
+  () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
+  { 
+    ssr: false,
+    loading: () => <Skeleton className="aspect-video w-full h-[400px] border-2 border-dashed rounded-lg bg-muted/30" />
+  }
+);
+
 
 const formSchema = z.object({
   source: z.string().min(2, { message: 'Source must be at least 2 characters.' }),
