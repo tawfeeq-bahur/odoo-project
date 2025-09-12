@@ -45,7 +45,7 @@ export default function VehicleHealthPage() {
     updateVehicleFuelLevel(assignedVehicle.id, fuel);
     toast({
       title: 'Fuel Level Updated',
-      description: `Fuel level for ${assignedVehicle.plateNumber} set to ${fuel}%.`,
+      description: `Fuel level for ${assignedVehicle.plateNumber} set to ${fuel}%. This has been sent to the admin for review.`,
     });
     setFuelImagePreview(null);
     if(fuelFileInputRef.current) fuelFileInputRef.current.value = '';

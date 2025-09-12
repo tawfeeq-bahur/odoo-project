@@ -113,4 +113,3 @@ export default function EmployeeManagementPage() {
     </div>
   );
 }
-
