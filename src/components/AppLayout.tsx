@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart, LifeBuoy, Route, Bell, Users, Send } from "lucide-react";
+import { Bot, LayoutDashboard, Truck, Settings, User, Map, DollarSign, ScanLine, LogOut, BarChart, LifeBuoy, Route, Bell, Users, Send, HeartPulse } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -44,7 +44,7 @@ const adminMenuItems = [
 const employeeMenuItems = [
   { href: "/", label: "My Dashboard", icon: LayoutDashboard },
   { href: "/trips", label: "My Trips", icon: Route },
-  { href: "/guide", label: "Trip Planner", icon: Map },
+  { href: "/vehicle-health", label: "Vehicle Health", icon: HeartPulse },
   { href: "/scanner", label: "Log Expense", icon: ScanLine },
   { href: "/profile", label: "My Profile", icon: User },
   { href: "/support", label: "Support", icon: LifeBuoy },
@@ -60,6 +60,7 @@ interface SharedState {
   logout: () => void;
   addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
   updateVehicleStatus: (vehicleId: string, status: Vehicle['status']) => void;
+  updateVehicleFuelLevel: (vehicleId: string, fuelLevel: number) => void;
   deleteVehicle: (vehicleId: string) => void;
   assignVehicle: (vehicleId: string, assignedTo: string | null) => void;
   addExpense: (expense: Omit<Expense, "id" | "status">) => void;
@@ -237,6 +238,10 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const updateVehicleStatus = (vehicleId: string, status: Vehicle['status']) => {
     setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, status } : v));
   }
+  
+  const updateVehicleFuelLevel = (vehicleId: string, fuelLevel: number) => {
+    setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, fuelLevel } : v));
+  };
 
   const deleteVehicle = (vehicleId: string) => {
     setVehicles(prev => prev.filter(v => v.id !== vehicleId));
@@ -295,6 +300,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     logout,
     addVehicle,
     updateVehicleStatus,
+    updateVehicleFuelLevel,
     deleteVehicle,
     assignVehicle,
     addExpense,
@@ -411,5 +417,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    
