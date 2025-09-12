@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
@@ -30,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { TripPlannerOutput } from "@/ai/flows/trip-planner";
 
 const adminMenuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },

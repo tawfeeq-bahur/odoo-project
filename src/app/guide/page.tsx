@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -69,10 +70,10 @@ export default function TripPlannerPage() {
   const uniqueEmployees = [...new Map(vehicles.filter(v => v.assignedTo).map(item => [item.assignedTo, item.assignedTo])).values()];
 
 
-  const pageTitle = user?.role === 'admin' ? "Assign a Trip" : "AI Trip Planner";
+  const pageTitle = user?.role === 'admin' ? "Assign a Trip" : "Trip Planner";
   const pageDescription = user?.role === 'admin' 
     ? "Generate a detailed trip plan and assign it to an available employee and vehicle."
-    : "This feature is for demonstration. Trip plans are generated and assigned by your admin.";
+    : "View your assigned trip details on the 'My Trips' page.";
 
 
   async function onPlannerSubmit(values: z.infer<typeof formSchema>) {
@@ -110,6 +111,7 @@ export default function TripPlannerPage() {
           startDate: new Date().toISOString(),
           vehicleId: selectedVehicle.id,
           employeeName: employeeName,
+          plan: result,
       });
 
       toast({
@@ -133,7 +135,7 @@ export default function TripPlannerPage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
            <Card>
                 <CardHeader>
-                    <CardTitle>AI Trip Planner</CardTitle>
+                    <CardTitle>{pageTitle}</CardTitle>
                     <CardDescription>{pageDescription}</CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -1,13 +1,15 @@
 
+
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSharedState } from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Route, CircleCheck, CircleX, Clock, MoreHorizontal, AlertTriangle, Play } from 'lucide-react';
+import { Route, CircleCheck, CircleX, Clock, MoreHorizontal, AlertTriangle, Play, FileText, Upload } from 'lucide-react';
 import type { Trip } from '@/lib/types';
 import { format } from 'date-fns';
 import {
@@ -17,23 +19,30 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Textarea } from '@/components/ui/textarea';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+
+const MapDisplay = dynamic(
+  () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
+  { 
+    ssr: false,
+    loading: () => <Skeleton className="aspect-video w-full h-[300px] border-2 border-dashed rounded-lg bg-muted/30" />
+  }
+);
+
 
 export default function TripsPage() {
     const { user, trips, updateTripStatus } = useSharedState();
     const { toast } = useToast();
+    const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
     
     if (user?.role !== 'employee') {
         return (
@@ -69,8 +78,7 @@ export default function TripsPage() {
     };
     
     const handleViewDetails = (trip: Trip) => {
-        // In a real app, this would navigate to a detailed trip page.
-        alert(`Trip Details:\n\nRoute: ${trip.source} to ${trip.destination}\nStatus: ${trip.status}\nStart Date: ${format(new Date(trip.startDate), 'PPP')}`);
+        setSelectedTrip(trip);
     }
 
     const getStatusBadge = (status: Trip['status']) => {
@@ -129,6 +137,56 @@ export default function TripsPage() {
                 </Card>
             )}
 
+            {selectedTrip && (
+                 <Dialog open={!!selectedTrip} onOpenChange={(isOpen) => !isOpen && setSelectedTrip(null)}>
+                    <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-headline">Trip Details: {selectedTrip.source} to {selectedTrip.destination}</DialogTitle>
+                            <DialogDescription>{selectedTrip.plan.suggestedRoute}</DialogDescription>
+                        </DialogHeader>
+                        <div className="grid md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-4">
+                            <div className="space-y-4">
+                                <MapDisplay plan={selectedTrip.plan} traffic={selectedTrip.plan.traffic}/>
+
+                                <Alert>
+                                    <AlertTriangle className="h-5 w-5" />
+                                    <AlertTitle>Disclaimer</AlertTitle>
+                                    <AlertDescription>{selectedTrip.plan.disclaimer}</AlertDescription>
+                                </Alert>
+                            </div>
+                            <div className="space-y-4">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Trip Summary</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                                        <InfoItem label="Distance" value={selectedTrip.plan.distance} />
+                                        <InfoItem label="Duration" value={selectedTrip.plan.duration} />
+                                        <InfoItem label="Est. Fuel Cost" value={`₹${selectedTrip.plan.estimatedFuelCost.toFixed(2)}`} />
+                                        <InfoItem label="Est. Toll Cost" value={`₹${selectedTrip.plan.estimatedTollCost.toFixed(2)}`} />
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Log Expenses for this Trip</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm text-muted-foreground mb-4">Upload receipts or manually enter costs related to this specific trip.</p>
+                                        <Button asChild className="w-full">
+                                            <Link href={`/scanner?tripId=${selectedTrip.id}`}>
+                                                <Upload className="mr-2"/> Upload Expenses for this Trip
+                                            </Link>
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+
+                            </div>
+                        </div>
+                    </DialogContent>
+                 </Dialog>
+            )}
+
         </div>
     )
 }
@@ -174,9 +232,9 @@ const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails
                                    </Button>
                                </DropdownMenuTrigger>
                                <DropdownMenuContent align="end">
+                                   <DropdownMenuItem onClick={() => onViewDetails(trip)}><FileText className="mr-2"/>View Details</DropdownMenuItem>
                                    {trip.status === 'Planned' && <DropdownMenuItem onClick={() => onStartTrip(trip.id)}><Play className="mr-2"/>Start Trip</DropdownMenuItem>}
                                    {trip.status === 'Ongoing' && <DropdownMenuItem onClick={() => onEndTrip(trip.id)}><CircleCheck className="mr-2"/>End Trip</DropdownMenuItem>}
-                                   {trip.status === 'Completed' && <DropdownMenuItem onClick={() => onViewDetails(trip)}>View Details</DropdownMenuItem>}
                                    {(trip.status === 'Planned' || trip.status === 'Ongoing') && (
                                     <DropdownMenuItem asChild>
                                       <Link href="/support" className="text-destructive focus:text-destructive">
@@ -198,4 +256,11 @@ const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails
             </div>
         )}
     </>
+)
+
+const InfoItem = ({ label, value }: { label: string, value: string | React.ReactNode }) => (
+    <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="font-semibold">{value}</p>
+    </div>
 )

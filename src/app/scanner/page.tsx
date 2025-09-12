@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
+import { useSearchParams } from 'next/navigation';
 
 type ParsedExpense = ExpenseParserOutput['expenses'][0];
 
@@ -29,6 +31,9 @@ const manualExpenseSchema = z.object({
 });
 
 export default function ScannerPage() {
+  const searchParams = useSearchParams();
+  const tripIdFromQuery = searchParams.get('tripId');
+  
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +51,12 @@ export default function ScannerPage() {
       date: format(new Date(), 'yyyy-MM-dd'),
     },
   });
+
+  const getTripId = () => {
+    if (tripIdFromQuery) return tripIdFromQuery;
+    if (user?.role === 'employee') return user.assignedVehicleId;
+    return undefined;
+  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -96,7 +107,7 @@ export default function ScannerPage() {
   const handleAddExpense = (expense: ParsedExpense) => {
     addExpense({
       ...expense,
-      tripId: user?.role === 'employee' ? user.assignedVehicleId : undefined,
+      tripId: getTripId(),
     });
     toast({
       title: 'Expense Added!',
@@ -108,7 +119,7 @@ export default function ScannerPage() {
   const handleManualSubmit = (values: z.infer<typeof manualExpenseSchema>) => {
     addExpense({
       ...values,
-      tripId: user?.role === 'employee' ? user.assignedVehicleId : undefined,
+      tripId: getTripId(),
     });
     toast({
       title: "Expense Logged",
@@ -122,7 +133,12 @@ export default function ScannerPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight font-headline">Log an Expense</h1>
-        <p className="text-muted-foreground">Upload a receipt for automatic scanning or enter an expense manually.</p>
+        <p className="text-muted-foreground">
+          {tripIdFromQuery 
+            ? `Adding expense for a specific trip. All logs here will be associated with that trip.`
+            : `Upload a receipt for automatic scanning or enter an expense manually.`
+          }
+        </p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">

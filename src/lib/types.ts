@@ -1,5 +1,7 @@
 
 
+import type { TripPlannerOutput } from "./ai/flows/trip-planner";
+
 export type Vehicle = {
   id: string;
   name: string;
@@ -30,6 +32,7 @@ export type Trip = {
   endDate?: string; // ISO Date
   status: "Ongoing" | "Completed" | "Planned" | "Cancelled";
   expenses: Expense[];
+  plan: TripPlannerOutput;
 };
 
 export type ChatMessage = {
