@@ -45,7 +45,15 @@ const geocoderFlow = ai.defineFlow(
     outputSchema: GeocodeOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      if (!output) {
+        throw new Error('No output from geocoder prompt');
+      }
+      return output;
+    } catch (e) {
+        console.error(e);
+        throw new Error('Unable to geocode location, AI model may be temporarily unavailable.')
+    }
   }
 );

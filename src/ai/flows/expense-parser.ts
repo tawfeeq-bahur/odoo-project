@@ -62,9 +62,15 @@ const expenseParserFlow = ai.defineFlow(
     outputSchema: ExpenseParserOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      if (!output) {
+        throw new Error('No output from expense parser prompt');
+      }
+      return output;
+    } catch(e) {
+      console.error(e);
+      throw new Error('Unable to parse expense, AI model may be temporarily unavailable.')
+    }
   }
 );
-
-    
