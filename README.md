@@ -34,6 +34,15 @@ FleetFlow is an AI-powered web application designed to streamline fleet manageme
 *   **Responsive:** The layout is fully responsive, ensuring a seamless experience whether you're in the office on a desktop or on the go with a mobile device.
 *   **Efficient Workflow:** The user journey is optimized for efficiency, from planning a trip to logging expenses, minimizing manual data entry.
 
+## Future Enhancements
+
+*   **Driver Performance Scoring:** Implement a driver scoring system (0-100) based on metrics like mileage efficiency (distance/fuel), on-time trip completion, and simulated harsh events (harsh braking, overspeeding). This will allow admins to rank drivers and identify coaching opportunities.
+*   **Virtual Maintenance Schedules:** Automatically trigger maintenance alerts (e.g., "Oil Change Due," "Tire Replacement Needed") based on total distance traveled (km). This moves from reactive to proactive vehicle care.
+*   **Advanced Route & Cost Analysis:** Integrate algorithms like the Haversine formula for accurate distance calculations and Dijkstra’s algorithm to find the most fuel-efficient or cost-effective routes by considering penalties for road types (city vs. highway) or high-wear areas.
+*   **Data Simulation & Import:** Add a feature to generate synthetic trip data or allow bulk trip log uploads via CSV. This will enable more robust testing, demonstrations, and analysis of historical trends.
+*   **Persistent Database:** Replace the current client-side state management with a full backend database (like Firebase Firestore or MongoDB) to ensure data persistence and scalability.
+*   **Secure User Authentication:** Implement a production-ready authentication system using a service like Firebase Authentication or NextAuth.js.
+
 ---
 
 ### Credits

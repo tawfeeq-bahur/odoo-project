@@ -256,13 +256,24 @@ This document contains the detailed content for a project presentation on the Fl
 ### **Slide 17: Future Enhancements**
 
 *   **Features to Add Later**
+    *   **Driver Performance Scoring & Analytics:**
+        *   **How:** Introduce a scoring system (0-100) that evaluates drivers based on key metrics like mileage efficiency (distance/fuel), adherence to expected trip times, and simulated harsh events (e.g., sharp braking inferred from route data).
+        *   **Impact:** This will enable admins to rank driver performance, identify areas for coaching, and reward top performers.
+    *   **Virtual Maintenance Schedules:**
+        *   **How:** Implement a system that tracks the total distance traveled by each vehicle. Based on predefined thresholds (e.g., oil change every 10,000 km), automatically trigger "Maintenance Due" alerts.
+        *   **Impact:** This shifts vehicle care from being reactive to proactive, reducing the risk of unexpected breakdowns.
+    *   **Advanced Route & Cost Optimization:**
+        *   **How:** Integrate algorithms like the Haversine formula for precise point-to-point distance calculations and Dijkstra’s algorithm to find the most fuel-efficient paths. The algorithm can weigh factors like road type (highway vs. city) and known congestion.
+        *   **Impact:** Provides smarter, more cost-effective route recommendations.
+    *   **Data Simulation & Bulk Import:**
+        *   **How:** Build a feature to either generate synthetic trip data (GPS points, speed, fuel usage) or allow admins to upload historical trip logs from a CSV file.
+        *   **Impact:** Enables robust testing, historical analysis, and more powerful demonstrations of the app's analytical capabilities.
     *   **Persistent Database (Backend Connection):**
         *   **How:** We will replace the client-side state management in `AppLayout.tsx` with API calls to a real backend.
         *   **API:** We can build a set of REST or GraphQL APIs (e.g., using Node.js/Express or another framework) to handle CRUD (Create, Read, Update, Delete) operations for vehicles, expenses, and users.
         *   **Database:** A database like MongoDB or Firebase Firestore will be used to store all application data permanently. For example, `addVehicle` will send a POST request to `/api/vehicles` instead of just updating a local `useState` array.
     *   **Secure User Authentication:** Implement a full login/signup system using a service like Firebase Authentication or a library like NextAuth.js.
     *   **Live GPS Tracking:** Integrate a GPS service to show the real-time location of vehicles on the map.
-    *   **Advanced Analytics:** Create more detailed reports on vehicle maintenance history, driver behavior, and long-term cost trends.
 
 *   **Scalability Plans**
     *   Deploy the application using a serverless platform like Firebase App Hosting or Vercel for automatic scaling.
