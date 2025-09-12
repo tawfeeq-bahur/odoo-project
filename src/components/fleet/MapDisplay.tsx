@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TripPlannerOutput } from '@/ai/flows/trip-planner';
 import { getCoordinates, GeocodeOutput } from '@/ai/flows/geocoder';
+import { snapToRoads } from '@/ai/flows/road-snapper';
 import L from 'leaflet';
 import { Polyline } from 'react-leaflet';
 import { Hospital, Fuel, Utensils, Bed, Bath } from 'lucide-react';
@@ -34,14 +35,15 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
   const mapInstance = useRef<L.Map | null>(null);
   const [sourceCoords, setSourceCoords] = useState<GeocodeOutput | null>(null);
   const [destCoords, setDestCoords] = useState<GeocodeOutput | null>(null);
+  const [snappedPolyline, setSnappedPolyline] = useState<L.LatLngTuple[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const getRouteColor = () => {
-    switch (traffic) {
-      case 'stop_and_go':
+    switch (traffic.toLowerCase()) {
+      case 'stop & go':
         return 'red';
       case 'normal':
-        return 'yellow';
+        return 'orange';
       case 'light':
         return 'green';
       default:
@@ -65,50 +67,65 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
         }).addTo(mapInstance.current);
     }
     
-    const fetchCoordinates = async () => {
+    const fetchAndSnapRoute = async () => {
         if (!plan) return;
         try {
             setError(null);
+            setSnappedPolyline([]);
+
+            // 1. Get coordinates for source and destination
             const [sourceRes, destRes] = await Promise.all([
                 getCoordinates({ location: plan.source }),
                 getCoordinates({ location: plan.destination })
             ]);
             setSourceCoords(sourceRes);
             setDestCoords(destRes);
+
+            // 2. Snap the AI-generated polyline to roads
+            if (plan.routePolyline && plan.routePolyline.length > 0) {
+              const snapperResult = await snapToRoads({ path: plan.routePolyline });
+              if (snapperResult.snappedPoints) {
+                const positions = snapperResult.snappedPoints.map(p => [p.lat, p.lng] as L.LatLngTuple);
+                setSnappedPolyline(positions);
+              }
+            }
         } catch (err) {
-            console.error("Geocoding error:", err);
-            setError("Could not find coordinates for the locations provided.");
+            console.error("Geocoding or Snapping error:", err);
+            setError("Could not generate the accurate route. Please try again.");
         }
     };
 
-    fetchCoordinates();
+    fetchAndSnapRoute();
 
   }, [plan]);
 
   useEffect(() => {
-    if (mapInstance.current && sourceCoords && destCoords) {
-        // Clear previous layers
-        mapInstance.current.eachLayer(layer => {
-            if (layer instanceof L.Marker || layer instanceof L.Polyline) {
-            mapInstance.current?.removeLayer(layer);
-            }
-        });
+    const map = mapInstance.current;
+    if (!map) return;
 
+    // Clear previous layers (markers, polylines)
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // Add new layers
+    if (sourceCoords && destCoords) {
         const sourceLatLng: L.LatLngTuple = [sourceCoords.latitude, sourceCoords.longitude];
         const destLatLng: L.LatLngTuple = [destCoords.latitude, destCoords.longitude];
 
-        L.marker(sourceLatLng).addTo(mapInstance.current).bindPopup(`<b>Source:</b><br>${plan.source}`);
-        L.marker(destLatLng).addTo(mapInstance.current).bindPopup(`<b>Destination:</b><br>${plan.destination}`);
+        L.marker(sourceLatLng).addTo(map).bindPopup(`<b>Source:</b><br>${plan.source}`);
+        L.marker(destLatLng).addTo(map).bindPopup(`<b>Destination:</b><br>${plan.destination}`);
         
         const bounds = L.latLngBounds([sourceLatLng, destLatLng]);
-        mapInstance.current.fitBounds(bounds, { padding: [50, 50] });
+        map.fitBounds(bounds, { padding: [50, 50] });
 
-        if (plan.routePolyline && plan.routePolyline.length > 0) {
-            const positions = plan.routePolyline.map(p => [p.lat, p.lng] as L.LatLngTuple);
-            L.polyline(positions, { color: getRouteColor(), weight: 5 }).addTo(mapInstance.current);
+        if (snappedPolyline.length > 0) {
+            L.polyline(snappedPolyline, { color: getRouteColor(), weight: 5 }).addTo(map);
         }
     }
-  }, [sourceCoords, destCoords, plan]);
+  }, [sourceCoords, destCoords, snappedPolyline, plan]);
 
 
   return (
