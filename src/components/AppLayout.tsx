@@ -36,6 +36,7 @@ import type { TripPlannerOutput } from "@/ai/flows/trip-planner";
 const adminMenuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Assign Trip", icon: Send },
+  { href: "/trip-summary", label: "Trip Summary", icon: Route },
   { href: "/vehicles", label: "Vehicle Management", icon: Truck },
   { href: "/employees", label: "Employee Management", icon: Users },
   { href: "/reports", label: "Reports & Analytics", icon: BarChart },
@@ -417,3 +418,5 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+    

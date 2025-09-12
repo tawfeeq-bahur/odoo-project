@@ -5,7 +5,7 @@ import { useSharedState } from "@/components/AppLayout";
 import { VehicleList } from "@/components/fleet/VehicleList";
 import { FleetSummary } from "@/components/fleet/FleetSummary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, PlusCircle, User, BarChart as BarChartIcon, AreaChart as AreaChartIcon, List, DollarSign, PieChart as PieChartIcon, Route, Fuel } from "lucide-react";
+import { Truck, PlusCircle, User, BarChart as BarChartIcon, AreaChart as AreaChartIcon, List, DollarSign, PieChart as PieChartIcon, Fuel } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -92,8 +92,6 @@ export default function DashboardPage() {
     }
   };
 
-  const ongoingTrips = trips.filter(trip => trip.status === 'Ongoing');
-
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -107,62 +105,6 @@ export default function DashboardPage() {
       {/* ADMIN VIEW */}
       {user?.role === 'admin' && (
         <div className="mt-8 space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Route className="h-5 w-5 text-primary" /> Ongoing Trip Summary</CardTitle>
-                    <CardDescription>A real-time overview of all trips currently in progress.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Employee & Vehicle</TableHead>
-                                <TableHead>Route</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Fuel Level</TableHead>
-                                <TableHead className="text-right">Trip Expenses</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {ongoingTrips.map(trip => {
-                                const vehicle = vehicles.find(v => v.id === trip.vehicleId);
-                                const tripExpenses = expenses.filter(e => e.tripId === trip.id).reduce((sum, exp) => sum + exp.amount, 0);
-
-                                return (
-                                    <TableRow key={trip.id}>
-                                        <TableCell>
-                                            <div className="font-medium">{trip.employeeName}</div>
-                                            <div className="text-sm text-muted-foreground">{vehicle?.plateNumber}</div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {trip.source} to {trip.destination}
-                                        </TableCell>
-                                        <TableCell>{getStatusBadge(trip.status)}</TableCell>
-                                        <TableCell>
-                                            {vehicle ? (
-                                                <div className="flex items-center gap-2">
-                                                    <Progress value={vehicle.fuelLevel} className="h-2 w-20" />
-                                                    <span>{vehicle.fuelLevel}%</span>
-                                                </div>
-                                            ) : '-'}
-                                        </TableCell>
-                                        <TableCell className="text-right font-medium">
-                                            ₹{tripExpenses.toFixed(2)}
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
-                    {ongoingTrips.length === 0 && (
-                        <div className="text-center py-10 text-muted-foreground">
-                            <Truck className="mx-auto h-8 w-8 mb-2" />
-                            <p>No trips are currently ongoing.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
                     <CardHeader>
@@ -333,5 +275,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
