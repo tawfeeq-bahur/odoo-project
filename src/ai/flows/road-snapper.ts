@@ -72,8 +72,9 @@ const roadSnapperFlow = ai.defineFlow(
       }
       return output;
     } catch (e) {
-      console.error(e);
-      throw new Error('Unable to snap to roads, AI model may be temporarily unavailable.');
+      console.warn('Road snapper failed, falling back to original path', e);
+      // Fallback: return the original path so the UI can still render a route
+      return { snappedPoints: input.path };
     }
   }
 );

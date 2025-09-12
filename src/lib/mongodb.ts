@@ -1,34 +1,85 @@
 // This approach is taken from https://github.com/vercel/next.js/tree/canary/examples/with-mongodb
-import { MongoClient } from "mongodb"
+import { MongoClient, Db, Collection } from "mongodb"
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"')
+// This module now supports TWO logical databases: one for Admin and one for Employee.
+// You can configure either separate clusters (URIs) or a single cluster with two DB names.
+
+// Admin DB config
+const ADMIN_URI = process.env.MONGODB_URI_ADMIN || process.env.MONGODB_URI
+const ADMIN_DB = process.env.MONGODB_DB_ADMIN || "fleet_admin"
+
+// Employee DB config
+const EMP_URI = process.env.MONGODB_URI_EMPLOYEE || process.env.MONGODB_URI
+const EMP_DB = process.env.MONGODB_DB_EMPLOYEE || "fleet_employee"
+
+if (!ADMIN_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI" or "MONGODB_URI_ADMIN"')
+}
+if (!EMP_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI" or "MONGODB_URI_EMPLOYEE"')
 }
 
-const uri = process.env.MONGODB_URI
 const options = {}
 
-let client
-let clientPromise: Promise<MongoClient>
+let adminClient: MongoClient
+let employeeClient: MongoClient
 
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>
-  }
+let adminClientPromise: Promise<MongoClient>
+let employeeClientPromise: Promise<MongoClient>
 
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options)
-    globalWithMongo._mongoClientPromise = client.connect()
-  }
-  clientPromise = globalWithMongo._mongoClientPromise
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options)
-  clientPromise = client.connect()
+type GlobalWithDbClients = typeof globalThis & {
+  _adminClientPromise?: Promise<MongoClient>
+  _employeeClientPromise?: Promise<MongoClient>
 }
 
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
-export default clientPromise
+const g = global as GlobalWithDbClients
+
+// If both URIs are the same, share a single client instance to avoid extra connections
+const sameCluster = ADMIN_URI === EMP_URI
+
+if (process.env.NODE_ENV === "development") {
+  if (!g._adminClientPromise) {
+    adminClient = new MongoClient(ADMIN_URI, options)
+    g._adminClientPromise = adminClient.connect()
+  }
+  adminClientPromise = g._adminClientPromise!
+
+  if (sameCluster) {
+    employeeClientPromise = adminClientPromise
+  } else {
+    if (!g._employeeClientPromise) {
+      employeeClient = new MongoClient(EMP_URI, options)
+      g._employeeClientPromise = employeeClient.connect()
+    }
+    employeeClientPromise = g._employeeClientPromise!
+  }
+} else {
+  adminClient = new MongoClient(ADMIN_URI, options)
+  adminClientPromise = adminClient.connect()
+
+  if (sameCluster) {
+    employeeClientPromise = adminClientPromise
+  } else {
+    employeeClient = new MongoClient(EMP_URI, options)
+    employeeClientPromise = employeeClient.connect()
+  }
+}
+
+// Database promises for convenience
+export const adminDbPromise: Promise<Db> = adminClientPromise.then((c) => c.db(ADMIN_DB))
+export const employeeDbPromise: Promise<Db> = employeeClientPromise.then((c) => c.db(EMP_DB))
+
+// Collection helpers
+export async function getAdminCollection<T = unknown>(name: string): Promise<Collection<T>> {
+  const db = await adminDbPromise
+  return db.collection<T>(name)
+}
+
+export async function getEmployeeCollection<T = unknown>(name: string): Promise<Collection<T>> {
+  const db = await employeeDbPromise
+  return db.collection<T>(name)
+}
+
+// Backward compatibility default export (kept for existing imports):
+// returns the Admin client by default
+export default adminClientPromise

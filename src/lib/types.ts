@@ -1,6 +1,6 @@
 
 
-import type { TripPlannerOutput } from "./ai/flows/trip-planner";
+import type { TripPlannerOutput } from "@/ai/flows/trip-planner";
 
 export type Vehicle = {
   id: string;
