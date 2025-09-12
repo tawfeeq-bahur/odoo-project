@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -264,3 +265,4 @@ const InfoItem = ({ label, value }: { label: string, value: string | React.React
         <p className="font-semibold">{value}</p>
     </div>
 )
+
