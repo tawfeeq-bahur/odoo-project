@@ -20,8 +20,11 @@ export default function VehicleHealthPage() {
   const assignedVehicle = vehicles.find(v => v.id === user?.assignedVehicleId);
   
   const [fuel, setFuel] = useState(assignedVehicle?.fuelLevel ?? 0);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [issueImagePreview, setIssueImagePreview] = useState<string | null>(null);
+  const [fuelImagePreview, setFuelImagePreview] = useState<string | null>(null);
+  
+  const issueFileInputRef = useRef<HTMLInputElement>(null);
+  const fuelFileInputRef = useRef<HTMLInputElement>(null);
 
   if (user?.role !== 'employee' || !assignedVehicle) {
     return (
@@ -44,6 +47,8 @@ export default function VehicleHealthPage() {
       title: 'Fuel Level Updated',
       description: `Fuel level for ${assignedVehicle.plateNumber} set to ${fuel}%.`,
     });
+    setFuelImagePreview(null);
+    if(fuelFileInputRef.current) fuelFileInputRef.current.value = '';
   };
 
   const handleReportIssue = (e: React.FormEvent) => {
@@ -53,18 +58,29 @@ export default function VehicleHealthPage() {
       description: `Your issue report for ${assignedVehicle.plateNumber} has been sent to the admin.`,
     });
     // Reset form fields
-    setImagePreview(null);
-    if(fileInputRef.current) fileInputRef.current.value = '';
+    setIssueImagePreview(null);
+    if(issueFileInputRef.current) issueFileInputRef.current.value = '';
     const form = e.target as HTMLFormElement;
     form.reset();
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIssueImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setIssueImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleFuelImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFuelImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -95,7 +111,7 @@ export default function VehicleHealthPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Gauge /> Update Fuel Level</CardTitle>
-              <CardDescription>Drag the slider to the current fuel percentage and click save.</CardDescription>
+              <CardDescription>Drag the slider and upload a geotagged photo of the dashboard's fuel gauge as proof.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -108,7 +124,32 @@ export default function VehicleHealthPage() {
                 />
                 <span className="font-bold text-xl w-16 text-center">{fuel}%</span>
               </div>
-              <Button onClick={handleFuelUpdate} className="w-full">
+              
+              <div>
+                <Label>Dashboard Photo Proof</Label>
+                <div
+                  className="relative mt-1 aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
+                  onClick={() => fuelFileInputRef.current?.click()}
+                >
+                  {fuelImagePreview ? (
+                    <Image src={fuelImagePreview} alt="Fuel gauge preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="dashboard gauge" />
+                  ) : (
+                    <div className="text-center text-muted-foreground p-4">
+                      <Upload className="mx-auto h-8 w-8" />
+                      <p>Click to upload a photo</p>
+                    </div>
+                  )}
+                </div>
+                <Input
+                  ref={fuelFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFuelImageChange}
+                />
+              </div>
+
+              <Button onClick={handleFuelUpdate} className="w-full" disabled={!fuelImagePreview}>
                 Save Fuel Level
               </Button>
             </CardContent>
@@ -130,10 +171,10 @@ export default function VehicleHealthPage() {
                 <Label>Upload Photo (Optional)</Label>
                 <div
                   className="relative mt-1 aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => issueFileInputRef.current?.click()}
                 >
-                  {imagePreview ? (
-                    <Image src={imagePreview} alt="Issue preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="vehicle damage" />
+                  {issueImagePreview ? (
+                    <Image src={issueImagePreview} alt="Issue preview" layout="fill" objectFit="contain" className="rounded-md" data-ai-hint="vehicle damage" />
                   ) : (
                     <div className="text-center text-muted-foreground p-4">
                       <Upload className="mx-auto h-8 w-8" />
@@ -142,11 +183,11 @@ export default function VehicleHealthPage() {
                   )}
                 </div>
                 <Input
-                  ref={fileInputRef}
+                  ref={issueFileInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={handleImageChange}
+                  onChange={handleIssueImageChange}
                 />
               </div>
               <Button type="submit" className="w-full">
