@@ -5,12 +5,12 @@ import { MongoClient, Db, Collection } from "mongodb"
 // You can configure either separate clusters (URIs) or a single cluster with two DB names.
 
 // Admin DB config
-const ADMIN_URI = process.env.MONGODB_URI_ADMIN || process.env.MONGODB_URI
-const ADMIN_DB = process.env.MONGODB_DB_ADMIN || "fleet_admin"
+const ADMIN_URI = process.env.MONGODB_URI_ADMIN || process.env.MONGODB_URI || "mongodb://localhost:27017"
+const ADMIN_DB = process.env.MONGODB_DB_ADMIN || "admin_db"
 
 // Employee DB config
-const EMP_URI = process.env.MONGODB_URI_EMPLOYEE || process.env.MONGODB_URI
-const EMP_DB = process.env.MONGODB_DB_EMPLOYEE || "fleet_employee"
+const EMP_URI = process.env.MONGODB_URI_EMPLOYEE || process.env.MONGODB_URI || "mongodb://localhost:27017"
+const EMP_DB = process.env.MONGODB_DB_EMPLOYEE || "emp_db"
 
 if (!ADMIN_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI" or "MONGODB_URI_ADMIN"')
@@ -70,12 +70,12 @@ export const adminDbPromise: Promise<Db> = adminClientPromise.then((c) => c.db(A
 export const employeeDbPromise: Promise<Db> = employeeClientPromise.then((c) => c.db(EMP_DB))
 
 // Collection helpers
-export async function getAdminCollection<T = unknown>(name: string): Promise<Collection<T>> {
+export async function getAdminCollection<T extends Record<string, any> = any>(name: string): Promise<Collection<T>> {
   const db = await adminDbPromise
   return db.collection<T>(name)
 }
 
-export async function getEmployeeCollection<T = unknown>(name: string): Promise<Collection<T>> {
+export async function getEmployeeCollection<T extends Record<string, any> = any>(name: string): Promise<Collection<T>> {
   const db = await employeeDbPromise
   return db.collection<T>(name)
 }

@@ -18,12 +18,68 @@ import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
 
 const POI_ICONS: { [key: string]: React.ReactNode } = {
-  Hospitals: <Hospital className="h-5 w-5 text-red-500" />,
-  'Fuel Stations': <Fuel className="h-5 w-5 text-yellow-500" />,
-  Restaurants: <Utensils className="h-5 w-5 text-orange-500" />,
-  Hotels: <Bed className="h-5 w-5 text-blue-500" />,
-  Restrooms: <Bath className="h-5 w-5 text-green-500" />,
+  Hospitals: <Hospital className="h-4 w-4 text-muted-foreground" />,
+  'Fuel Stations': <Fuel className="h-4 w-4 text-muted-foreground" />,
+  Restaurants: <Utensils className="h-4 w-4 text-muted-foreground" />,
+  Hotels: <Bed className="h-4 w-4 text-muted-foreground" />,
+  Restrooms: <Bath className="h-4 w-4 text-muted-foreground" />,
+  'EV Stations': <div className="h-4 w-4 rounded-full bg-muted-foreground/20 flex items-center justify-center">
+    <div className="h-2 w-2 rounded-full bg-muted-foreground"></div>
+  </div>,
 };
+
+// Fallback coordinates for common Indian cities
+function getFallbackCoordinates(location: string): { latitude: number; longitude: number } {
+  const cityCoordinates: { [key: string]: { lat: number; lng: number } } = {
+    'mumbai': { lat: 19.0760, lng: 72.8777 },
+    'delhi': { lat: 28.7041, lng: 77.1025 },
+    'bangalore': { lat: 12.9716, lng: 77.5946 },
+    'chennai': { lat: 13.0827, lng: 80.2707 },
+    'hyderabad': { lat: 17.3850, lng: 78.4867 },
+    'pune': { lat: 18.5204, lng: 73.8567 },
+    'kolkata': { lat: 22.5726, lng: 88.3639 },
+    'coimbatore': { lat: 11.0168, lng: 76.9558 },
+    'erode': { lat: 11.3410, lng: 77.7172 },
+    'madurai': { lat: 9.9252, lng: 78.1198 },
+    'salem': { lat: 11.6643, lng: 78.1460 },
+    'tirupur': { lat: 11.1085, lng: 77.3411 },
+    'trichy': { lat: 10.7905, lng: 78.7047 },
+    'karur': { lat: 10.9601, lng: 78.0767 },
+    'namakkal': { lat: 11.2212, lng: 78.1672 },
+    'dindigul': { lat: 10.3450, lng: 77.9600 },
+    'tirunelveli': { lat: 8.7139, lng: 77.7567 },
+    'tuticorin': { lat: 8.7642, lng: 78.1348 },
+    'thanjavur': { lat: 10.7869, lng: 79.1378 },
+    'vellore': { lat: 12.9202, lng: 79.1500 },
+    'tiruvannamalai': { lat: 12.2300, lng: 79.0600 },
+    'cuddalore': { lat: 11.7447, lng: 79.7680 },
+    'villupuram': { lat: 11.9394, lng: 79.5000 },
+    'pondicherry': { lat: 11.9139, lng: 79.8145 },
+    'ariyalur': { lat: 11.1374, lng: 79.0758 },
+    'perambalur': { lat: 11.2400, lng: 78.8800 },
+    'pudukkottai': { lat: 10.3800, lng: 78.8200 },
+    'sivaganga': { lat: 9.8500, lng: 78.4800 },
+    'ramanathapuram': { lat: 9.3700, lng: 78.8200 },
+    'virudhunagar': { lat: 9.5800, lng: 77.9600 },
+    'theni': { lat: 10.0100, lng: 77.4800 },
+    'kanyakumari': { lat: 8.0883, lng: 77.5385 },
+    'nilgiris': { lat: 11.4600, lng: 76.6400 },
+    'dharmapuri': { lat: 12.1200, lng: 78.1600 },
+    'krishnagiri': { lat: 12.5200, lng: 78.2200 }
+  };
+  
+  const locationLower = location.toLowerCase();
+  const cityKey = Object.keys(cityCoordinates).find(city => 
+    locationLower.includes(city) || city.includes(locationLower)
+  );
+  
+  if (cityKey) {
+    return { latitude: cityCoordinates[cityKey].lat, longitude: cityCoordinates[cityKey].lng };
+  }
+  
+  // Default to a central location in India if city not found
+  return { latitude: 20.5937, longitude: 78.9629 };
+}
 
 type MapDisplayProps = {
   plan: TripPlannerOutput;
@@ -157,7 +213,24 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             }
         } catch (err) {
             console.error("Geocoding or Snapping error:", err);
-            setError("Could not generate the accurate route. Please try again.");
+            // Try to use basic coordinates as fallback
+            try {
+              const fallbackSource = getFallbackCoordinates(plan.source);
+              const fallbackDest = getFallbackCoordinates(plan.destination);
+              setSourceCoords(fallbackSource);
+              setDestCoords(fallbackDest);
+              
+              // Create a simple straight line between source and destination
+              const simpleRoute: L.LatLngTuple[] = [
+                [fallbackSource.latitude, fallbackSource.longitude],
+                [fallbackDest.latitude, fallbackDest.longitude]
+              ];
+              setRoadPolyline(simpleRoute);
+              setError(null); // Clear error since we have a fallback
+            } catch (fallbackErr) {
+              console.error("Fallback also failed:", fallbackErr);
+              setError("Could not generate the accurate route. Please try again.");
+            }
         }
     };
 
@@ -229,7 +302,10 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
   useEffect(() => {
     const map = mapInstance.current;
     if (!map) return;
-    if (roadPolyline.length === 0) return;
+    
+    // Use roadPolyline if available, otherwise fall back to snappedPolyline
+    const activeRoute = roadPolyline.length > 0 ? roadPolyline : snappedPolyline;
+    if (activeRoute.length === 0) return;
 
     // Remove old markers layer
     if (markersLayerRef.current) {
@@ -257,7 +333,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
       'EV Stations': { query: 'node[amenity=charging_station]', color: '#22c55e', emoji: '⚡' },
     };
 
-    const bounds = L.latLngBounds(roadPolyline as L.LatLngTuple[]);
+    const bounds = L.latLngBounds(activeRoute as L.LatLngTuple[]);
     const south = bounds.getSouth();
     const west = bounds.getWest();
     const north = bounds.getNorth();
@@ -328,7 +404,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           const lon = e.lon || e.center?.lon;
           if (typeof lat !== 'number' || typeof lon !== 'number') return;
           const pt: L.LatLngTuple = [lat, lon];
-          const dist = distanceToPolyline(pt, roadPolyline);
+          const dist = distanceToPolyline(pt, activeRoute);
           if (dist > MAX_DISTANCE_M) return;
 
           const tags = e.tags || {};
@@ -360,7 +436,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     };
 
     fetchPOIs();
-  }, [roadPolyline]);
+  }, [roadPolyline, snappedPolyline]);
 
 
   return (
@@ -384,7 +460,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                 <CardTitle>Points of Interest Along Route</CardTitle>
                 <CardDescription>Key locations identified by the AI near your suggested path.</CardDescription>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CardContent className="space-y-4">
                 {Object.entries({
                   Hospitals: (poiList.Hospitals || []) as any,
                   Restaurants: (poiList.Restaurants || []) as any,
@@ -392,29 +468,35 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                   'Fuel Stations': (poiList['Fuel Stations'] || []) as any,
                   'EV Stations': (poiList['EV Stations'] || []) as any,
                 }).map(([category, places]) => {
-                  const open = expanded[category] ?? true;
+                  const open = expanded[category] ?? false;
+                  const placesCount = (places as any[]).length;
+                  const hasPlaces = placesCount > 0;
+                  
                   return (
-                    <div key={category} className="p-4 border rounded-lg bg-background">
+                    <div key={category} className="border rounded-lg p-4">
                       <button
                         type="button"
-                        className="font-semibold w-full flex items-center justify-between"
-                        onClick={() => setExpanded(prev => ({ ...prev, [category]: !open }))}
+                        className="w-full flex items-center justify-between"
+                        onClick={() => hasPlaces && setExpanded(prev => ({ ...prev, [category]: !open }))}
+                        disabled={!hasPlaces}
                       >
                         <span className="flex items-center gap-2">
                           {POI_ICONS[category as keyof typeof POI_ICONS]}
-                          {category}
+                          <span className="font-medium">{category}</span>
                         </span>
-                        <span className="text-xs text-muted-foreground">{open ? 'Hide' : 'Show'} ({(places as any[]).length})</span>
+                        <span className="text-sm text-muted-foreground">
+                          {hasPlaces ? `${placesCount} found` : 'None found'}
+                        </span>
                       </button>
-                      {open && (
-                        <ul className="mt-2 space-y-1 text-sm text-muted-foreground pl-5">
+                      {open && hasPlaces && (
+                        <div className="mt-3 space-y-2">
                           {(places as { name: string; lat: number; lon: number }[]).map((place, index) => {
                             const key = `${place.name}-${place.lat.toFixed(5)}-${place.lon.toFixed(5)}`;
                             return (
-                              <li key={index}>
+                              <div key={index} className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  className="underline hover:text-primary text-left"
+                                  className="text-sm text-muted-foreground hover:text-primary underline text-left"
                                   onClick={() => {
                                     const map = mapInstance.current;
                                     const marker = markerIndexRef.current.get(key);
@@ -426,10 +508,10 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                                 >
                                   {place.name}
                                 </button>
-                              </li>
+                              </div>
                             );
                           })}
-                        </ul>
+                        </div>
                       )}
                     </div>
                   );

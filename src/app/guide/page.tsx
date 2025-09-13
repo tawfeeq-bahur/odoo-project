@@ -212,7 +212,7 @@ export default function TripPlannerPage() {
                                                 </FormControl>
                                                 <SelectContent>
                                                     {uniqueEmployees.length > 0 ? uniqueEmployees.map(emp => (
-                                                        <SelectItem key={emp} value={emp}>{emp}</SelectItem>
+                                                        <SelectItem key={emp} value={emp || ''}>{emp}</SelectItem>
                                                     )) : <SelectItem value="none" disabled>No employees available</SelectItem>}
                                                 </SelectContent>
                                             </Select>

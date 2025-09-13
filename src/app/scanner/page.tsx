@@ -107,7 +107,7 @@ export default function ScannerPage() {
   const handleAddExpense = (expense: ParsedExpense) => {
     addExpense({
       ...expense,
-      tripId: getTripId(),
+      tripId: getTripId() || undefined,
     });
     toast({
       title: 'Expense Added!',
@@ -119,7 +119,7 @@ export default function ScannerPage() {
   const handleManualSubmit = (values: z.infer<typeof manualExpenseSchema>) => {
     addExpense({
       ...values,
-      tripId: getTripId(),
+      tripId: getTripId() || undefined,
     });
     toast({
       title: "Expense Logged",

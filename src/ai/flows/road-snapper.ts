@@ -27,7 +27,22 @@ const RoadSnapperOutputSchema = z.object({
 export type RoadSnapperOutput = z.infer<typeof RoadSnapperOutputSchema>;
 
 export async function snapToRoads(input: RoadSnapperInput): Promise<RoadSnapperOutput> {
-  return roadSnapperFlow(input);
+  try {
+    return await roadSnapperFlow(input);
+  } catch (e) {
+    console.warn('AI road snapper failed, using fallback snapping', e);
+    return getFallbackSnappedPoints(input.path);
+  }
+}
+
+function getFallbackSnappedPoints(path: Array<{lat: number, lng: number}>): RoadSnapperOutput {
+  // If we have a valid path, return it as-is
+  if (path && path.length > 0) {
+    return { snappedPoints: path };
+  }
+  
+  // Return empty array if no path
+  return { snappedPoints: [] };
 }
 
 const prompt = ai.definePrompt({

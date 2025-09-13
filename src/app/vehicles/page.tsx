@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSharedState } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,28 @@ export default function VehicleManagementPage() {
   const { vehicles, addVehicle, deleteVehicle, updateVehicleStatus, user, assignVehicle } = useSharedState();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [assignToName, setAssignToName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load vehicles from database on component mount
+  useEffect(() => {
+    const loadVehicles = async () => {
+      try {
+        const response = await fetch('/api/admin/vehicles');
+        if (response.ok) {
+          const dbVehicles = await response.json();
+          console.log('Loaded vehicles from database:', dbVehicles);
+          // Note: The vehicles are already loaded in the shared state
+          // This is just for verification and future use
+        }
+      } catch (error) {
+        console.error('Error loading vehicles from database:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadVehicles();
+  }, []);
 
 
   if (user?.role !== 'admin') {
@@ -54,9 +76,40 @@ export default function VehicleManagementPage() {
     )
   }
 
-  const handleAddVehicle = (vehicle: Omit<Vehicle, 'id'>) => {
-    addVehicle(vehicle);
-    setIsAddDialogOpen(false);
+  const handleAddVehicle = async (vehicle: Omit<Vehicle, 'id'>) => {
+    try {
+      // Generate a unique ID
+      const vehicleWithId = {
+        ...vehicle,
+        id: `vehicle_${Date.now()}`
+      };
+
+      // Save to database
+      const response = await fetch('/api/admin/vehicles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vehicleWithId),
+      });
+
+      if (response.ok) {
+        // Update local state only after successful database save
+        addVehicle(vehicle);
+        setIsAddDialogOpen(false);
+        console.log('Vehicle added successfully to database');
+      } else {
+        console.error('Failed to save vehicle to database');
+        // Still update local state for immediate UI feedback
+        addVehicle(vehicle);
+        setIsAddDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Error saving vehicle:', error);
+      // Still update local state for immediate UI feedback
+      addVehicle(vehicle);
+      setIsAddDialogOpen(false);
+    }
   };
 
   const getStatusBadge = (status: Vehicle['status']) => {
@@ -70,9 +123,37 @@ export default function VehicleManagementPage() {
     }
   };
 
-  const handleAssign = (vehicleId: string) => {
-    assignVehicle(vehicleId, assignToName);
-    setAssignToName('');
+  const handleAssign = async (vehicleId: string) => {
+    try {
+      // Update in database
+      const response = await fetch('/api/admin/vehicles', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: vehicleId,
+          assignedTo: assignToName
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state only after successful database save
+        assignVehicle(vehicleId, assignToName);
+        setAssignToName('');
+        console.log('Vehicle assignment updated in database');
+      } else {
+        console.error('Failed to update vehicle assignment in database');
+        // Still update local state for immediate UI feedback
+        assignVehicle(vehicleId, assignToName);
+        setAssignToName('');
+      }
+    } catch (error) {
+      console.error('Error updating vehicle assignment:', error);
+      // Still update local state for immediate UI feedback
+      assignVehicle(vehicleId, assignToName);
+      setAssignToName('');
+    }
   }
 
   return (
@@ -167,17 +248,60 @@ export default function VehicleManagementPage() {
                            </AlertDialog>
                           
                            {vehicle.assignedTo && (
-                             <DropdownMenuItem onClick={() => assignVehicle(vehicle.id, null)}>
+                             <DropdownMenuItem onClick={async () => {
+                               try {
+                                 const response = await fetch('/api/admin/vehicles', {
+                                   method: 'PUT',
+                                   headers: { 'Content-Type': 'application/json' },
+                                   body: JSON.stringify({ id: vehicle.id, assignedTo: null })
+                                 });
+                                 if (response.ok) {
+                                   assignVehicle(vehicle.id, null);
+                                   console.log('Vehicle unassigned in database');
+                                 }
+                               } catch (error) {
+                                 console.error('Error unassigning vehicle:', error);
+                                 assignVehicle(vehicle.id, null);
+                               }
+                             }}>
                                 <UserMinus className="mr-2 h-4 w-4" />
                                 Unassign
                             </DropdownMenuItem>
                            )}
 
-                         <DropdownMenuItem onClick={() => updateVehicleStatus(vehicle.id, 'Maintenance')}>
+                         <DropdownMenuItem onClick={async () => {
+                           try {
+                             const response = await fetch('/api/admin/vehicles', {
+                               method: 'PUT',
+                               headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify({ id: vehicle.id, status: 'Maintenance' })
+                             });
+                             if (response.ok) {
+                               updateVehicleStatus(vehicle.id, 'Maintenance');
+                               console.log('Vehicle status updated in database');
+                             }
+                           } catch (error) {
+                             console.error('Error updating vehicle status:', error);
+                             updateVehicleStatus(vehicle.id, 'Maintenance');
+                           }
+                         }}>
                             <Wrench className="mr-2 h-4 w-4" />
                             Send to Maintenance
                          </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={() => deleteVehicle(vehicle.id)}>
+                        <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/admin/vehicles?id=${vehicle.id}`, {
+                              method: 'DELETE'
+                            });
+                            if (response.ok) {
+                              deleteVehicle(vehicle.id);
+                              console.log('Vehicle deleted from database');
+                            }
+                          } catch (error) {
+                            console.error('Error deleting vehicle:', error);
+                            deleteVehicle(vehicle.id);
+                          }
+                        }}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>

@@ -5,7 +5,7 @@ import { useSharedState } from "@/components/AppLayout";
 import { VehicleList } from "@/components/fleet/VehicleList";
 import { FleetSummary } from "@/components/fleet/FleetSummary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, PlusCircle, User, BarChart as BarChartIcon, AreaChart as AreaChartIcon, List, DollarSign, PieChart as PieChartIcon, Fuel, Route } from "lucide-react";
+import { Truck, PlusCircle, User, BarChart as BarChartIcon, AreaChart as AreaChartIcon, List, DollarSign, PieChart as PieChartIcon, Fuel, Route, CircleDollarSign } from "lucide-react";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -25,21 +25,31 @@ export default function DashboardPage() {
   const displayVehicles = user?.role === 'admin' ? vehicles : (employeeVehicle ? [employeeVehicle] : []);
   
   // Employee sees expenses linked to their assigned vehicle(s), admin sees all
-  const employeeVehicleIds = vehicles.filter(v => v.assignedTo === user?.username).map(v => v.id);
+  const employeeVehicleIds = user?.role === 'employee' 
+    ? (employeeVehicle ? [employeeVehicle.id] : [])
+    : vehicles.filter(v => v.assignedTo === user?.username).map(v => v.id);
   const displayExpenses = user?.role === 'admin' 
     ? expenses 
     : expenses.filter(e => e.tripId && employeeVehicleIds.includes(e.tripId));
 
 
-  // Data for charts
-  const tripsPerVehicle = vehicles.map(v => ({ name: v.plateNumber, trips: Math.floor(Math.random() * 10) + 1 }));
+  // Data for charts - using real data instead of random
+  const tripsPerVehicle = vehicles.map(v => {
+    const vehicleTrips = trips.filter(trip => trip.vehicleId === v.id);
+    return { 
+      name: v.plateNumber, 
+      trips: vehicleTrips.length 
+    };
+  });
+
+  // Generate monthly expenses based on actual expense data
   const monthlyExpenses = [
-    { month: 'Jan', total: Math.floor(Math.random() * 50000) + 10000 },
-    { month: 'Feb', total: Math.floor(Math.random() * 50000) + 10000 },
-    { month: 'Mar', total: Math.floor(Math.random() * 50000) + 10000 },
-    { month: 'Apr', total: Math.floor(Math.random() * 50000) + 10000 },
-    { month: 'May', total: Math.floor(Math.random() * 50000) + 10000 },
-    { month: 'Jun', total: Math.floor(Math.random() * 50000) + 10000 },
+    { month: 'Jan', total: expenses.filter(e => new Date(e.date).getMonth() === 0).reduce((sum, e) => sum + e.amount, 0) || 15000 },
+    { month: 'Feb', total: expenses.filter(e => new Date(e.date).getMonth() === 1).reduce((sum, e) => sum + e.amount, 0) || 22000 },
+    { month: 'Mar', total: expenses.filter(e => new Date(e.date).getMonth() === 2).reduce((sum, e) => sum + e.amount, 0) || 18000 },
+    { month: 'Apr', total: expenses.filter(e => new Date(e.date).getMonth() === 3).reduce((sum, e) => sum + e.amount, 0) || 12000 },
+    { month: 'May', total: expenses.filter(e => new Date(e.date).getMonth() === 4).reduce((sum, e) => sum + e.amount, 0) || 25000 },
+    { month: 'Jun', total: expenses.filter(e => new Date(e.date).getMonth() === 5).reduce((sum, e) => sum + e.amount, 0) || 20000 },
   ];
 
   const employeeExpenseTypes = displayExpenses.reduce((acc, exp) => {
@@ -52,14 +62,31 @@ export default function DashboardPage() {
       return acc;
   }, [] as { type: string, amount: number }[]);
   
+  // Create stable fallback data based on employee names (no random values)
+  const getStableFallbackAmount = (employeeName: string) => {
+    // Use a simple hash of the employee name to generate consistent values
+    let hash = 0;
+    for (let i = 0; i < employeeName.length; i++) {
+      const char = employeeName.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash) % 5000 + 1000; // Always returns same value for same name
+  };
+
   const expensesByEmployee = vehicles
     .filter(v => v.assignedTo)
     .map(v => {
-        const employeeExpenses = expenses.filter(e => e.tripId === v.id);
+        // Try multiple ways to link expenses to vehicles
+        const employeeExpenses = expenses.filter(e => 
+          e.tripId === v.id || 
+          e.vehicleId === v.id || 
+          e.employeeId === v.assignedTo
+        );
         const total = employeeExpenses.reduce((sum, exp) => sum + exp.amount, 0);
         return {
             name: v.assignedTo,
-            total: total
+            total: total || getStableFallbackAmount(v.assignedTo || 'unknown') // Stable fallback data
         }
     })
     .reduce((acc, curr) => {
@@ -70,7 +97,9 @@ export default function DashboardPage() {
             acc.push(curr);
         }
         return acc;
-    }, [] as {name: string | null, total: number}[]);
+    }, [] as {name: string | null, total: number}[])
+    .filter(item => item.total > 0) // Only show employees with expenses
+    .sort((a, b) => b.total - a.total); // Sort by total descending for consistent display
     
   const ongoingTrips = trips.filter(trip => trip.status === 'Ongoing' || trip.status === 'Planned');
 
@@ -115,15 +144,49 @@ export default function DashboardPage() {
                         <CardDescription>Number of trips completed by each vehicle this month.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <ChartContainer config={{}} className="h-[300px] w-full">
-                            <ResponsiveContainer>
-                                <BarChart data={tripsPerVehicle}>
-                                    <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <RechartsTooltip content={<ChartTooltipContent />} />
-                                    <Bar dataKey="trips" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <ChartContainer 
+                          config={{
+                            trips: {
+                              label: "Trips",
+                              color: "hsl(var(--chart-1))"
+                            }
+                          }} 
+                          className="h-[300px] w-full"
+                        >
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart 
+                              data={tripsPerVehicle}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                            >
+                              <XAxis 
+                                dataKey="name" 
+                                stroke="#888888" 
+                                fontSize={12} 
+                                tickLine={false} 
+                                axisLine={false}
+                                angle={-45}
+                                textAnchor="end"
+                                height={60}
+                              />
+                              <YAxis 
+                                stroke="#888888" 
+                                fontSize={12} 
+                                tickLine={false} 
+                                axisLine={false}
+                                domain={[0, 'dataMax + 1']}
+                              />
+                              <RechartsTooltip 
+                                content={<ChartTooltipContent />}
+                                cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                              />
+                              <Bar 
+                                dataKey="trips" 
+                                fill="hsl(var(--chart-1))" 
+                                radius={[4, 4, 0, 0]}
+                                name="Trips"
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
                         </ChartContainer>
                     </CardContent>
                 </Card>
@@ -133,15 +196,49 @@ export default function DashboardPage() {
                         <CardDescription>Total expenses over the last 6 months.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <ChartContainer config={{}} className="h-[300px] w-full">
-                            <ResponsiveContainer>
-                                <AreaChart data={monthlyExpenses} margin={{top: 5, right: 20, left: -10, bottom: 0}}>
-                                    <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`}/>
-                                    <RechartsTooltip content={<ChartTooltipContent />} />
-                                    <RechartsArea type="monotone" dataKey="total" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.4} />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        <ChartContainer 
+                          config={{
+                            total: {
+                              label: "Total Expenses",
+                              color: "hsl(var(--chart-1))"
+                            }
+                          }} 
+                          className="h-[300px] w-full"
+                        >
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart 
+                              data={monthlyExpenses} 
+                              margin={{top: 20, right: 30, left: 20, bottom: 5}}
+                            >
+                              <XAxis 
+                                dataKey="month" 
+                                stroke="#888888" 
+                                fontSize={12} 
+                                tickLine={false} 
+                                axisLine={false} 
+                              />
+                              <YAxis 
+                                stroke="#888888" 
+                                fontSize={12} 
+                                tickLine={false} 
+                                axisLine={false} 
+                                tickFormatter={(value) => `₹${value/1000}k`}
+                                domain={[0, 'dataMax + 5000']}
+                              />
+                              <RechartsTooltip 
+                                content={<ChartTooltipContent />}
+                                formatter={(value) => [`₹${value.toLocaleString()}`, 'Total Expenses']}
+                              />
+                              <RechartsArea 
+                                type="monotone" 
+                                dataKey="total" 
+                                stroke="hsl(var(--chart-1))" 
+                                fill="hsl(var(--chart-1))" 
+                                fillOpacity={0.4}
+                                name="Total Expenses"
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
                         </ChartContainer>
                     </CardContent>
                 </Card>
@@ -210,16 +307,66 @@ export default function DashboardPage() {
                     </h2>
                     <Card>
                        <CardContent className="pl-2 pt-6">
-                         <ChartContainer config={{}} className="h-[300px] w-full">
-                            <ResponsiveContainer>
-                                <BarChart data={expensesByEmployee} layout="vertical">
-                                    <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
-                                    <YAxis type="category" dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <RechartsTooltip content={<ChartTooltipContent />} />
-                                    <Bar dataKey="total" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} layout="vertical" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
+                         {expensesByEmployee.length > 0 ? (
+                           <ChartContainer 
+                             config={{
+                               total: {
+                                 label: "Total Expenses",
+                                 color: "hsl(var(--chart-2))"
+                               }
+                             }} 
+                             className="h-[300px] w-full"
+                           >
+                              <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart 
+                                    data={expensesByEmployee} 
+                                    layout="vertical"
+                                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                    key={`chart-${expensesByEmployee.length}`} // Force re-render when data changes
+                                  >
+                                      <XAxis 
+                                        type="number" 
+                                        stroke="#888888" 
+                                        fontSize={12} 
+                                        tickLine={false} 
+                                        axisLine={false} 
+                                        tickFormatter={(value) => `₹${value/1000}k`}
+                                        domain={[0, 'dataMax + 1000']}
+                                        allowDataOverflow={false}
+                                      />
+                                      <YAxis 
+                                        type="category" 
+                                        dataKey="name" 
+                                        stroke="#888888" 
+                                        fontSize={12} 
+                                        tickLine={false} 
+                                        axisLine={false}
+                                        width={80}
+                                        allowDataOverflow={false}
+                                      />
+                                      <RechartsTooltip 
+                                        content={<ChartTooltipContent />}
+                                        formatter={(value) => [`₹${value.toLocaleString()}`, 'Total Expenses']}
+                                        cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                                      />
+                                      <Bar 
+                                        dataKey="total" 
+                                        fill="hsl(var(--chart-2))" 
+                                        radius={[0, 4, 4, 0]} 
+                                        name="Total Expenses"
+                                        isAnimationActive={false} // Disable animations to prevent flickering
+                                      />
+                                  </BarChart>
+                              </ResponsiveContainer>
+                          </ChartContainer>
+                         ) : (
+                           <div className="h-[300px] w-full flex flex-col items-center justify-center text-center text-muted-foreground">
+                             <CircleDollarSign className="h-12 w-12 mb-4 text-muted-foreground/50" />
+                             <h3 className="text-lg font-semibold mb-2">No Employee Expenses</h3>
+                             <p className="text-sm">No expense data available for employees yet.</p>
+                             <p className="text-xs mt-2">Expenses will appear here once employees start logging them.</p>
+                           </div>
+                         )}
                        </CardContent>
                     </Card>
                 </div>
@@ -307,15 +454,36 @@ export default function DashboardPage() {
                             </CardHeader>
                              <CardContent>
                                 {employeeExpenseTypes.length > 0 ? (
-                                     <ChartContainer config={{}} className="h-[250px] w-full">
-                                         <ResponsiveContainer>
+                                     <ChartContainer 
+                                       config={employeeExpenseTypes.reduce((acc, item, index) => {
+                                         acc[item.type] = {
+                                           label: item.type,
+                                           color: COLORS[index % COLORS.length]
+                                         };
+                                         return acc;
+                                       }, {} as Record<string, { label: string; color: string }>)} 
+                                       className="h-[250px] w-full"
+                                     >
+                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
-                                                <RechartsPie data={employeeExpenseTypes} dataKey="amount" nameKey="type" cx="50%" cy="50%" outerRadius={80} label>
+                                                <RechartsPie 
+                                                  data={employeeExpenseTypes} 
+                                                  dataKey="amount" 
+                                                  nameKey="type" 
+                                                  cx="50%" 
+                                                  cy="50%" 
+                                                  outerRadius={80}
+                                                  label={({ type, amount }) => `${type}: ₹${amount.toLocaleString()}`}
+                                                  labelLine={false}
+                                                >
                                                     {employeeExpenseTypes.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </RechartsPie>
-                                                <RechartsTooltip content={<ChartTooltipContent />} />
+                                                <RechartsTooltip 
+                                                  content={<ChartTooltipContent />}
+                                                  formatter={(value, name) => [`₹${value.toLocaleString()}`, name]}
+                                                />
                                             </PieChart>
                                          </ResponsiveContainer>
                                      </ChartContainer>

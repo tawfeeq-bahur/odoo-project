@@ -1,12 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import type { Vehicle, Expense } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Truck, CircleDollarSign, Fuel, Wrench, Lightbulb, AlertTriangle } from 'lucide-react';
-import { getVehicleInsights, VehicleInsightsOutput } from '@/ai/flows/vehicle-insights';
-import { Skeleton } from '../ui/skeleton';
 
 type FleetSummaryProps = {
   vehicles: Vehicle[];
@@ -14,15 +11,9 @@ type FleetSummaryProps = {
 };
 
 export function FleetSummary({ vehicles, expenses }: FleetSummaryProps) {
-  const [insights, setInsights] = useState<VehicleInsightsOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  // Simple calculations without any async operations
   const totalExpenses = expenses.reduce((acc, exp) => acc + exp.amount, 0);
-  const fuelConsumption = expenses
-    .filter(exp => exp.type === 'Fuel')
-    .reduce((acc, exp) => acc + exp.amount, 0); // Simplified: assuming amount is a proxy for consumption
-
-
+  
   const summary = {
     totalVehicles: vehicles.length,
     onTrip: vehicles.filter(v => v.status === 'On Trip').length,
@@ -30,26 +21,24 @@ export function FleetSummary({ vehicles, expenses }: FleetSummaryProps) {
     maintenance: vehicles.filter(v => v.status === 'Maintenance').length,
   };
 
-  useEffect(() => {
-    async function fetchInsights() {
-      setIsLoading(true);
-      try {
-        const result = await getVehicleInsights({
-          totalVehicles: summary.totalVehicles,
-          ongoingTrips: summary.onTrip,
-          totalExpenses: summary.totalExpenses, 
-          fuelConsumption: fuelConsumption, // Using calculated fuel consumption
-        });
-        setInsights(result);
-      } catch (error) {
-        console.error("Failed to get vehicle insights:", error);
-        setInsights(null);
-      } finally {
-        setIsLoading(false);
-      }
+  // Generate insights immediately without any loading states
+  const generateInsights = () => {
+    if (summary.totalVehicles === 0) {
+      return {
+        efficiencyInsight: "No vehicles in fleet yet. Add vehicles to get efficiency insights.",
+        costSavingSuggestion: "Start by adding vehicles and tracking expenses to identify cost-saving opportunities.",
+        anomalyDetection: "Operations look normal."
+      };
     }
-    fetchInsights();
-  }, [vehicles, expenses]);
+
+    return {
+      efficiencyInsight: `Your fleet of ${summary.totalVehicles} vehicles is currently ${summary.onTrip > 0 ? 'actively operating' : 'idle'}. ${summary.onTrip > 0 ? `${summary.onTrip} trips are in progress.` : 'No active trips at the moment.'}`,
+      costSavingSuggestion: `Total expenses this month: ₹${summary.totalExpenses.toLocaleString()}. Consider optimizing routes and maintenance schedules to reduce costs.`,
+      anomalyDetection: summary.maintenance > 0 ? `${summary.maintenance} vehicle(s) in maintenance. Monitor maintenance schedules to prevent unexpected breakdowns.` : "Operations look normal."
+    };
+  };
+
+  const insights = generateInsights();
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -69,22 +58,20 @@ export function FleetSummary({ vehicles, expenses }: FleetSummaryProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLoading && <InsightsSkeleton />}
-          {insights && (
-            <>
-              <InsightItem title="Efficiency Insight" text={insights.efficiencyInsight} />
-              <InsightItem title="Cost Saving Suggestion" text={insights.costSavingSuggestion} />
-              <InsightItem 
-                title="Anomaly Detection" 
-                text={insights.anomalyDetection} 
-                icon={insights.anomalyDetection.toLowerCase().includes("normal") ? undefined : AlertTriangle}
-                iconColor="text-orange-500"
-              />
-            </>
-          )}
-           {!isLoading && !insights && (
-            <div className="text-sm text-muted-foreground">Could not load AI insights.</div>
-          )}
+          <InsightItem 
+            title="Efficiency Insight" 
+            text={insights.efficiencyInsight} 
+          />
+          <InsightItem 
+            title="Cost Saving Suggestion" 
+            text={insights.costSavingSuggestion} 
+          />
+          <InsightItem 
+            title="Anomaly Detection" 
+            text={insights.anomalyDetection}
+            icon={insights.anomalyDetection.toLowerCase().includes("normal") ? undefined : AlertTriangle}
+            iconColor="text-orange-500"
+          />
         </CardContent>
       </Card>
     </div>
@@ -113,19 +100,3 @@ const InsightItem = ({ title, text, icon: Icon, iconColor }: { title: string, te
   </div>
 );
 
-const InsightsSkeleton = () => (
-  <div className="space-y-4">
-    <div className="space-y-2">
-       <Skeleton className="h-5 w-1/4" />
-       <Skeleton className="h-4 w-3/4" />
-    </div>
-    <div className="space-y-2">
-       <Skeleton className="h-5 w-1/4" />
-       <Skeleton className="h-4 w-full" />
-    </div>
-     <div className="space-y-2">
-       <Skeleton className="h-5 w-1/4" />
-       <Skeleton className="h-4 w-1/2" />
-    </div>
-  </div>
-);

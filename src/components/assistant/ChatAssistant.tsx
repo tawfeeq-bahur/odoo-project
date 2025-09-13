@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { medicationAssistant } from "@/ai/flows/medication-assistant";
+// import { medicationAssistant } from "@/ai/flows/medication-assistant";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ChatMessage } from "@/lib/types";
 
