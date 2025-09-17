@@ -17,6 +17,16 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username or Plate Number is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
+  adminCode: z.string().optional(),
+}).refine((data) => {
+  // If username is 'admin', adminCode is required
+  if (data.username.toLowerCase() === 'admin') {
+    return data.adminCode && data.adminCode.length === 6 && /^\d{6}$/.test(data.adminCode);
+  }
+  return true;
+}, {
+  message: "Admin code must be exactly 6 digits",
+  path: ["adminCode"],
 });
 
 export default function LoginPage() {
@@ -28,16 +38,21 @@ export default function LoginPage() {
     defaultValues: {
       username: '',
       password: '',
+      adminCode: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const { username, password } = values;
+    const { username, password, adminCode } = values;
 
-    const success = login(username, password);
+    const success = login(username, password, adminCode);
 
     if (!success) {
-        setError('Invalid credentials. Please check your username/plate number and password.');
+        if (username.toLowerCase() === 'admin') {
+            setError('Invalid admin credentials. Please check your username, password, and 6-digit admin code.');
+        } else {
+            setError('Invalid credentials. Please check your username/plate number and password.');
+        }
     } else {
         setError(null);
     }
@@ -85,6 +100,31 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
+              {form.watch('username').toLowerCase() === 'admin' && (
+                <FormField
+                  control={form.control}
+                  name="adminCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Admin Code (6 digits)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="text" 
+                          placeholder="123456" 
+                          maxLength={6}
+                          {...field}
+                          onChange={(e) => {
+                            // Only allow digits
+                            const value = e.target.value.replace(/\D/g, '');
+                            field.onChange(value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               {error && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />

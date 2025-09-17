@@ -1,0 +1,31 @@
+FLEET MANAGER - ENVIRONMENT SETUP
+
+1. CREATE .env.local FILE:
+   Create a file named ".env.local" in the fleet_manager directory with this content:
+
+   GOOGLE_AI_API_KEY=your_google_ai_api_key_here
+   MONGODB_URI=mongodb://localhost:27017
+   MONGODB_URI_ADMIN=mongodb://localhost:27017
+   MONGODB_URI_EMPLOYEE=mongodb://localhost:27017
+   MONGODB_DB_ADMIN=admin_db
+   MONGODB_DB_EMPLOYEE=emp_db
+   NEXTAUTH_SECRET=your_nextauth_secret_here
+   NEXTAUTH_URL=http://localhost:9002
+
+2. GET GOOGLE AI API KEY:
+   - Go to: https://aistudio.google.com/app/apikey
+   - Create a new API key
+   - Replace "your_google_ai_api_key_here" with your actual API key
+
+3. START THE SERVER:
+   Run: npm run dev
+
+4. ACCESS THE APPLICATION:
+   The application will be available at: http://localhost:9002
+   
+   Trip Planner (Admin): http://localhost:9002/guide
+   Dashboard: http://localhost:9002/
+   Login: http://localhost:9002/login
+
+5. TRIP PLANNER FIX:
+   Once you add the Google AI API key, the trip planner error will be resolved.

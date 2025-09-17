@@ -38,6 +38,8 @@ const formSchema = z.object({
   routeType: z.string({required_error: "Route type is required."}).min(1, "Route type is required."),
   traffic: z.string({required_error: "Traffic condition is required."}).min(1, "Traffic condition is required."),
   loadKg: z.coerce.number().optional(),
+  avg_speed_kmph: z.coerce.number().min(1, "Average speed must be at least 1 kmph").max(200, "Average speed cannot exceed 200 kmph"),
+  max_speed_kmph: z.coerce.number().min(1, "Max speed must be at least 1 kmph").max(200, "Max speed cannot exceed 200 kmph"),
 });
 
 
@@ -59,6 +61,8 @@ export default function TripPlannerPage() {
       employeeId: undefined,
       vehicleId: undefined,
       loadKg: undefined,
+      avg_speed_kmph: 45,
+      max_speed_kmph: 60,
     },
   });
   
@@ -102,7 +106,9 @@ export default function TripPlannerPage() {
         vehicleModel: selectedVehicle.model,
         routeType: values.routeType,
         traffic: values.traffic,
-        loadKg: values.loadKg
+        loadKg: values.loadKg,
+        avg_speed_kmph: values.avg_speed_kmph,
+        max_speed_kmph: values.max_speed_kmph
       });
       
       addTrip({
@@ -295,6 +301,28 @@ export default function TripPlannerPage() {
                                         <FormItem>
                                         <FormLabel>Load in kg (Optional)</FormLabel>
                                         <FormControl><Input type="number" placeholder="e.g., 5000" {...field} value={field.value ?? ''} /></FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={plannerForm.control}
+                                    name="avg_speed_kmph"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Average Speed (kmph)</FormLabel>
+                                        <FormControl><Input type="number" placeholder="e.g., 45" {...field} /></FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                <FormField
+                                    control={plannerForm.control}
+                                    name="max_speed_kmph"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Maximum Speed (kmph)</FormLabel>
+                                        <FormControl><Input type="number" placeholder="e.g., 60" {...field} /></FormControl>
                                         <FormMessage />
                                         </FormItem>
                                     )}

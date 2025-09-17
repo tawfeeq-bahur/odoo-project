@@ -59,7 +59,7 @@ interface SharedState {
   expenses: Expense[];
   trips: Trip[];
   user: UserType | null;
-  login: (username: string, password: string) => boolean;
+  login: (username: string, password: string, adminCode?: string) => boolean;
   logout: () => void;
   refreshData: () => Promise<boolean>;
   addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
@@ -315,11 +315,20 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     loadDataFromDatabase();
   }, [setTrips, setExpenses]);
 
-  const login = (username: string, password: string): boolean => {
-    // Admin login
+  const login = (username: string, password: string, adminCode?: string): boolean => {
+    // Admin login - requires 6-digit admin code
     if (username === 'admin' && password === '123') {
-      setUser({ username: 'Admin', role: 'admin' });
-      return true;
+      // Check if admin code is provided and valid (6 digits)
+      if (!adminCode || adminCode.length !== 6 || !/^\d{6}$/.test(adminCode)) {
+        return false;
+      }
+      // For demo purposes, accept any 6-digit code starting with '1'
+      // In production, you would validate against a secure admin code
+      if (adminCode.startsWith('1')) {
+        setUser({ username: 'Admin', role: 'admin' });
+        return true;
+      }
+      return false;
     }
     
     // Employee login (using assigned name as username)

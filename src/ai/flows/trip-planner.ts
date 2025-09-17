@@ -18,6 +18,8 @@ const TripPlannerInputSchema = z.object({
   routeType: z.string().describe("The primary type of route (e.g., 'City', 'Highway')."),
   traffic: z.string().describe("The expected traffic conditions (e.g., 'Normal', 'Stop & Go', 'Light')."),
   loadKg: z.number().optional().describe("The weight of the load in kilograms."),
+  avg_speed_kmph: z.number().describe("The average speed expected for the trip in kmph."),
+  max_speed_kmph: z.number().describe("The maximum speed expected for the trip in kmph."),
 });
 export type TripPlannerInput = z.infer<typeof TripPlannerInputSchema>;
 
@@ -60,7 +62,7 @@ export async function getTripPlan(input: TripPlannerInput): Promise<TripPlannerO
 function generateFallbackPlan(input: TripPlannerInput): TripPlannerOutput {
     // Calculate realistic distance based on common Indian routes
     const distance = calculateDistance(input.source, input.destination);
-    const duration = calculateDuration(distance, input.routeType, input.traffic);
+    const duration = calculateDuration(distance, input.routeType, input.traffic, input.avg_speed_kmph);
     const fuelCost = calculateFuelCost(distance, input.vehicleModel, input.loadKg);
     const tollCost = calculateTollCost(distance, input.routeType);
     
@@ -116,15 +118,17 @@ function calculateDistance(source: string, destination: string): number {
     return Math.max(50, Math.floor(Math.random() * 500) + 100);
 }
 
-function calculateDuration(distance: number, routeType: string, traffic: string): string {
-    let baseSpeed = 60; // km/h base speed
+function calculateDuration(distance: number, routeType: string, traffic: string, avgSpeed: number): string {
+    let baseSpeed = avgSpeed; // Use the provided average speed as base
     
+    // Adjust based on route type if needed
     if (routeType === 'Highway') {
-        baseSpeed = 80;
+        baseSpeed = Math.min(baseSpeed, 80); // Cap at 80 km/h for highways
     } else if (routeType === 'City') {
-        baseSpeed = 30;
+        baseSpeed = Math.min(baseSpeed, 40); // Cap at 40 km/h for city
     }
     
+    // Adjust for traffic conditions
     if (traffic === 'Heavy' || traffic === 'Stop & Go') {
         baseSpeed *= 0.6;
     } else if (traffic === 'Light') {
@@ -232,6 +236,8 @@ const prompt = ai.definePrompt({
         Vehicle Information:
         - Model: {{vehicleModel}}
         - Load: {{loadKg}} kg (if provided)
+        - Average Speed: {{avg_speed_kmph}} kmph
+        - Maximum Speed: {{max_speed_kmph}} kmph
 
         Trip Conditions:
         - Source: {{source}}
@@ -241,8 +247,8 @@ const prompt = ai.definePrompt({
 
         Instructions:
         1.  Calculate the estimated distance in kilometers.
-        2.  Estimate the trip duration, accounting for traffic and route type.
-        3.  Estimate the fuel cost. Be realistic, considering the vehicle model and load.
+        2.  Estimate the trip duration, accounting for traffic, route type, and the provided average speed.
+        3.  Estimate the fuel cost. Be realistic, considering the vehicle model, load, and speed parameters.
         4.  Estimate the toll charges based on the most likely highway route.
         5.  Provide a brief summary of the suggested route (e.g., "Take NH44 to Hyderabad...").
         6.  Generate an accurate, detailed route polyline. This polyline must follow the actual national highways and major roads. It should not be a straight line or a rough guess. It should have enough points to trace the roads on a map.
