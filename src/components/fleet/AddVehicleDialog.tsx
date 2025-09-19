@@ -2,7 +2,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -60,7 +61,7 @@ type AddPackageDialogProps = {
 export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [studentList, setStudentList] = useState<string[]>([]);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
