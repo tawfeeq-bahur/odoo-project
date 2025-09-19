@@ -1,76 +1,78 @@
 
 'use server';
 /**
- * @fileOverview Provides AI-driven insights about the vehicle fleet.
+ * @fileOverview Provides AI-driven insights about tour packages and expenses.
  *
- * - getVehicleInsights - A function that returns insights based on fleet data.
- * - VehicleInsightsInput - The input type for the getVehicleInsights function.
- * - VehicleInsightsOutput - The return type for the getVehicleInsights function.
+ * - getTourInsights - A function that returns insights based on tour data.
+ * - TourInsightsInput - The input type for the getTourInsights function.
+ * - TourInsightsOutput - The return type for the getTourInsights function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-const VehicleInsightsInputSchema = z.object({
-  totalVehicles: z.number().describe('The total number of vehicles in the fleet.'),
-  ongoingTrips: z.number().describe('The number of trips currently in progress.'),
+const TourInsightsInputSchema = z.object({
+  totalPackages: z.number().describe('The total number of tour packages.'),
+  activeTours: z.number().describe('The number of tours currently active or planned.'),
   totalExpenses: z.number().describe('The total expenses for the month.'),
-  fuelConsumption: z.number().describe('The total fuel consumption in liters for the month.'),
+  totalMembers: z.number().describe('The total number of members across all tours.'),
 });
-export type VehicleInsightsInput = z.infer<typeof VehicleInsightsInputSchema>;
+export type TourInsightsInput = z.infer<typeof TourInsightsInputSchema>;
 
-const VehicleInsightsOutputSchema = z.object({
-  efficiencyInsight: z.string().describe("An insight about the fleet's overall efficiency."),
-  costSavingSuggestion: z.string().describe("A suggestion for how to save costs."),
-  anomalyDetection: z.string().describe("A note about any detected anomalies, or a confirmation that everything looks normal."),
+const TourInsightsOutputSchema = z.object({
+  engagementInsight: z.string().describe("An insight about member engagement or tour popularity."),
+  costSavingSuggestion: z.string().describe("A suggestion for how to save costs or optimize budget."),
+  growthOpportunity: z.string().describe("A note about a potential growth opportunity, like a popular destination."),
 });
-export type VehicleInsightsOutput = z.infer<typeof VehicleInsightsOutputSchema>;
+export type TourInsightsOutput = z.infer<typeof TourInsightsOutputSchema>;
 
 
-export async function getVehicleInsights(input: VehicleInsightsInput): Promise<VehicleInsightsOutput> {
-  return vehicleInsightsFlow(input);
+export async function getTourInsights(input: TourInsightsInput): Promise<TourInsightsOutput> {
+  return tourInsightsFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'vehicleInsightsPrompt',
-  input: { schema: VehicleInsightsInputSchema },
-  output: { schema: VehicleInsightsOutputSchema },
+  name: 'tourInsightsPrompt',
+  input: { schema: TourInsightsInputSchema },
+  output: { schema: TourInsightsOutputSchema },
   model: 'googleai/gemini-2.5-flash',
   prompt: `
-    You are a fleet management analyst AI. Based on the following summary data for the current month, provide actionable insights.
+    You are a travel business analyst AI. Based on the following summary data for the current month, provide actionable insights for a tour organizer.
 
-    - Total Vehicles: {{totalVehicles}}
-    - Ongoing Trips: {{ongoingTrips}}
+    - Total Tour Packages: {{totalPackages}}
+    - Active/Planned Tours: {{activeTours}}
     - Total Expenses: ₹{{totalExpenses}}
-    - Fuel Consumption: {{fuelConsumption}} Liters
+    - Total Members: {{totalMembers}}
 
     Analyze this data and generate:
-    1.  A concise insight about the fleet's current operational efficiency.
+    1.  A concise insight about member engagement or tour popularity.
     2.  One specific, actionable cost-saving suggestion.
-    3.  One anomaly detection note. If no anomalies are apparent, state that "Operations look normal."
+    3.  One suggestion for a growth opportunity (e.g., a new type of tour, a popular destination to focus on).
 
-    Be brief and to the point.
+    Be brief, positive, and to the point.
   `,
 });
 
 
-const vehicleInsightsFlow = ai.defineFlow(
+const tourInsightsFlow = ai.defineFlow(
   {
-    name: 'vehicleInsightsFlow',
-    inputSchema: VehicleInsightsInputSchema,
-    outputSchema: VehicleInsightsOutputSchema,
+    name: 'tourInsightsFlow',
+    inputSchema: TourInsightsInputSchema,
+    outputSchema: TourInsightsOutputSchema,
   },
   async (input) => {
     try {
         const {output} = await prompt(input);
-        return output!;
+        if (!output) {
+          throw new Error("AI did not return an output.");
+        }
+        return output;
     } catch (error) {
         console.error("AI Insight Error:", error);
-        // Return a default/safe response when the AI fails
         return {
-            efficiencyInsight: "Could not retrieve efficiency insights at this time.",
-            costSavingSuggestion: "Could not retrieve cost saving suggestions.",
-            anomalyDetection: "AI analysis is temporarily unavailable. Please try again later."
+            engagementInsight: "Could not retrieve engagement insights at this time.",
+            costSavingSuggestion: "Review expenses manually to find savings opportunities.",
+            growthOpportunity: "AI analysis is temporarily unavailable. Please try again later."
         }
     }
   }

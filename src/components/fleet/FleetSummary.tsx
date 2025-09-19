@@ -1,51 +1,58 @@
 
 'use client';
 
-import type { Vehicle, Expense } from '@/lib/types';
+import { useEffect, useState } from 'react';
+import type { TourPackage, Expense, Member } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Truck, CircleDollarSign, Fuel, Wrench, Lightbulb, AlertTriangle } from 'lucide-react';
+import { Suitcase, CircleDollarSign, Users, Wrench, Lightbulb, AlertTriangle } from 'lucide-react';
+import { getTourInsights, TourInsightsOutput } from '@/ai/flows/vehicle-insights';
+import { Skeleton } from '@/components/ui/skeleton';
 
-type FleetSummaryProps = {
-  vehicles: Vehicle[];
+type TourSummaryProps = {
+  packages: TourPackage[];
   expenses: Expense[];
+  members: Member[];
 };
 
-export function FleetSummary({ vehicles, expenses }: FleetSummaryProps) {
-  // Simple calculations without any async operations
+export function TourSummary({ packages, expenses, members }: TourSummaryProps) {
+  const [insights, setInsights] = useState<TourInsightsOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const totalExpenses = expenses.reduce((acc, exp) => acc + exp.amount, 0);
-  
-  const summary = {
-    totalVehicles: vehicles.length,
-    onTrip: vehicles.filter(v => v.status === 'On Trip').length,
-    totalExpenses: totalExpenses,
-    maintenance: vehicles.filter(v => v.status === 'Maintenance').length,
-  };
 
-  // Generate insights immediately without any loading states
-  const generateInsights = () => {
-    if (summary.totalVehicles === 0) {
-      return {
-        efficiencyInsight: "No vehicles in fleet yet. Add vehicles to get efficiency insights.",
-        costSavingSuggestion: "Start by adding vehicles and tracking expenses to identify cost-saving opportunities.",
-        anomalyDetection: "Operations look normal."
-      };
+  useEffect(() => {
+    async function fetchInsights() {
+      setIsLoading(true);
+      try {
+        const result = await getTourInsights({
+          totalPackages: packages.length,
+          activeTours: packages.filter(p => p.status === 'Active').length,
+          totalExpenses: totalExpenses,
+          totalMembers: members.length,
+        });
+        setInsights(result);
+      } catch (error) {
+        console.error("Failed to fetch AI insights:", error);
+        setInsights({
+          engagementInsight: "Could not load insights.",
+          costSavingSuggestion: "Could not load suggestions.",
+          growthOpportunity: "Analysis currently unavailable."
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
-
-    return {
-      efficiencyInsight: `Your fleet of ${summary.totalVehicles} vehicles is currently ${summary.onTrip > 0 ? 'actively operating' : 'idle'}. ${summary.onTrip > 0 ? `${summary.onTrip} trips are in progress.` : 'No active trips at the moment.'}`,
-      costSavingSuggestion: `Total expenses this month: ₹${summary.totalExpenses.toLocaleString()}. Consider optimizing routes and maintenance schedules to reduce costs.`,
-      anomalyDetection: summary.maintenance > 0 ? `${summary.maintenance} vehicle(s) in maintenance. Monitor maintenance schedules to prevent unexpected breakdowns.` : "Operations look normal."
-    };
-  };
-
-  const insights = generateInsights();
+    fetchInsights();
+  }, [packages, expenses, members, totalExpenses]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <SummaryCard icon={Truck} title="Total Vehicles" value={summary.totalVehicles} />
-      <SummaryCard icon={CircleDollarSign} title="Total Expenses" value={`₹${summary.totalExpenses.toFixed(2)}`} />
-      <SummaryCard icon={Wrench} title="In Maintenance" value={summary.maintenance} />
-      <SummaryCard icon={Fuel} title="Ongoing Trips" value={summary.onTrip} />
+    <>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard icon={Suitcase} title="Total Packages" value={packages.length} />
+        <SummaryCard icon={CircleDollarSign} title="Total Expenses" value={`₹${totalExpenses.toLocaleString()}`} />
+        <SummaryCard icon={Users} title="Total Members" value={members.length} />
+        <SummaryCard icon={Wrench} title="Draft Packages" value={packages.filter(p => p.status === 'Draft').length} />
+      </div>
 
       <Card className="md:col-span-2 lg:col-span-4">
         <CardHeader>
@@ -54,27 +61,20 @@ export function FleetSummary({ vehicles, expenses }: FleetSummaryProps) {
             AI-Powered Insights
           </CardTitle>
           <CardDescription>
-            Actionable insights based on your fleet's current activity.
+            Actionable insights based on your current tour activity.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <InsightItem 
-            title="Efficiency Insight" 
-            text={insights.efficiencyInsight} 
-          />
-          <InsightItem 
-            title="Cost Saving Suggestion" 
-            text={insights.costSavingSuggestion} 
-          />
-          <InsightItem 
-            title="Anomaly Detection" 
-            text={insights.anomalyDetection}
-            icon={insights.anomalyDetection.toLowerCase().includes("normal") ? undefined : AlertTriangle}
-            iconColor="text-orange-500"
-          />
+          {isLoading ? <InsightsSkeleton /> : (
+            <>
+              <InsightItem title="Engagement Insight" text={insights?.engagementInsight} />
+              <InsightItem title="Cost Saving Suggestion" text={insights?.costSavingSuggestion} />
+              <InsightItem title="Growth Opportunity" text={insights?.growthOpportunity} />
+            </>
+          )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }
 
@@ -90,9 +90,8 @@ const SummaryCard = ({ icon: Icon, title, value }: { icon: React.ElementType; ti
   </Card>
 );
 
-const InsightItem = ({ title, text, icon: Icon, iconColor }: { title: string, text: string, icon?: React.ElementType, iconColor?: string }) => (
+const InsightItem = ({ title, text }: { title: string; text?: string }) => (
   <div className="p-3 rounded-lg bg-muted/50 flex items-start gap-3">
-    {Icon && <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${iconColor || ''}`} />}
     <div>
       <h4 className="font-semibold text-sm">{title}</h4>
       <p className="text-sm text-muted-foreground">{text}</p>
@@ -100,3 +99,19 @@ const InsightItem = ({ title, text, icon: Icon, iconColor }: { title: string, te
   </div>
 );
 
+const InsightsSkeleton = () => (
+  <div className="space-y-4">
+    <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+      <Skeleton className="h-4 w-1/4" />
+      <Skeleton className="h-4 w-3/4" />
+    </div>
+    <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+      <Skeleton className="h-4 w-1/4" />
+      <Skeleton className="h-4 w-full" />
+    </div>
+    <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+      <Skeleton className="h-4 w-1/4" />
+      <Skeleton className="h-4 w-2/3" />
+    </div>
+  </div>
+);

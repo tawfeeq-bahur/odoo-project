@@ -1,14 +1,16 @@
-# FleetFlow - Fleet Management Optimization
 
-FleetFlow is an AI-powered web application designed to streamline fleet management operations. It provides a centralized dashboard for real-time monitoring, a smart trip planner for cost and distance estimation, and an expense scanner to simplify financial tracking.
+# TourJet - AI-Powered Tour Management
+
+TourJet is a smart, AI-driven web application designed to simplify tour and travel management. It provides a centralized dashboard for organizers to plan trips, manage members, and track expenses, and a user-friendly panel for members to view trip details and collaborate.
 
 ## Core Features
 
-*   **Fleet Dashboard:** Get a real-time overview of your entire fleet, including vehicle status, ongoing trips, and key performance indicators like fuel consumption and total expenses.
-*   **AI Trip Planner:** Enter a source and destination to receive instant AI-powered estimations for trip distance, duration, fuel costs, and potential toll charges.
-*   **AI Expense Scanner:** Upload images of fuel receipts, toll bills, or maintenance invoices. The AI will automatically parse the details and add them to your trip expenses.
-*   **Vehicle & Trip Management:** Track detailed information for each vehicle and log every trip with associated expenses and routes.
-*   **Data-Driven Analytics:** Visualize historical data with interactive charts to identify inefficiencies, detect anomalies, and make informed decisions for future planning.
+*   **Organizer Dashboard:** A comprehensive overview for trip leaders to manage tour packages, active trips, members, and expenses.
+*   **AI Route Planner:** Enter a source and destination to get AI-powered estimations for travel distance, duration, and costs, with points of interest visualized on a map.
+*   **AI Expense Scanner:** Upload receipts for food, travel, or tickets. The AI automatically parses the details for easy expense logging.
+*   **Trip & Itinerary Management:** Create detailed day-wise itineraries, manage trip members via invite links, and track all trip-related information in one place.
+*   **Budgeting & Analytics:** Monitor expenses with category-wise splits and get AI-powered insights to optimize your budget and identify popular trends.
+*   **Member Collaboration:** Members can view all trip info, see shared expenses, and (in future versions) interact via a group chat or polls.
 *   **Responsive & Themed UI:** A clean, professional interface that works seamlessly on both desktop and mobile devices, with light and dark theme support.
 
 ## Technology Stack
@@ -26,31 +28,19 @@ FleetFlow is an AI-powered web application designed to streamline fleet manageme
     *   **AI Provider:** Google AI
     *   **Icons:** Lucide React
     *   **Charts:** Recharts
+    *   **Mapping:** Leaflet & React-Leaflet
 
 ## UI/UX Focus
 
-*   **Professional & Clean:** The UI is designed to be clutter-free and intuitive, using a corporate color palette (blues and grays) suitable for a business tool.
-*   **Data-Centric:** Dashboards and components are designed to present data clearly and effectively, enabling quick insights.
-*   **Responsive:** The layout is fully responsive, ensuring a seamless experience whether you're in the office on a desktop or on the go with a mobile device.
-*   **Efficient Workflow:** The user journey is optimized for efficiency, from planning a trip to logging expenses, minimizing manual data entry.
+*   **Role-Based Design:** The UI adapts to provide a tailored experience for both Tour Organizers and Trip Members.
+*   **Data-Centric:** Dashboards and components are designed to present data clearly and effectively, enabling quick insights and easy management.
+*   **Responsive:** The layout is fully responsive, ensuring a seamless experience whether you're planning on a desktop or checking details on the go with a mobile device.
+*   **Efficient Workflow:** The user journey is optimized for efficiency, from planning a new tour to logging an expense, minimizing manual work.
 
 ## Future Enhancements
 
-*   **Driver Performance Scoring:** Implement a driver scoring system (0-100) based on metrics like mileage efficiency (distance/fuel), on-time trip completion, and simulated harsh events (harsh braking, overspeeding). This will allow admins to rank drivers and identify coaching opportunities.
-*   **Virtual Maintenance Schedules:** Automatically trigger maintenance alerts (e.g., "Oil Change Due," "Tire Replacement Needed") based on total distance traveled (km). This moves from reactive to proactive vehicle care.
-*   **Advanced Route & Cost Analysis:** Integrate algorithms like the Haversine formula for accurate distance calculations and Dijkstra’s algorithm to find the most fuel-efficient or cost-effective routes by considering penalties for road types (city vs. highway) or high-wear areas.
-*   **Data Simulation & Import:** Add a feature to generate synthetic trip data or allow bulk trip log uploads via CSV. This will enable more robust testing, demonstrations, and analysis of historical trends.
-*   **Persistent Database:** Replace the current client-side state management with a full backend database (like Firebase Firestore or MongoDB) to ensure data persistence and scalability.
+*   **Real-time Group Chat:** Implement a chat section for members of a trip to communicate and coordinate.
+*   **QR Code / Invite Link Generation:** Allow organizers to generate unique links or QR codes for members to join a trip.
+*   **Photo Sharing & Memories:** A dedicated section for members to upload and share photos from a trip, creating a shared album.
+*   **Persistent Database:** Replace the current client-side state management with a full backend database (like Firebase Firestore or MongoDB) to ensure data persistence.
 *   **Secure User Authentication:** Implement a production-ready authentication system using a service like Firebase Authentication or NextAuth.js.
-
----
-
-### Credits
-
-## Credits  
-
-**Developed by:** JD  
-
-- 📧 Email: deepakjd1226@gmail.com
-- 🔗 LinkedIn: https://www.linkedin.com/in/deepak-j-1206hd/
-

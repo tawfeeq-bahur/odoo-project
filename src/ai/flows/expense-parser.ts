@@ -21,7 +21,7 @@ const ExpenseParserInputSchema = z.object({
 export type ExpenseParserInput = z.infer<typeof ExpenseParserInputSchema>;
 
 const ParsedExpenseSchema = z.object({
-    type: z.enum(["Fuel", "Toll", "Maintenance", "Health", "Travel Allowance", "Other"]).describe('The type of expense.'),
+    type: z.enum(["Travel", "Food", "Hotel", "Tickets", "Misc"]).describe('The type of expense.'),
     amount: z.number().describe('The total amount of the expense.'),
     date: z.string().describe('The date of the expense in YYYY-MM-DD format.'),
 });
@@ -40,11 +40,11 @@ const prompt = ai.definePrompt({
   input: {schema: ExpenseParserInputSchema},
   output: {schema: ExpenseParserOutputSchema},
   model: 'googleai/gemini-2.5-flash',
-  prompt: `You are an expert at reading and interpreting receipts and bills for fleet management.
+  prompt: `You are an expert at reading and interpreting receipts and bills for tourism management.
 
 Analyze the provided image of a bill or receipt. Identify the type of expense, the total amount, and the date.
 
-Categorize the expense into one of the following types: "Fuel", "Toll", "Maintenance", "Health", "Travel Allowance", "Other".
+Categorize the expense into one of the following types: "Travel", "Food", "Hotel", "Tickets", "Misc".
 
 Extract the following information for each expense found and return it in a structured format:
 - Expense Type

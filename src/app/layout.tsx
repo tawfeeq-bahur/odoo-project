@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'FleetFlow',
-  description: 'AI-Powered Fleet Management',
+  title: 'TourJet',
+  description: 'AI-Powered Tourism Management',
 };
 
 export default function RootLayout({

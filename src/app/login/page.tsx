@@ -11,22 +11,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useSharedState } from '@/components/AppLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, Truck } from 'lucide-react';
+import { AlertTriangle, Compass } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: 'Username or Plate Number is required.' }),
+  username: z.string().min(1, { message: 'Username is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
-  adminCode: z.string().optional(),
-}).refine((data) => {
-  // If username is 'admin', adminCode is required
-  if (data.username.toLowerCase() === 'admin') {
-    return data.adminCode && data.adminCode.length === 6 && /^\d{6}$/.test(data.adminCode);
-  }
-  return true;
-}, {
-  message: "Admin code must be exactly 6 digits",
-  path: ["adminCode"],
 });
 
 export default function LoginPage() {
@@ -38,23 +28,17 @@ export default function LoginPage() {
     defaultValues: {
       username: '',
       password: '',
-      adminCode: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const { username, password, adminCode } = values;
-
-    const success = login(username, password, adminCode);
+    const { username, password } = values;
+    const success = login(username, password);
 
     if (!success) {
-        if (username.toLowerCase() === 'admin') {
-            setError('Invalid admin credentials. Please check your username, password, and 6-digit admin code.');
-        } else {
-            setError('Invalid credentials. Please check your username/plate number and password.');
-        }
+      setError('Invalid credentials. Use "organizer" or "member" with password "123".');
     } else {
-        setError(null);
+      setError(null);
     }
   }
 
@@ -66,9 +50,9 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
-            <Truck className="h-8 w-8 text-primary" />
+            <Compass className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-headline">Welcome to FleetFlow</CardTitle>
+          <CardTitle className="text-2xl font-headline">Welcome to TourJet</CardTitle>
           <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -79,9 +63,9 @@ export default function LoginPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username / Plate Number</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin or e.g., TRK-001" {...field} />
+                      <Input placeholder="organizer / member" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -100,31 +84,7 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              {form.watch('username').toLowerCase() === 'admin' && (
-                <FormField
-                  control={form.control}
-                  name="adminCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Admin Code (6 digits)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="text" 
-                          placeholder="123456" 
-                          maxLength={6}
-                          {...field}
-                          onChange={(e) => {
-                            // Only allow digits
-                            const value = e.target.value.replace(/\D/g, '');
-                            field.onChange(value);
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              
               {error && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />

@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Upload, AlertTriangle, ScanLine, PlusCircle, LoaderCircle, CheckCircle, XCircle, DollarSign, Calendar, Fuel, Milestone, Wrench, HeartPulse, Send } from 'lucide-react';
+import { Upload, AlertTriangle, ScanLine, PlusCircle, LoaderCircle, CheckCircle, Wallet, Send, Utensils, Ticket } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useSharedState } from '@/components/AppLayout';
@@ -25,14 +25,15 @@ import { useSearchParams } from 'next/navigation';
 type ParsedExpense = ExpenseParserOutput['expenses'][0];
 
 const manualExpenseSchema = z.object({
-  type: z.enum(["Fuel", "Toll", "Maintenance", "Health", "Travel Allowance", "Other"]),
+  type: z.enum(["Travel", "Food", "Hotel", "Tickets", "Misc"]),
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0."),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'A valid date is required.' }),
+  description: z.string().min(3, "Please provide a brief description."),
 });
 
 export default function ScannerPage() {
   const searchParams = useSearchParams();
-  const tripIdFromQuery = searchParams.get('tripId');
+  const tourIdFromQuery = searchParams.get('tourId');
   
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -41,21 +42,20 @@ export default function ScannerPage() {
   const [parsedExpenses, setParsedExpenses] = useState<ParsedExpense[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { addExpense, user } = useSharedState();
+  const { addExpense } = useSharedState();
 
   const form = useForm<z.infer<typeof manualExpenseSchema>>({
     resolver: zodResolver(manualExpenseSchema),
     defaultValues: {
-      type: "Fuel",
-      amount: 0,
+      type: "Food",
+      amount: undefined,
       date: format(new Date(), 'yyyy-MM-dd'),
+      description: "",
     },
   });
 
-  const getTripId = () => {
-    if (tripIdFromQuery) return tripIdFromQuery;
-    if (user?.role === 'employee') return user.assignedVehicleId;
-    return undefined;
+  const getTourId = () => {
+    return tourIdFromQuery || undefined;
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,10 +104,12 @@ export default function ScannerPage() {
     }
   };
 
-  const handleAddExpense = (expense: ParsedExpense) => {
+  const handleAddExpense = (expense: ParsedExpense, description?: string) => {
     addExpense({
       ...expense,
-      tripId: getTripId() || undefined,
+      amount: Number(expense.amount),
+      tourId: getTourId(),
+      description: description || "Scanned from receipt",
     });
     toast({
       title: 'Expense Added!',
@@ -119,14 +121,18 @@ export default function ScannerPage() {
   const handleManualSubmit = (values: z.infer<typeof manualExpenseSchema>) => {
     addExpense({
       ...values,
-      tripId: getTripId() || undefined,
+      tourId: getTourId(),
     });
     toast({
       title: "Expense Logged",
       description: `Your ${values.type} expense of ₹${values.amount.toFixed(2)} has been submitted for approval.`
     });
-    form.reset();
-    form.setValue('date', format(new Date(), 'yyyy-MM-dd'));
+    form.reset({
+        type: "Food",
+        amount: undefined,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        description: "",
+    });
   };
 
   return (
@@ -134,10 +140,7 @@ export default function ScannerPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight font-headline">Log an Expense</h1>
         <p className="text-muted-foreground">
-          {tripIdFromQuery 
-            ? `Adding expense for a specific trip. All logs here will be associated with that trip.`
-            : `Upload a receipt for automatic scanning or enter an expense manually.`
-          }
+          Upload a receipt for automatic scanning or enter an expense manually.
         </p>
       </div>
 
@@ -206,12 +209,11 @@ export default function ScannerPage() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="Fuel">Fuel</SelectItem>
-                                                <SelectItem value="Toll">Toll</SelectItem>
-                                                <SelectItem value="Maintenance">Maintenance</SelectItem>
-                                                <SelectItem value="Health">Health</SelectItem>
-                                                <SelectItem value="Travel Allowance">Travel Allowance</SelectItem>
-                                                <SelectItem value="Other">Other</SelectItem>
+                                                <SelectItem value="Travel">Travel</SelectItem>
+                                                <SelectItem value="Food">Food</SelectItem>
+                                                <SelectItem value="Hotel">Hotel</SelectItem>
+                                                <SelectItem value="Tickets">Tickets</SelectItem>
+                                                <SelectItem value="Misc">Misc.</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -246,6 +248,19 @@ export default function ScannerPage() {
                                     )}
                                 />
                             </div>
+                             <FormField
+                                control={form.control}
+                                name="description"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Description</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., Lunch at hotel" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <Button type="submit" className="w-full">
                                 <Send className="mr-2"/> Submit Expense
                             </Button>
@@ -258,7 +273,7 @@ export default function ScannerPage() {
         <Card>
           <CardHeader>
             <CardTitle>3. Review & Add Scanned Expenses</CardTitle>
-            <CardDescription>Review the expenses found by the AI and add them to your trip log.</CardDescription>
+            <CardDescription>Review the expenses found by the AI and add them to your log.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading && <ResultsSkeleton />}
@@ -278,24 +293,22 @@ export default function ScannerPage() {
               </div>
             )}
             
-            {parsedExpenses && (
+            {parsedExpenses && parsedExpenses.length > 0 && (
               <div className="space-y-3">
                 {parsedExpenses.map((exp, index) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-background">
                     <div className="flex items-center gap-3">
                        <div className="p-2 bg-muted rounded-md">
-                         {exp.type === "Fuel" && <Fuel className="w-5 h-5 text-primary" />}
-                         {exp.type === "Toll" && <Milestone className="w-5 h-5 text-primary" />}
-                         {exp.type === "Maintenance" && <Wrench className="w-5 h-5 text-primary" />}
-                         {exp.type === "Health" && <HeartPulse className="w-5 h-5 text-primary" />}
+                         {exp.type === "Food" && <Utensils className="w-5 h-5 text-primary" />}
+                         {exp.type === "Travel" && <Wallet className="w-5 h-5 text-primary" />}
+                         {exp.type === "Tickets" && <Ticket className="w-5 h-5 text-primary" />}
                        </div>
                        <div>
                          <div className="font-semibold flex items-center gap-2">
                            <Badge variant="outline">{exp.type}</Badge>
                          </div>
                          <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                           <DollarSign className="w-3 h-3" /> ₹{exp.amount.toFixed(2)}
-                           <Calendar className="w-3 h-3 ml-2" /> {exp.date}
+                           ₹{exp.amount.toFixed(2)} on {exp.date}
                          </p>
                        </div>
                     </div>
@@ -306,6 +319,12 @@ export default function ScannerPage() {
                   </div>
                 ))}
               </div>
+            )}
+            
+             {parsedExpenses && parsedExpenses.length === 0 && (
+                <div className="text-center py-10 text-muted-foreground">
+                    <p>No valid expenses were added yet.</p>
+                </div>
             )}
           </CardContent>
         </Card>

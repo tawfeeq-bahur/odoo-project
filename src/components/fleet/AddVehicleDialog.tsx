@@ -25,46 +25,40 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Vehicle } from '@/lib/types';
-import { format } from 'date-fns';
+import type { TourPackage } from '@/lib/types';
+import { useSharedState } from '../AppLayout';
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'Vehicle name must be at least 2 characters.' }),
-  plateNumber: z.string().min(3, { message: 'Plate number is required.' }),
-  model: z.string().min(2, { message: 'Model is required.' }),
-  status: z.enum(['Idle', 'On Trip', 'Maintenance']),
-  fuelLevel: z.coerce.number().min(0).max(100, { message: 'Fuel level must be between 0 and 100.' }),
-  lastMaintenance: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Invalid date format' }),
-  assignedTo: z.string().optional(),
+  name: z.string().min(3, { message: 'Tour name must be at least 3 characters.' }),
+  destination: z.string().min(2, { message: 'Destination is required.' }),
+  status: z.enum(['Active', 'Draft', 'Archived']),
+  price: z.coerce.number().min(0, { message: 'Price cannot be negative.' }),
+  durationDays: z.coerce.number().min(1, { message: 'Duration must be at least 1 day.' }),
 });
 
-type AddVehicleDialogProps = {
+type AddPackageDialogProps = {
   children: React.ReactNode;
-  onAddVehicle: (vehicle: Omit<Vehicle, 'id'>) => void;
+  onAddPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizer'>) => void;
 };
 
-export function AddVehicleDialog({ children, onAddVehicle }: AddVehicleDialogProps) {
+export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useSharedState();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      plateNumber: '',
-      model: '',
-      status: 'Idle',
-      fuelLevel: 100,
-      lastMaintenance: format(new Date(), 'yyyy-MM-dd'),
-      assignedTo: '',
+      destination: '',
+      status: 'Draft',
+      price: 0,
+      durationDays: 1,
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddVehicle({
-      ...values,
-      lastMaintenance: new Date(values.lastMaintenance).toISOString(),
-      assignedTo: values.assignedTo || null,
-    });
+    if (!user) return;
+    onAddPackage(values);
     form.reset();
     setIsOpen(false);
   }
@@ -74,49 +68,34 @@ export function AddVehicleDialog({ children, onAddVehicle }: AddVehicleDialogPro
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add a New Vehicle</DialogTitle>
+          <DialogTitle>Create a New Tour Package</DialogTitle>
           <DialogDescription>
-            Enter the details for the new vehicle to add it to your fleet.
+            Enter the details for the new tour package.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vehicle Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Volvo Prime Mover" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="model"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Model</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., VNL 860" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
             <FormField
               control={form.control}
-              name="plateNumber"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Plate Number</FormLabel>
+                  <FormLabel>Tour Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., TRK-001" {...field} />
+                    <Input placeholder="e.g., Himalayan Adventure" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="destination"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Destination</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Manali, HP" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,34 +104,25 @@ export function AddVehicleDialog({ children, onAddVehicle }: AddVehicleDialogPro
             <div className="grid grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
-                    name="status"
+                    name="price"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Status</FormLabel>
-                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="Idle">Idle</SelectItem>
-                                <SelectItem value="On Trip">On Trip</SelectItem>
-                                <SelectItem value="Maintenance">Maintenance</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <FormLabel>Price per Person (₹)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="e.g., 25000" {...field} />
+                        </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                 />
                  <FormField
                     control={form.control}
-                    name="fuelLevel"
+                    name="durationDays"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Fuel Level (%)</FormLabel>
+                        <FormLabel>Duration (Days)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="e.g., 85" {...field} />
+                            <Input type="number" placeholder="e.g., 7" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -161,35 +131,29 @@ export function AddVehicleDialog({ children, onAddVehicle }: AddVehicleDialogPro
             </div>
              <FormField
                 control={form.control}
-                name="lastMaintenance"
+                name="status"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Last Maintenance Date</FormLabel>
-                        <FormControl>
-                            <Input type="date" {...field} />
-                        </FormControl>
+                        <FormLabel>Status</FormLabel>
+                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Draft">Draft</SelectItem>
+                                <SelectItem value="Active">Active</SelectItem>
+                                <SelectItem value="Archived">Archived</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                     </FormItem>
                 )}
             />
-
-            <FormField
-              control={form.control}
-              name="assignedTo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assign To (Employee Name)</FormLabel>
-                  <FormControl>
-                     <Input placeholder="e.g., Raja" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <DialogFooter className="pt-4">
                <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Vehicle</Button>
+              <Button type="submit">Create Package</Button>
             </DialogFooter>
           </form>
         </Form>

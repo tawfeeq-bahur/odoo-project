@@ -2,43 +2,57 @@
 
 import type { TripPlannerOutput } from "@/ai/flows/trip-planner";
 
-export type Vehicle = {
+export type TourPackage = {
   id: string;
   name: string;
-  plateNumber: string;
-  model: string;
-  type?: string; // Vehicle type (truck, van, etc.)
-  year?: number; // Vehicle year
-  fuelType?: string; // Fuel type (diesel, petrol, etc.)
-  status: "On Trip" | "Idle" | "Maintenance";
-  fuelLevel: number; // Percentage
-  lastMaintenance: string; // ISO Date
-  assignedTo: string | null;
+  destination: string;
+  status: "Active" | "Draft" | "Archived";
+  price: number; // Price per person
+  durationDays: number;
+  lastUpdated: string; // ISO Date
+  organizer: string | null;
 };
 
 export type Expense = {
   id:string;
-  type: "Fuel" | "Toll" | "Maintenance" | "Health" | "Travel Allowance" | "Other";
+  type: "Travel" | "Food" | "Hotel" | "Tickets" | "Misc";
   amount: number;
   date: string; // YYYY-MM-DD
-  tripId?: string; // Optional: link to a specific trip or vehicle
-  vehicleId?: string; // Optional: link to a specific vehicle
-  employeeId?: string; // Optional: link to a specific employee
+  tourId?: string; // Link to a specific tour
+  description: string;
   status: 'pending' | 'approved' | 'rejected';
 };
 
+export type ItineraryItem = {
+    id: string;
+    day: number;
+    time: string;
+    place: string;
+    notes?: string;
+}
+
 export type Trip = {
   id: string;
-  vehicleId: string;
-  employeeName: string;
+  packageId: string;
+  organizerName: string;
   source: string;
   destination: string;
   startDate: string; // ISO Date
   endDate?: string; // ISO Date
   status: "Ongoing" | "Completed" | "Planned" | "Cancelled";
   expenses: Expense[];
+  itinerary: ItineraryItem[];
+  members: Member[];
   plan: TripPlannerOutput;
 };
+
+export type Member = {
+    id: string;
+    name: string;
+    contact: string;
+    role: 'Organizer' | 'Member';
+};
+
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -46,64 +60,9 @@ export type ChatMessage = {
   disclaimer?: string;
 };
 
-export type EmergencyContact = {
-  id: string;
-  name: string;
-  phone: string;
-  initials: string;
-};
-
-export type Reminder = {
-  id: string;
-  medicationName: string;
-  time: string;
-  status: 'pending' | 'snoozed';
-};
-
 export type User = {
   username: string;
-  role: 'admin' | 'employee';
-  assignedVehicleId?: string | null;
+  role: 'organizer' | 'member';
+  assignedTourId?: string | null;
 }
-
-export type EmployeeProfile = {
-  id: string;
-  name: string;
-  employeeId: string;
-  email?: string;
-  phone?: string;
-  department?: string;
-  position?: string;
-  assignedVehicleId?: string | null;
-  emergencyContacts?: Array<{
-    name: string;
-    phone: string;
-    relationship: string;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type OdometerReading = {
-  id: string;
-  driverId: string;
-  vehicleId: string;
-  tripId?: string;
-  odometerValue: number;
-  photoUrl: string;
-  latitude: number;
-  longitude: number;
-  timestamp: string; // ISO Date
-  submittedAt: string; // ISO Date
-  status: 'pending' | 'approved' | 'rejected';
-  adminNotes?: string;
-  exifData?: {
-    gpsLatitude?: number;
-    gpsLongitude?: number;
-    gpsTimestamp?: string;
-    cameraMake?: string;
-    cameraModel?: string;
-  };
-}
-
     
