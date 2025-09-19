@@ -20,22 +20,11 @@ import { useState } from 'react';
 export default function MemberManagementPage() {
   const { user, packages } = useSharedState();
   const { toast } = useToast();
-  const [selectedTourId, setSelectedTourId] = useState<string>(packages[0]?.id || '');
 
-  if (user?.role !== 'organizer') {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>This page is only available for trip organizers.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Find tours organized by the current user
+  const organizedTours = packages.filter(p => p.organizerName === user?.username);
+
+  const [selectedTourId, setSelectedTourId] = useState<string>(organizedTours[0]?.id || '');
 
   const selectedTour = packages.find(p => p.id === selectedTourId);
 
@@ -54,21 +43,31 @@ export default function MemberManagementPage() {
           <h1 className="text-3xl font-bold tracking-tight font-headline">Member Management</h1>
           <p className="text-muted-foreground">Generate invite codes and manage members for your tours.</p>
         </div>
-        <div className="w-72">
-          <Select value={selectedTourId} onValueChange={setSelectedTourId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a tour to manage" />
-            </SelectTrigger>
-            <SelectContent>
-              {packages.map(pkg => (
-                <SelectItem key={pkg.id} value={pkg.id}>{pkg.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {organizedTours.length > 0 && (
+            <div className="w-72">
+            <Select value={selectedTourId} onValueChange={setSelectedTourId}>
+                <SelectTrigger>
+                <SelectValue placeholder="Select a tour to manage" />
+                </SelectTrigger>
+                <SelectContent>
+                {organizedTours.map(pkg => (
+                    <SelectItem key={pkg.id} value={pkg.id}>{pkg.name}</SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+            </div>
+        )}
       </div>
 
-      {selectedTour ? (
+      {organizedTours.length === 0 ? (
+        <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+                <Users className="mx-auto h-12 w-12 mb-4" />
+                <h3 className="text-lg font-semibold">You are not organizing any tours.</h3>
+                <p>Create a tour from your dashboard to start managing members.</p>
+            </CardContent>
+        </Card>
+      ) : selectedTour ? (
         <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-8">
                 <Card>
@@ -132,11 +131,11 @@ export default function MemberManagementPage() {
             </div>
         </div>
       ) : (
-        <Card>
+         <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
                 <Users className="mx-auto h-12 w-12 mb-4" />
-                <h3 className="text-lg font-semibold">No Tours Available</h3>
-                <p>Create a tour package first to start managing members.</p>
+                <h3 className="text-lg font-semibold">Select a tour</h3>
+                <p>Please select one of your organized tours from the dropdown above.</p>
             </CardContent>
         </Card>
       )}
