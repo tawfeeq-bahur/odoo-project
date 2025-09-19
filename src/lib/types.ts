@@ -11,6 +11,8 @@ export type TourPackage = {
   durationDays: number;
   lastUpdated: string; // ISO Date
   organizer: string | null;
+  inviteCode: string; // Unique code to join the tour
+  members: string[]; // List of member names who joined
 };
 
 export type Expense = {
@@ -51,6 +53,7 @@ export type Member = {
     name: string;
     contact: string;
     role: 'Organizer' | 'Member';
+    tourId?: string;
 };
 
 
@@ -65,4 +68,3 @@ export type User = {
   role: 'organizer' | 'member';
   assignedTourId?: string | null;
 }
-    

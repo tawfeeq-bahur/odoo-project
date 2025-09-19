@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Suitcase, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, ListChecks, History, QrCode } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, ListChecks, History, QrCode } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -31,13 +31,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { addDays, format, subDays } from 'date-fns';
+import { useToast } from "@/hooks/use-toast";
 
 const organizerMenuItems = [
   { href: "/", label: "My Tours", icon: LayoutDashboard },
   { href: "/guide", label: "Plan Route", icon: Route },
   { href: "/members", label: "Member Management", icon: Users },
   { href: "/itinerary", label: "Itinerary Management", icon: ListChecks },
-  { href: "/expenses", label: "Expense & Budget", icon: Wallet },
+  { href: "/scanner", label: "Log Expense", icon: Wallet },
   { href: "/reports", label: "Reports & Analytics", icon: BarChart },
 ];
 
@@ -45,7 +46,7 @@ const memberMenuItems = [
   { href: "/", label: "Trip Dashboard", icon: LayoutDashboard },
   { href: "/join", label: "Join a Trip", icon: QrCode },
   { href: "/itinerary", label: "Itinerary", icon: ListChecks },
-  { href: "/expenses", label: "Shared Expenses", icon: Wallet },
+  { href: "/scanner", label: "Log Expense", icon: Wallet },
   { href: "/group", label: "Group Chat", icon: MessageSquare },
   { href: "/history", label: "My History", icon: History },
 ];
@@ -60,13 +61,14 @@ interface SharedState {
   user: UserType | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  addPackage: (pkg: Omit<TourPackage, "id">) => void;
+  addPackage: (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizer' | 'inviteCode' | 'members'>) => void;
   updatePackage: (pkgId: string, updates: Partial<TourPackage>) => void;
   deletePackage: (pkgId: string) => void;
   addExpense: (expense: Omit<Expense, "id" | "status">) => void;
   updateExpenseStatus: (expenseId: string, status: Expense['status']) => void;
   addTrip: (trip: Omit<Trip, 'id' | 'status' | 'expenses' | 'itinerary' | 'members'>) => void;
   updateTripStatus: (tripId: string, status: Trip['status']) => void;
+  joinTour: (inviteCode: string) => boolean;
 }
 
 const SharedStateContext = createContext<SharedState | undefined>(undefined);
@@ -79,11 +81,17 @@ export const useSharedState = () => {
   return context;
 };
 
+// Helper to generate a random invite code
+const generateInviteCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+};
+
+
 // Initial Data
 const initialPackages: TourPackage[] = [
-  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", price: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizer: "Admin" },
-  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", price: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizer: "Admin" },
-  { id: "3", name: "Desert Safari", destination: "Rajasthan", status: "Draft", price: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizer: "Admin" },
+  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", price: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizer: "Admin", inviteCode: generateInviteCode(), members: ['Arun Kumar', 'Priya Singh'] },
+  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", price: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizer: "Admin", inviteCode: generateInviteCode(), members: [] },
+  { id: "3", name: "Desert Safari", destination: "Rajasthan", status: "Draft", price: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizer: "Admin", inviteCode: generateInviteCode(), members: [] },
 ];
 
 const initialExpenses: Expense[] = [
@@ -93,9 +101,9 @@ const initialExpenses: Expense[] = [
 ];
 
 const initialMembers: Member[] = [
-    { id: 'mem1', name: 'Arun', contact: 'arun@email.com', role: 'Member' },
-    { id: 'mem2', name: 'Priya', contact: 'priya@email.com', role: 'Member' },
-    { id: 'mem3', name: 'Ravi', contact: 'ravi@email.com', role: 'Member' },
+    { id: 'mem1', name: 'Arun Kumar', contact: 'arun@email.com', role: 'Member', tourId: '1' },
+    { id: 'mem2', name: 'Priya Singh', contact: 'priya@email.com', role: 'Member', tourId: '1' },
+    { id: 'mem3', name: 'Ravi Sharma', contact: 'ravi@email.com', role: 'Member' },
 ];
 
 const initialItineraries: ItineraryItem[] = [
@@ -123,7 +131,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
        setUser({ 
             username: "Arun Kumar", 
             role: 'member',
-            assignedTourId: '1'
+            assignedTourId: '1' // Pre-assign to a tour for demo
         });
         return true;
     }
@@ -134,8 +142,15 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
   
-  const addPackage = (pkg: Omit<TourPackage, "id">) => {
-    const newPackage: TourPackage = { ...pkg, id: new Date().toISOString() };
+  const addPackage = (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizer' | 'inviteCode' | 'members'>) => {
+    const newPackage: TourPackage = { 
+        ...pkg, 
+        id: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+        organizer: user?.username || 'Admin',
+        inviteCode: generateInviteCode(),
+        members: []
+    };
     setPackages(prev => [newPackage, ...prev]);
   };
   
@@ -180,6 +195,25 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
         return t;
     }));
   }
+
+  const joinTour = (inviteCode: string): boolean => {
+    const tour = packages.find(p => p.inviteCode.toLowerCase() === inviteCode.toLowerCase());
+    if (tour && user && user.role === 'member') {
+      // Update user's assigned tour
+      setUser(prev => prev ? { ...prev, assignedTourId: tour.id } : null);
+
+      // Add member to the tour package's member list
+      setPackages(prev => prev.map(p => {
+        if (p.id === tour.id && !p.members.includes(user.username)) {
+          return { ...p, members: [...p.members, user.username] };
+        }
+        return p;
+      }));
+      return true;
+    }
+    return false;
+  };
+
   
   const value = {
     packages,
@@ -196,7 +230,8 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     addExpense,
     updateExpenseStatus,
     addTrip,
-    updateTripStatus
+    updateTripStatus,
+    joinTour,
   };
 
   return (
