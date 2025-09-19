@@ -12,12 +12,14 @@ export type TourPackage = {
   lastUpdated: string; // ISO Date
   organizerName: string; // The user who created this package
   inviteCode: string; // Unique code to join the tour
-  members: string[]; // List of member usernames who joined
+  members: string[] | { name: string; status: 'pending' | 'present' | 'absent' }[]; // List of member usernames who joined, or student objects
   gallery: string[]; // List of image URLs
-  tripType: 'friends' | 'family';
+  tripType: 'friends' | 'family' | 'school';
   travelStyle: 'day' | 'night' | 'whole-day';
   maxMembers: number;
   maxBudget: number;
+  schoolName?: string;
+  schoolLocation?: string;
 };
 
 export type Expense = {

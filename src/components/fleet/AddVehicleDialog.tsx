@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { TourPackage } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Upload } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Tour name must be at least 3 characters.' }),
@@ -35,19 +36,31 @@ const formSchema = z.object({
   status: z.enum(['Active', 'Draft', 'Archived']),
   pricePerPerson: z.coerce.number().min(0, { message: 'Price cannot be negative.' }),
   durationDays: z.coerce.number().min(1, { message: 'Duration must be at least 1 day.' }),
-  tripType: z.enum(['friends', 'family'], { required_error: 'Please select a trip type.' }),
+  tripType: z.enum(['friends', 'family', 'school'], { required_error: 'Please select a trip type.' }),
   travelStyle: z.enum(['day', 'night', 'whole-day'], { required_error: 'Please select a travel style.' }),
   maxMembers: z.coerce.number().min(1, 'Group must have at least 1 member.'),
   maxBudget: z.coerce.number().min(1, 'Please enter an estimated budget.'),
+  schoolName: z.string().optional(),
+  schoolLocation: z.string().optional(),
+}).refine(data => {
+    if (data.tripType === 'school') {
+        return !!data.schoolName && !!data.schoolLocation;
+    }
+    return true;
+}, {
+    message: "School Name and Location are required for school trips.",
+    path: ["schoolName"],
 });
 
 type AddPackageDialogProps = {
   children: React.ReactNode;
-  onAddPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members' | 'gallery'>) => void;
+  onAddPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'gallery'>) => void;
 };
 
 export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [studentList, setStudentList] = useState<string[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,12 +72,36 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
       durationDays: 1,
       maxMembers: 1,
       maxBudget: 10000,
+      schoolName: '',
+      schoolLocation: '',
     },
   });
 
+  const tripType = form.watch('tripType');
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target?.result as string;
+            // Assuming CSV is a single column of names, with a header
+            const lines = text.split('\n').slice(1); // Skip header
+            const names = lines.map(line => line.trim()).filter(Boolean);
+            setStudentList(names);
+        };
+        reader.readAsText(file);
+    }
+  };
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddPackage(values);
+    const membersWithAttendance = studentList.map(name => ({ name, status: 'pending' as 'pending' | 'present' | 'absent' }));
+    onAddPackage({
+      ...values,
+      members: tripType === 'school' ? membersWithAttendance : [],
+    });
     form.reset();
+    setStudentList([]);
     setIsOpen(false);
   }
 
@@ -79,7 +116,7 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <FormField
               control={form.control}
               name="name"
@@ -131,12 +168,53 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
                             </FormControl>
                             <FormLabel className="font-normal">Family Trip</FormLabel>
                         </FormItem>
+                         <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="school" />
+                            </FormControl>
+                            <FormLabel className="font-normal">School Trip</FormLabel>
+                        </FormItem>
                         </RadioGroup>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
             />
+
+            {tripType === 'school' && (
+                <div className="space-y-4 p-4 border bg-muted/50 rounded-lg">
+                    <FormField
+                        control={form.control}
+                        name="schoolName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>School Name</FormLabel>
+                                <FormControl><Input placeholder="e.g., Mountain View High" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="schoolLocation"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>School Location</FormLabel>
+                                <FormControl><Input placeholder="e.g., Shimla, HP" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <div>
+                        <FormLabel>Student List (CSV)</FormLabel>
+                        <Input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileChange} className="hidden"/>
+                        <Button type="button" variant="outline" className="w-full mt-1" onClick={() => fileInputRef.current?.click()}>
+                            <Upload className="mr-2"/> {studentList.length > 0 ? `${studentList.length} students loaded` : 'Upload CSV'}
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-1">Upload a CSV file with a 'name' column for all students.</p>
+                    </div>
+                </div>
+            )}
 
             <FormField
                 control={form.control}

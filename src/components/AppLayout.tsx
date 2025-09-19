@@ -51,7 +51,7 @@ interface SharedState {
   user: UserType | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  addPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members' | 'gallery'>) => void;
+  addPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'gallery'>) => void;
   updatePackage: (pkgId: string, updates: Partial<TourPackage>) => void;
   deletePackage: (pkgId: string) => void;
   addExpense: (expense: Omit<Expense, "id" | "status" | "submittedBy">) => void;
@@ -113,7 +113,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
   
-  const addPackage = (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members' | 'gallery'>) => {
+  const addPackage = (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'gallery'>) => {
     if (!user) {
         toast({ title: "Error", description: "You must be logged in to create a tour.", variant: "destructive"});
         return;
@@ -124,8 +124,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
         lastUpdated: new Date().toISOString(),
         organizerName: user.username,
         inviteCode: generateInviteCode(),
-        members: [], // Starts with no members
-        gallery: [], // Starts with an empty gallery
+        gallery: [],
     };
     setPackages(prev => [newPackage, ...prev]);
     toast({ title: "Tour Created!", description: `"${pkg.name}" has been created.`});
@@ -181,7 +180,13 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
             toast({ title: "Already Organizer", description: "You are the organizer of this tour.", variant: "destructive"});
             return false;
         }
-        if (tour.members.includes(user.username)) {
+        
+        const isAlreadyMember = Array.isArray(tour.members) && tour.members.some(member => {
+            const memberName = typeof member === 'string' ? member : member.name;
+            return memberName === user.username;
+        });
+
+        if (isAlreadyMember) {
             toast({ title: "Already a Member", description: "You have already joined this tour.", variant: "destructive"});
             return false;
         }
