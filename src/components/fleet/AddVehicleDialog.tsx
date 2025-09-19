@@ -27,13 +27,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { TourPackage } from '@/lib/types';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Tour name must be at least 3 characters.' }),
   destination: z.string().min(2, { message: 'Destination is required.' }),
   status: z.enum(['Active', 'Draft', 'Archived']),
-  price: z.coerce.number().min(0, { message: 'Price cannot be negative.' }),
+  pricePerPerson: z.coerce.number().min(0, { message: 'Price cannot be negative.' }),
   durationDays: z.coerce.number().min(1, { message: 'Duration must be at least 1 day.' }),
+  tripType: z.enum(['friends', 'family'], { required_error: 'Please select a trip type.' }),
+  travelStyle: z.enum(['day', 'night', 'whole-day'], { required_error: 'Please select a travel style.' }),
+  maxMembers: z.coerce.number().min(1, 'Group must have at least 1 member.'),
+  maxBudget: z.coerce.number().min(1, 'Please enter an estimated budget.'),
 });
 
 type AddPackageDialogProps = {
@@ -50,8 +55,10 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
       name: '',
       destination: '',
       status: 'Draft',
-      price: 0,
+      pricePerPerson: 0,
       durationDays: 1,
+      maxMembers: 1,
+      maxBudget: 10000,
     },
   });
 
@@ -64,11 +71,11 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create a New Tour</DialogTitle>
           <DialogDescription>
-            Enter the details for the new tour you want to organize.
+            Enter the details for the new tour you want to organize. More details lead to better AI suggestions.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -91,7 +98,7 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
               name="destination"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Destination</FormLabel>
+                  <FormLabel>Main Destination</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Manali, HP" {...field} />
                   </FormControl>
@@ -99,10 +106,94 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
                 </FormItem>
               )}
             />
+
+            <FormField
+                control={form.control}
+                name="tripType"
+                render={({ field }) => (
+                    <FormItem className="space-y-3">
+                    <FormLabel>Trip Type</FormLabel>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex items-center space-x-4"
+                        >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="friends" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Friends Trip</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                            <RadioGroupItem value="family" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Family Trip</FormLabel>
+                        </FormItem>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="travelStyle"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Preferred Travel Time</FormLabel>
+                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select travel style" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="day">Day Travel</SelectItem>
+                                <SelectItem value="night">Night Travel</SelectItem>
+                                <SelectItem value="whole-day">Whole Day (Flexible)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
-                    name="price"
+                    name="maxMembers"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Max Group Size</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="e.g., 10" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="maxBudget"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Total Budget (₹)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="e.g., 50000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="pricePerPerson"
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Price per Person (₹)</FormLabel>

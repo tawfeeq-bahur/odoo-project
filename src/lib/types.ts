@@ -7,13 +7,17 @@ export type TourPackage = {
   name: string;
   destination: string;
   status: "Active" | "Draft" | "Archived";
-  price: number; // Price per person
+  pricePerPerson: number;
   durationDays: number;
   lastUpdated: string; // ISO Date
   organizerName: string; // The user who created this package
   inviteCode: string; // Unique code to join the tour
   members: string[]; // List of member usernames who joined
   gallery: string[]; // List of image URLs
+  tripType: 'friends' | 'family';
+  travelStyle: 'day' | 'night' | 'whole-day';
+  maxMembers: number;
+  maxBudget: number;
 };
 
 export type Expense = {
