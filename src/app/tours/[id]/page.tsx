@@ -5,8 +5,6 @@ import { useParams, notFound, useRouter } from 'next/navigation';
 import { useSharedState } from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   MapPin,
   Calendar,
@@ -14,7 +12,6 @@ import {
   Route,
   Wallet,
   Camera,
-  Upload,
   ArrowLeft,
   Clock,
   Home,
@@ -40,16 +37,15 @@ export default function TourDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const { packages, trips, expenses, itineraries, user, addPhotoToTour } = useSharedState();
+  const { packages, trips, expenses, user, addPhotoToTour } = useSharedState();
   
   const tourId = params.id as string;
   const tour = packages.find(p => p.id === tourId);
   const tripPlan = trips.find(t => t.packageId === tourId);
   const tourExpenses = expenses.filter(e => e.tourId === tourId);
+  const itinerary = tripPlan?.plan?.itinerary || [];
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   if (!tour) {
     notFound();
@@ -152,16 +148,16 @@ export default function TourDetailsPage() {
               <CardTitle>Itinerary</CardTitle>
             </CardHeader>
             <CardContent>
-                {itineraries.length > 0 ? (
+                {itinerary.length > 0 ? (
                     <div className="space-y-4">
-                        {itineraries.map(item => (
-                            <div key={item.id} className="flex gap-4">
+                        {itinerary.map((item, index) => (
+                            <div key={index} className="flex gap-4">
                                 <div className="text-center">
                                     <p className="font-bold">Day {item.day}</p>
                                     <p className="text-xs text-muted-foreground">{item.time}</p>
                                 </div>
                                 <div className="border-l-2 border-primary pl-4">
-                                    <p className="font-semibold">{item.place}</p>
+                                    <p className="font-semibold">{item.activity}</p>
                                     {item.notes && <p className="text-xs text-muted-foreground italic">"{item.notes}"</p>}
                                 </div>
                             </div>

@@ -28,10 +28,9 @@ export type Expense = {
 };
 
 export type ItineraryItem = {
-    id: string;
     day: number;
     time: string;
-    place: string;
+    activity: string;
     notes?: string;
 }
 
@@ -46,7 +45,6 @@ export type Trip = {
   endDate?: string; // ISO Date
   status: "Ongoing" | "Completed" | "Planned" | "Cancelled";
   expenses: Expense[];
-  itinerary: ItineraryItem[];
   members: string[]; // Usernames of members in this trip
   plan: TripPlannerOutput;
 };

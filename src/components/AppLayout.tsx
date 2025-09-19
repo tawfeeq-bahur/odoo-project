@@ -48,7 +48,6 @@ interface SharedState {
   packages: TourPackage[];
   expenses: Expense[];
   trips: Trip[];
-  itineraries: ItineraryItem[];
   user: UserType | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
@@ -57,7 +56,7 @@ interface SharedState {
   deletePackage: (pkgId: string) => void;
   addExpense: (expense: Omit<Expense, "id" | "status" | "submittedBy">) => void;
   updateExpenseStatus: (expenseId: string, status: Expense['status']) => void;
-  addTrip: (trip: Omit<Trip, 'id' | 'status' | 'expenses' | 'itinerary' | 'members'>) => void;
+  addTrip: (trip: Omit<Trip, 'id' | 'status' | 'expenses' | 'members'>) => void;
   updateTripStatus: (tripId: string, status: Trip['status']) => void;
   joinTour: (inviteCode: string) => boolean;
   addPhotoToTour: (tourId: string, photoUrl: string) => void;
@@ -93,18 +92,11 @@ const initialExpenses: Expense[] = [
     {id: 'exp3', type: 'Hotel', amount: 35000, date: subDays(new Date(), 1).toISOString(), tourId: '2', description: '3-night stay', status: 'pending', submittedBy: 'Priya'},
 ];
 
-const initialItineraries: ItineraryItem[] = [
-    { id: 'it1', day: 1, time: '09:00', place: 'Solang Valley', notes: 'Wear warm clothes' },
-    { id: 'it2', day: 1, time: '14:00', place: 'Hadimba Temple', notes: '' },
-    { id: 'it3', day: 2, time: '10:00', place: 'Rohtang Pass', notes: 'Carry ID proof' },
-];
-
 
 export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [packages, setPackages] = useState<TourPackage[]>(initialPackages);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [itineraries, setItineraries] = useState<ItineraryItem[]>(initialItineraries);
   const [user, setUser] = useState<UserType | null>(null);
   const { toast } = useToast();
 
@@ -162,13 +154,12 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setExpenses(prev => prev.map(e => e.id === expenseId ? { ...e, status } : e));
   }
   
-  const addTrip = (trip: Omit<Trip, 'id' | 'status' | 'expenses' | 'itinerary' | 'members'>) => {
+  const addTrip = (trip: Omit<Trip, 'id' | 'status' | 'expenses' | 'members'>) => {
     const newTrip: Trip = {
       ...trip,
       id: `trip_${Date.now()}`,
       status: 'Planned',
       expenses: [],
-      itinerary: [],
       members: [],
     };
     setTrips(prev => [newTrip, ...prev]);
@@ -220,7 +211,6 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     packages,
     expenses,
     trips,
-    itineraries,
     user,
     login,
     logout,

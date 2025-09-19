@@ -28,6 +28,13 @@ const LatLngSchema = z.object({
   lng: z.number(),
 });
 
+const ItineraryItemSchema = z.object({
+  day: z.number().describe("The day number of the activity (e.g., 1, 2)."),
+  time: z.string().describe("The time of the activity (e.g., '09:00 AM', 'Afternoon')."),
+  activity: z.string().describe("A brief description of the activity or place to visit."),
+  notes: z.string().optional().describe("Optional short notes for the activity (e.g., 'Entry fee required').")
+});
+
 const TripPlannerOutputSchema = z.object({
   source: z.string(),
   destination: z.string(),
@@ -41,11 +48,7 @@ const TripPlannerOutputSchema = z.object({
   routeType: z.string().optional().describe("The primary type of route (e.g., 'City', 'Highway')."),
   traffic: z.string().optional().describe("The expected traffic conditions (e.g., 'Normal', 'Stop & Go', 'Light')."),
   ecoTip: z.string().optional().describe("An eco-friendly travel tip for the trip."),
-  pointsOfInterest: z.object({
-    Hotels: z.array(z.string()).describe("A list of 2-3 well-rated hotels or stays near the route."),
-    Restaurants: z.array(z.string()).describe("A list of 2-3 popular restaurants suitable for tourists along the route."),
-    Monuments: z.array(z.string()).describe("A list of 2-3 key monuments or tourist attractions along the route."),
-  }),
+  itinerary: z.array(ItineraryItemSchema).describe("A day-wise itinerary of activities and places to visit based on the points of interest found along the route."),
 });
 export type TripPlannerOutput = z.infer<typeof TripPlannerOutputSchema>;
 
@@ -77,11 +80,10 @@ function generateFallbackPlan(input: TripPlannerInput): TripPlannerOutput {
         routeType: input.routeType,
         traffic: input.traffic,
         ecoTip: 'Consider using public transport for parts of your journey to reduce your carbon footprint.',
-        pointsOfInterest: {
-            Hotels: ["Hotel Grand View", "Riverside Inn"],
-            Restaurants: ["Local Heritage Restaurant", "Highway Treats Dhaba"],
-            Monuments: ["Historic Fort", "Ancient Temple Complex"]
-        },
+        itinerary: [
+            { day: 1, time: 'Morning', activity: 'Start journey', notes: 'Have a safe trip!' },
+            { day: 1, time: 'Evening', activity: `Arrive at ${input.destination}`, notes: 'Check into hotel.' },
+        ],
     };
 }
 
@@ -114,7 +116,7 @@ const prompt = ai.definePrompt({
         4.  Estimate toll charges if traveling by road.
         5.  Provide a brief summary of the suggested route (e.g., "Take NH44 towards...").
         6.  Generate an accurate, detailed route polyline with enough points to trace the roads on a map.
-        7.  Identify 2-3 of each of the following points of interest along the route: well-rated Hotels, popular Restaurants, and key Monuments/Attractions.
+        7.  Based on the route, create a logical, day-wise itinerary with 3-5 activities. Include key monuments, restaurants, and hotels as activities in the itinerary.
         8.  Include a standard disclaimer about the estimates.
     `,
 });
@@ -127,6 +129,9 @@ const tripPlannerFlow = ai.defineFlow(
     },
     async (input) => {
         const { output } = await prompt(input);
+        if (!output) {
+          throw new Error("AI trip planner did not return a valid output.");
+        }
         return output;
     }
 );
