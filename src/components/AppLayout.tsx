@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Plan a Route", icon: Route },
+  { href: "/members", label: "Manage Members", icon: Users },
   { href: "/scanner", label: "Log Expense", icon: Wallet },
   { href: "/reports", label: "Analytics", icon: BarChart },
 ];
@@ -51,7 +52,7 @@ interface SharedState {
   user: UserType | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  addPackage: (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members'>) => void;
+  addPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members' | 'gallery'>) => void;
   updatePackage: (pkgId: string, updates: Partial<TourPackage>) => void;
   deletePackage: (pkgId: string) => void;
   addExpense: (expense: Omit<Expense, "id" | "status" | "submittedBy">) => void;
@@ -59,6 +60,7 @@ interface SharedState {
   addTrip: (trip: Omit<Trip, 'id' | 'status' | 'expenses' | 'itinerary' | 'members'>) => void;
   updateTripStatus: (tripId: string, status: Trip['status']) => void;
   joinTour: (inviteCode: string) => boolean;
+  addPhotoToTour: (tourId: string, photoUrl: string) => void;
 }
 
 const SharedStateContext = createContext<SharedState | undefined>(undefined);
@@ -80,9 +82,9 @@ const generateInviteCode = () => {
 const demoUsers = ["Arun", "Priya", "Ravi"]; // Usernames for login
 
 const initialPackages: TourPackage[] = [
-  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", price: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizerName: "Arun", inviteCode: generateInviteCode(), members: ['Priya'] },
-  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", price: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizerName: "Priya", inviteCode: generateInviteCode(), members: [] },
-  { id: "3", name: "Solo Backpacking", destination: "Rajasthan", status: "Draft", price: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizerName: "Ravi", inviteCode: generateInviteCode(), members: [] },
+  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", price: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizerName: "Arun", inviteCode: generateInviteCode(), members: ['Priya'], gallery: ['/placeholders/himalayas1.jpg', '/placeholders/himalayas2.jpg'] },
+  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", price: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizerName: "Priya", inviteCode: generateInviteCode(), members: [], gallery: [] },
+  { id: "3", name: "Solo Backpacking", destination: "Rajasthan", status: "Draft", price: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizerName: "Ravi", inviteCode: generateInviteCode(), members: [], gallery: [] },
 ];
 
 const initialExpenses: Expense[] = [
@@ -119,7 +121,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
   
-  const addPackage = (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members'>) => {
+  const addPackage = (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members' | 'gallery'>) => {
     if (!user) {
         toast({ title: "Error", description: "You must be logged in to create a tour.", variant: "destructive"});
         return;
@@ -130,7 +132,8 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
         lastUpdated: new Date().toISOString(),
         organizerName: user.username,
         inviteCode: generateInviteCode(),
-        members: [] // Starts with no members
+        members: [], // Starts with no members
+        gallery: [], // Starts with an empty gallery
     };
     setPackages(prev => [newPackage, ...prev]);
     toast({ title: "Tour Created!", description: `"${pkg.name}" has been created.`});
@@ -203,6 +206,15 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
+  const addPhotoToTour = (tourId: string, photoUrl: string) => {
+    setPackages(prev => prev.map(p => {
+      if (p.id === tourId) {
+        return { ...p, gallery: [...p.gallery, photoUrl] };
+      }
+      return p;
+    }));
+  };
+
   
   const value = {
     packages,
@@ -220,7 +232,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     addTrip,
     updateTripStatus,
     joinTour,
-    members: [], // This is now derived from packages
+    addPhotoToTour,
   };
 
   return (

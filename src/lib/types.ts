@@ -13,6 +13,7 @@ export type TourPackage = {
   organizerName: string; // The user who created this package
   inviteCode: string; // Unique code to join the tour
   members: string[]; // List of member usernames who joined
+  gallery: string[]; // List of image URLs
 };
 
 export type Expense = {

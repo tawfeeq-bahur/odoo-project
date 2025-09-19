@@ -4,7 +4,7 @@
 import { useSharedState } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, MapPin, CalendarDays, Users, Star, UserPlus } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, MapPin, Users, Star, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog"; // Will rename this component later
 import { useToast } from "@/hooks/use-toast";
 
@@ -123,7 +122,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <Separator />
+      <div className="w-full border-t border-border my-8"></div>
 
       {/* Tours I've Joined */}
       <div className="space-y-4">
