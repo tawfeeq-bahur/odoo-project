@@ -8,7 +8,7 @@ import { PlusCircle, Eye, Users, BarChart, PieChart, DollarSign, Calendar, Plane
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format, subMonths, parseISO } from "date-fns";
 import { 
   BarChart as RechartsBarChart, 
@@ -23,11 +23,13 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function DashboardPage() {
-  const { user, packages, trips, expenses } = useSharedState();
+  const { user, packages, trips, expenses, addPackage } = useSharedState();
+  const [isAddPackageDialogOpen, setIsAddPackageDialogOpen] = useState(false);
 
   if (!user) return null;
 
@@ -82,6 +84,9 @@ export default function DashboardPage() {
             <Button asChild variant="outline">
                 <Link href="/join"><Users className="mr-2"/> Join a Tour</Link>
             </Button>
+            <AddPackageDialog onAddPackage={addPackage}>
+                <Button><PlusCircle className="mr-2"/> Organize Tour</Button>
+            </AddPackageDialog>
         </div>
       </div>
       

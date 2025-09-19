@@ -38,7 +38,7 @@ const formSchema = z.object({
 
 type AddPackageDialogProps = {
   children: React.ReactNode;
-  onAddPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members'>) => void;
+  onAddPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members' | 'gallery'>) => void;
 };
 
 export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogProps) {
