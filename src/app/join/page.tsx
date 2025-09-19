@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -32,19 +33,8 @@ export default function JoinTripPage() {
     },
   });
 
-  if (user?.role !== 'member') {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>This page is only for members. Organizers manage tours from their dashboard.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (!user) {
+    return null; // Or a loading indicator
   }
 
   const onSubmit = (values: z.infer<typeof joinFormSchema>) => {
@@ -68,8 +58,8 @@ export default function JoinTripPage() {
           <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
             <QrCode className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle>Join a Trip</CardTitle>
-          <CardDescription>Enter the 6-character invite code provided by your tour organizer.</CardDescription>
+          <CardTitle>Join a Tour</CardTitle>
+          <CardDescription>Enter the 6-character invite code provided by the tour organizer.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -103,7 +93,7 @@ export default function JoinTripPage() {
 
               <Button type="submit" className="w-full">
                 <LogIn className="mr-2" />
-                Join Trip
+                Join Tour
               </Button>
             </form>
           </Form>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -36,7 +37,7 @@ export default function LoginPage() {
     const success = login(username, password);
 
     if (!success) {
-      setError('Invalid credentials. Use "organizer" or "member" with password "123".');
+      setError('Invalid credentials. Use "Arun", "Priya", or "Ravi" with password "123".');
     } else {
       setError(null);
     }
@@ -65,7 +66,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="organizer / member" {...field} />
+                      <Input placeholder="e.g., Arun / Priya / Ravi" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -26,7 +27,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { TourPackage } from '@/lib/types';
-import { useSharedState } from '../AppLayout';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Tour name must be at least 3 characters.' }),
@@ -38,12 +38,11 @@ const formSchema = z.object({
 
 type AddPackageDialogProps = {
   children: React.ReactNode;
-  onAddPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizer'>) => void;
+  onAddPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members'>) => void;
 };
 
 export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useSharedState();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,7 +56,6 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) return;
     onAddPackage(values);
     form.reset();
     setIsOpen(false);
@@ -68,9 +66,9 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create a New Tour Package</DialogTitle>
+          <DialogTitle>Create a New Tour</DialogTitle>
           <DialogDescription>
-            Enter the details for the new tour package.
+            Enter the details for the new tour you want to organize.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -153,7 +151,7 @@ export function AddPackageDialog({ children, onAddPackage }: AddPackageDialogPro
             />
             <DialogFooter className="pt-4">
                <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit">Create Package</Button>
+              <Button type="submit">Create Tour</Button>
             </DialogFooter>
           </form>
         </Form>

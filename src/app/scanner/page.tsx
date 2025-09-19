@@ -29,6 +29,7 @@ const manualExpenseSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0."),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'A valid date is required.' }),
   description: z.string().min(3, "Please provide a brief description."),
+  tourId: z.string().optional(), // Tour to associate with
 });
 
 export default function ScannerPage() {
@@ -42,7 +43,9 @@ export default function ScannerPage() {
   const [parsedExpenses, setParsedExpenses] = useState<ParsedExpense[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { addExpense } = useSharedState();
+  const { user, packages, addExpense } = useSharedState();
+
+  const userTours = packages.filter(p => p.organizerName === user?.username || p.members.includes(user?.username || ''));
 
   const form = useForm<z.infer<typeof manualExpenseSchema>>({
     resolver: zodResolver(manualExpenseSchema),
@@ -51,6 +54,7 @@ export default function ScannerPage() {
       amount: undefined,
       date: format(new Date(), 'yyyy-MM-dd'),
       description: "",
+      tourId: tourIdFromQuery || "",
     },
   });
 
@@ -120,18 +124,22 @@ export default function ScannerPage() {
   
   const handleManualSubmit = (values: z.infer<typeof manualExpenseSchema>) => {
     addExpense({
-      ...values,
-      tourId: getTourId(),
+      type: values.type,
+      amount: values.amount,
+      date: values.date,
+      description: values.description,
+      tourId: values.tourId,
     });
     toast({
       title: "Expense Logged",
-      description: `Your ${values.type} expense of ₹${values.amount.toFixed(2)} has been submitted for approval.`
+      description: `Your ${values.type} expense of ₹${values.amount.toFixed(2)} has been submitted.`
     });
     form.reset({
         type: "Food",
         amount: undefined,
         date: format(new Date(), 'yyyy-MM-dd'),
         description: "",
+        tourId: tourIdFromQuery || "",
     });
   };
 
@@ -196,6 +204,28 @@ export default function ScannerPage() {
                 <CardContent>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(handleManualSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="tourId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Associate with Tour (Optional)</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a tour" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {userTours.map(tour => (
+                                                    <SelectItem key={tour.id} value={tour.id}>{tour.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                              <FormField
                                 control={form.control}
                                 name="type"

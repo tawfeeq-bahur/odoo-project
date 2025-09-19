@@ -10,9 +10,9 @@ export type TourPackage = {
   price: number; // Price per person
   durationDays: number;
   lastUpdated: string; // ISO Date
-  organizer: string | null;
+  organizerName: string; // The user who created this package
   inviteCode: string; // Unique code to join the tour
-  members: string[]; // List of member names who joined
+  members: string[]; // List of member usernames who joined
 };
 
 export type Expense = {
@@ -22,6 +22,7 @@ export type Expense = {
   date: string; // YYYY-MM-DD
   tourId?: string; // Link to a specific tour
   description: string;
+  submittedBy: string; // Username of the person who submitted it
   status: 'pending' | 'approved' | 'rejected';
 };
 
@@ -36,7 +37,7 @@ export type ItineraryItem = {
 export type Trip = {
   id: string;
   packageId: string;
-  packageName: string; // Added field
+  packageName: string;
   organizerName: string;
   source: string;
   destination: string;
@@ -45,7 +46,7 @@ export type Trip = {
   status: "Ongoing" | "Completed" | "Planned" | "Cancelled";
   expenses: Expense[];
   itinerary: ItineraryItem[];
-  members: Member[];
+  members: string[]; // Usernames of members in this trip
   plan: TripPlannerOutput;
 };
 
@@ -64,8 +65,7 @@ export type ChatMessage = {
   disclaimer?: string;
 };
 
+// Simplified User type - no more global role
 export type User = {
   username: string;
-  role: 'organizer' | 'member';
-  assignedTourId?: string | null;
 }

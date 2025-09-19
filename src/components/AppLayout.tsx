@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, ListChecks, History, QrCode } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, History, ListChecks, PlusCircle, User as UserIcon } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import type { TourPackage, Expense, User as UserType, Trip, Member, ItineraryItem } from "@/lib/types";
+import type { TourPackage, Expense, User as UserType, Trip, ItineraryItem } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
 import LoginPage from "@/app/login/page";
 import {
@@ -30,25 +31,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { addDays, format, subDays } from 'date-fns';
+import { subDays } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 
-const organizerMenuItems = [
-  { href: "/", label: "My Tours", icon: LayoutDashboard },
-  { href: "/guide", label: "Plan Route", icon: Route },
-  { href: "/members", label: "Member Management", icon: Users },
-  { href: "/itinerary", label: "Itinerary Management", icon: ListChecks },
+// Unified menu for all users
+const menuItems = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/guide", label: "Plan a Route", icon: Route },
   { href: "/scanner", label: "Log Expense", icon: Wallet },
-  { href: "/reports", label: "Reports & Analytics", icon: BarChart },
-];
-
-const memberMenuItems = [
-  { href: "/", label: "Trip Dashboard", icon: LayoutDashboard },
-  { href: "/join", label: "Join a Trip", icon: QrCode },
-  { href: "/itinerary", label: "Itinerary", icon: ListChecks },
-  { href: "/scanner", label: "Log Expense", icon: Wallet },
-  { href: "/group", label: "Group Chat", icon: MessageSquare },
-  { href: "/history", label: "My History", icon: History },
+  { href: "/reports", label: "Analytics", icon: BarChart },
 ];
 
 
@@ -56,15 +47,14 @@ interface SharedState {
   packages: TourPackage[];
   expenses: Expense[];
   trips: Trip[];
-  members: Member[];
   itineraries: ItineraryItem[];
   user: UserType | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  addPackage: (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizer' | 'inviteCode' | 'members'>) => void;
+  addPackage: (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members'>) => void;
   updatePackage: (pkgId: string, updates: Partial<TourPackage>) => void;
   deletePackage: (pkgId: string) => void;
-  addExpense: (expense: Omit<Expense, "id" | "status">) => void;
+  addExpense: (expense: Omit<Expense, "id" | "status" | "submittedBy">) => void;
   updateExpenseStatus: (expenseId: string, status: Expense['status']) => void;
   addTrip: (trip: Omit<Trip, 'id' | 'status' | 'expenses' | 'itinerary' | 'members'>) => void;
   updateTripStatus: (tripId: string, status: Trip['status']) => void;
@@ -86,24 +76,19 @@ const generateInviteCode = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
+// --- Initial Demo Data ---
+const demoUsers = ["Arun", "Priya", "Ravi"]; // Usernames for login
 
-// Initial Data
 const initialPackages: TourPackage[] = [
-  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", price: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizer: "Admin", inviteCode: generateInviteCode(), members: ['Arun Kumar', 'Priya Singh'] },
-  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", price: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizer: "Admin", inviteCode: generateInviteCode(), members: [] },
-  { id: "3", name: "Desert Safari", destination: "Rajasthan", status: "Draft", price: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizer: "Admin", inviteCode: generateInviteCode(), members: [] },
+  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", price: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizerName: "Arun", inviteCode: generateInviteCode(), members: ['Priya'] },
+  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", price: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizerName: "Priya", inviteCode: generateInviteCode(), members: [] },
+  { id: "3", name: "Solo Backpacking", destination: "Rajasthan", status: "Draft", price: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizerName: "Ravi", inviteCode: generateInviteCode(), members: [] },
 ];
 
 const initialExpenses: Expense[] = [
-    {id: 'exp1', type: 'Food', amount: 5000, date: subDays(new Date(), 2).toISOString(), tourId: '1', description: 'Group Dinner', status: 'approved'},
-    {id: 'exp2', type: 'Travel', amount: 12000, date: subDays(new Date(), 3).toISOString(), tourId: '1', description: 'Bus Tickets', status: 'approved'},
-    {id: 'exp3', type: 'Hotel', amount: 35000, date: subDays(new Date(), 1).toISOString(), tourId: '2', description: '3-night stay', status: 'pending'},
-];
-
-const initialMembers: Member[] = [
-    { id: 'mem1', name: 'Arun Kumar', contact: 'arun@email.com', role: 'Member', tourId: '1' },
-    { id: 'mem2', name: 'Priya Singh', contact: 'priya@email.com', role: 'Member', tourId: '1' },
-    { id: 'mem3', name: 'Ravi Sharma', contact: 'ravi@email.com', role: 'Member' },
+    {id: 'exp1', type: 'Food', amount: 5000, date: subDays(new Date(), 2).toISOString(), tourId: '1', description: 'Group Dinner', status: 'approved', submittedBy: 'Arun'},
+    {id: 'exp2', type: 'Travel', amount: 12000, date: subDays(new Date(), 3).toISOString(), tourId: '1', description: 'Bus Tickets', status: 'approved', submittedBy: 'Arun'},
+    {id: 'exp3', type: 'Hotel', amount: 35000, date: subDays(new Date(), 1).toISOString(), tourId: '2', description: '3-night stay', status: 'pending', submittedBy: 'Priya'},
 ];
 
 const initialItineraries: ItineraryItem[] = [
@@ -117,23 +102,15 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [packages, setPackages] = useState<TourPackage[]>(initialPackages);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [members, setMembers] = useState<Member[]>(initialMembers);
   const [itineraries, setItineraries] = useState<ItineraryItem[]>(initialItineraries);
   const [user, setUser] = useState<UserType | null>(null);
+  const { toast } = useToast();
 
   const login = (username: string, password: string): boolean => {
-    if (username.toLowerCase() === 'organizer' && password === '123') {
-      setUser({ username: 'Organizer', role: 'organizer' });
+    const validUser = demoUsers.find(u => u.toLowerCase() === username.toLowerCase());
+    if (validUser && password === '123') {
+      setUser({ username: validUser });
       return true;
-    }
-    
-    if (username.toLowerCase() === 'member' && password === '123') {
-       setUser({ 
-            username: "Arun Kumar", 
-            role: 'member',
-            assignedTourId: '1' // Pre-assign to a tour for demo
-        });
-        return true;
     }
     return false;
   };
@@ -142,16 +119,21 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
   
-  const addPackage = (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizer' | 'inviteCode' | 'members'>) => {
+  const addPackage = (pkg: Omit<TourPackage, "id" | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members'>) => {
+    if (!user) {
+        toast({ title: "Error", description: "You must be logged in to create a tour.", variant: "destructive"});
+        return;
+    }
     const newPackage: TourPackage = { 
         ...pkg, 
         id: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
-        organizer: user?.username || 'Admin',
+        organizerName: user.username,
         inviteCode: generateInviteCode(),
-        members: []
+        members: [] // Starts with no members
     };
     setPackages(prev => [newPackage, ...prev]);
+    toast({ title: "Tour Created!", description: `"${pkg.name}" has been created.`});
   };
   
   const updatePackage = (pkgId: string, updates: Partial<TourPackage>) => {
@@ -162,11 +144,13 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setPackages(prev => prev.filter(p => p.id !== pkgId));
   };
   
-  const addExpense = (expense: Omit<Expense, "id" | "status">) => {
+  const addExpense = (expense: Omit<Expense, "id" | "status" | "submittedBy">) => {
+    if (!user) return;
     const newExpense: Expense = {
       ...expense,
       id: `exp_${Date.now()}`,
-      status: 'pending'
+      status: 'pending',
+      submittedBy: user.username
     };
     setExpenses(prev => [...prev, newExpense]);
   }
@@ -198,13 +182,18 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
 
   const joinTour = (inviteCode: string): boolean => {
     const tour = packages.find(p => p.inviteCode.toLowerCase() === inviteCode.toLowerCase());
-    if (tour && user && user.role === 'member') {
-      // Update user's assigned tour
-      setUser(prev => prev ? { ...prev, assignedTourId: tour.id } : null);
-
-      // Add member to the tour package's member list
+    if (tour && user) {
+        if (tour.organizerName === user.username) {
+            toast({ title: "Already Organizer", description: "You are the organizer of this tour.", variant: "destructive"});
+            return false;
+        }
+        if (tour.members.includes(user.username)) {
+            toast({ title: "Already a Member", description: "You have already joined this tour.", variant: "destructive"});
+            return false;
+        }
+      
       setPackages(prev => prev.map(p => {
-        if (p.id === tour.id && !p.members.includes(user.username)) {
+        if (p.id === tour.id) {
           return { ...p, members: [...p.members, user.username] };
         }
         return p;
@@ -219,7 +208,6 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     packages,
     expenses,
     trips,
-    members,
     itineraries,
     user,
     login,
@@ -232,6 +220,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     addTrip,
     updateTripStatus,
     joinTour,
+    members: [], // This is now derived from packages
   };
 
   return (
@@ -250,8 +239,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <LoginPage />;
   }
 
-  const menuItems = user.role === 'organizer' ? organizerMenuItems : memberMenuItems;
-  const userEmail = user.role === 'organizer' ? 'organizer@tourjet.com' : `${user.username.toLowerCase().split(' ')[0]}@tourjet.com`;
+  const userEmail = `${user.username.toLowerCase()}@tourjet.com`;
   const userName = user.username;
   const userFallback = userName.substring(0, 2).toUpperCase();
 
