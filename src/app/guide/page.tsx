@@ -104,10 +104,20 @@ export default function TourPlannerPage() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Sorry, I could not generate a trip plan. The AI model might be unavailable. Please try again.';
       setError(errorMessage);
-      setPlan(generateFallbackPlan({
+      const fallbackPlan = generateFallbackPlan({
         ...values,
         loadKg: 100,
-      }));
+      });
+      addTrip({
+        source: fallbackPlan.source,
+        destination: fallbackPlan.destination,
+        startDate: new Date().toISOString(),
+        organizerName: user.username,
+        packageId: selectedPackage.id,
+        packageName: selectedPackage.name,
+        plan: fallbackPlan,
+      });
+      setPlan(fallbackPlan);
     } finally {
       setIsLoading(false);
     }

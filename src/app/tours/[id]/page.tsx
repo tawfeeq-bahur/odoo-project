@@ -179,8 +179,8 @@ export default function TourDetailsPage() {
 
         {/* Right Column */}
         <div className="lg:col-span-2 space-y-8">
-          {tripPlan ? (
-            <MapDisplay plan={tripPlan.plan} />
+          {tripPlan && tripPlan.plan ? (
+            <MapDisplay plan={tripPlan.plan} traffic={tripPlan.plan.traffic}/>
           ) : (
             <Card>
                 <CardHeader>
