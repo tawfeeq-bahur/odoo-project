@@ -51,10 +51,11 @@ export default function TourDetailsPage() {
     notFound();
   }
 
-  // Check if current user is part of the tour
+  // Check if current user is part of the tour (either organizer or member)
   const isMember = tour.organizerName === user?.username || tour.members.includes(user?.username || '');
   if (!isMember) {
-    notFound(); // Or show an access denied message
+    // If not a member, deny access by showing a 404.
+    notFound(); 
   }
 
   const totalExpenses = useMemo(() => {
