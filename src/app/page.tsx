@@ -4,165 +4,203 @@
 import { useSharedState } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, MapPin, Users, Star, UserPlus } from 'lucide-react';
+import { PlusCircle, Eye, Users, BarChart, PieChart, DollarSign, Calendar, Plane } from 'lucide-react';
 import Link from 'next/link';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Badge } from "@/components/ui/badge";
-import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog"; // Will rename this component later
-import { useToast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useMemo } from "react";
+import { format, subMonths, parseISO } from "date-fns";
+import { 
+  BarChart as RechartsBarChart, 
+  Bar as RechartsBar,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function DashboardPage() {
-  const { user, packages, addPackage, deletePackage } = useSharedState();
-  const { toast } = useToast();
+  const { user, packages, trips, expenses } = useSharedState();
 
   if (!user) return null;
 
-  const toursOrganizing = packages.filter(p => p.organizerName === user.username);
-  const toursJoined = packages.filter(p => p.members.includes(user.username));
+  const userTrips = useMemo(() => trips.filter(trip => trip.organizerName === user.username || trip.members.includes(user.username)), [trips, user.username]);
+  const userExpenses = useMemo(() => expenses.filter(exp => exp.submittedBy === user.username && exp.status === 'approved'), [expenses, user.username]);
 
-  const handleCreateTour = (pkg: Omit<any, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'members'>) => {
-    addPackage(pkg);
-  };
-  
-  const handleDeleteTour = (pkgId: string) => {
-      const pkg = packages.find(p => p.id === pkgId);
-      if (!pkg) return;
+  const totalSpend = useMemo(() => userExpenses.reduce((sum, exp) => sum + exp.amount, 0), [userExpenses]);
+  const totalTrips = userTrips.length;
+  const totalDays = useMemo(() => userTrips.filter(t => t.status === 'Completed').reduce((sum, trip) => sum + (packages.find(p => p.id === trip.packageId)?.durationDays || 0), 0), [userTrips, packages]);
 
-      if (pkg.organizerName !== user.username) {
-          toast({
-              title: "Permission Denied",
-              description: "You can only delete tours that you are organizing.",
-              variant: "destructive"
-          });
-          return;
+  const monthlySpending = useMemo(() => {
+    const months = Array.from({ length: 6 }, (_, i) => subMonths(new Date(), 5 - i));
+    const data = months.map(month => ({
+      name: format(month, 'MMM'),
+      total: 0,
+    }));
+
+    userExpenses.forEach(exp => {
+      const monthStr = format(parseISO(exp.date), 'MMM');
+      const monthData = data.find(d => d.name === monthStr);
+      if (monthData) {
+        monthData.total += exp.amount;
       }
-      deletePackage(pkgId);
-      toast({
-          title: "Tour Deleted",
-          description: `"${pkg.name}" has been successfully deleted.`
-      });
-  }
+    });
+
+    return data;
+  }, [userExpenses]);
+  
+  const expenseByCategory = useMemo(() => {
+    const categoryMap: { [key: string]: number } = {};
+    userExpenses.forEach(exp => {
+      categoryMap[exp.type] = (categoryMap[exp.type] || 0) + exp.amount;
+    });
+    return Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
+  }, [userExpenses]);
+  
+  const recentTrips = useMemo(() => {
+      return userTrips
+          .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+          .slice(0, 5);
+  }, [userTrips]);
+
 
   return (
     <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-headline">My Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user.username}! Here's an overview of your tours.</p>
+          <p className="text-muted-foreground">Welcome back, {user.username}! Here's your travel analysis.</p>
         </div>
         <div className="flex items-center gap-2">
             <Button asChild variant="outline">
-                <Link href="/join"><UserPlus className="mr-2"/> Join a Tour</Link>
+                <Link href="/join"><Users className="mr-2"/> Join a Tour</Link>
             </Button>
-            <AddPackageDialog onAddPackage={handleCreateTour}>
-                <Button>
-                    <PlusCircle className="mr-2" /> Create New Tour
-                </Button>
-            </AddPackageDialog>
         </div>
       </div>
       
-      {/* Tours I'm Organizing */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold flex items-center gap-2"><Star className="text-amber-500" /> Tours I'm Organizing ({toursOrganizing.length})</h2>
-        {toursOrganizing.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {toursOrganizing.map((pkg) => (
-              <Card key={pkg.id} className="flex flex-col">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="leading-tight">{pkg.name}</CardTitle>
-                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                          <MoreHorizontal />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem><Edit className="mr-2" /> Edit Details</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteTour(pkg.id)}>
-                          <Trash2 className="mr-2" /> Delete Tour
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <CardDescription className="flex items-center gap-2 pt-1">
-                    <MapPin className="h-4 w-4" /> {pkg.destination}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Members</span>
-                    <span className="font-semibold">{pkg.members.length} Joined</span>
-                  </div>
-                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Invite Code</span>
-                    <Badge variant="secondary" className="font-mono">{pkg.inviteCode}</Badge>
-                  </div>
-                </CardContent>
-                <div className="p-6 pt-0">
-                  <Button asChild className="w-full">
-                    <Link href={`/tours/${pkg.id}`}><Eye className="mr-2" /> Manage Tour</Link>
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              <p>You haven't created any tours yet. Click "Create New Tour" to get started!</p>
-            </CardContent>
-          </Card>
-        )}
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard icon={DollarSign} title="Total Spend" value={`₹${totalSpend.toLocaleString()}`} description="Approved expenses" />
+          <StatCard icon={Plane} title="Total Trips" value={totalTrips.toString()} description="Organized or joined" />
+          <StatCard icon={Calendar} title="Total Days Traveled" value={totalDays.toString()} description="From completed trips" />
       </div>
 
-      <div className="w-full border-t border-border my-8"></div>
-
-      {/* Tours I've Joined */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold flex items-center gap-2"><Users /> Tours I've Joined ({toursJoined.length})</h2>
-         {toursJoined.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {toursJoined.map((pkg) => (
-                <Card key={pkg.id} className="flex flex-col">
-                    <CardHeader>
-                    <CardTitle className="leading-tight">{pkg.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 pt-1">
-                        <MapPin className="h-4 w-4" /> {pkg.destination}
-                    </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow space-y-3">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Organizer</span>
-                        <span className="font-semibold">{pkg.organizerName}</span>
-                    </div>
-                     <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Total Members</span>
-                        <span className="font-semibold">{pkg.members.length + 1}</span>
-                    </div>
-                    </CardContent>
-                    <div className="p-6 pt-0">
-                    <Button asChild className="w-full" variant="secondary">
-                        <Link href={`/tours/${pkg.id}`}><Eye className="mr-2" /> View Details</Link>
-                    </Button>
-                    </div>
-                </Card>
-                ))}
-            </div>
-            ) : (
-            <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                <p>You haven't joined any tours. Find a tour and use the invite code to join!</p>
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><BarChart /> Monthly Spending Overview</CardTitle>
+                    <CardDescription>Your approved spending over the last 6 months.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <RechartsBarChart data={monthlySpending}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <RechartsBar dataKey="total" fill="hsl(var(--primary))" name="Total Spend (₹)" />
+                        </RechartsBarChart>
+                    </ResponsiveContainer>
                 </CardContent>
             </Card>
-        )}
+
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><PieChart /> Expense Breakdown</CardTitle>
+                    <CardDescription>How your spending is distributed across categories.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                         <RechartsPieChart>
+                            <Pie
+                                data={expenseByCategory}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                                nameKey="name"
+                                label={(props) => `${props.name} (${(props.percent * 100).toFixed(0)}%)`}
+                            >
+                                {expenseByCategory.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                        </RechartsPieChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
       </div>
+      
+       <Card>
+          <CardHeader>
+            <CardTitle>Recent Trips</CardTitle>
+            <CardDescription>Your most recent travel activity.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead>Tour Name</TableHead>
+                          <TableHead>Destination</TableHead>
+                          <TableHead>Start Date</TableHead>
+                          <TableHead>My Role</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {recentTrips.map(trip => (
+                          <TableRow key={trip.id}>
+                              <TableCell className="font-medium">{trip.packageName}</TableCell>
+                              <TableCell>{trip.destination}</TableCell>
+                              <TableCell>{format(parseISO(trip.startDate), 'PPP')}</TableCell>
+                              <TableCell>
+                                  <Badge variant={trip.organizerName === user.username ? 'default' : 'secondary'}>
+                                      {trip.organizerName === user.username ? 'Organizer' : 'Member'}
+                                  </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                  <Button asChild variant="ghost" size="sm">
+                                      <Link href={`/tours/${trip.packageId}`}><Eye className="mr-2" /> View Details</Link>
+                                  </Button>
+                              </TableCell>
+                          </TableRow>
+                      ))}
+                  </TableBody>
+              </Table>
+               {recentTrips.length === 0 && (
+                  <div className="text-center py-10 text-muted-foreground">
+                      No trips found. Create or join a tour to get started!
+                  </div>
+              )}
+          </CardContent>
+      </Card>
     </div>
   );
 }
+
+
+const StatCard = ({ icon: Icon, title, value, description }: { icon: React.ElementType, title: string, value: string, description: string }) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{value}</div>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </CardContent>
+  </Card>
+);
+
+    
