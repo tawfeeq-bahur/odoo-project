@@ -21,7 +21,7 @@ import { useSharedState } from '@/components/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 
 const MapDisplay = dynamic(
-  () => import('@/components/fleet/MapDisplay'),
+  () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
   { 
     ssr: false,
     loading: () => <Skeleton className="aspect-video w-full h-[400px] border-2 border-dashed rounded-lg bg-muted/30" />
