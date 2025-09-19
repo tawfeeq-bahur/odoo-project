@@ -36,6 +36,7 @@ export type ItineraryItem = {
 export type Trip = {
   id: string;
   packageId: string;
+  packageName: string; // Added field
   organizerName: string;
   source: string;
   destination: string;

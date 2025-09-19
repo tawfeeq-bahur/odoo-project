@@ -16,24 +16,25 @@ import { Badge } from "@/components/ui/badge";
 import type { TourPackage } from "@/lib/types";
 
 export default function DashboardPage() {
-  const { user, packages, addPackage, deletePackage } = useSharedState();
+  const { user, packages, trips, addPackage, deletePackage } = useSharedState();
 
   if (user?.role === 'member') {
     // Member Dashboard
-    const assignedTour = packages.find(p => p.id === user.assignedTourId) || packages[0];
+    const assignedTrip = trips.find(t => t.members.some(m => m.name === user.username));
+    
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <h1 className="text-3xl font-bold tracking-tight font-headline">My Trip Dashboard</h1>
-        {assignedTour ? (
+        {assignedTrip ? (
           <Card>
             <CardHeader>
-              <CardTitle>{assignedTour.name}</CardTitle>
+              <CardTitle>{assignedTrip.packageName}</CardTitle>
               <CardDescription>You are a member of this upcoming trip. Here are the details.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> Destination: <span className="font-semibold text-foreground">{assignedTour.destination}</span></div>
-              <div className="flex items-center gap-2 text-muted-foreground"><CalendarDays className="h-4 w-4" /> Duration: <span className="font-semibold text-foreground">{assignedTour.durationDays} Days</span></div>
-              <div className="flex items-center gap-2 text-muted-foreground"><Users className="h-4 w-4" /> Organizer: <span className="font-semibold text-foreground">{assignedTour.organizer}</span></div>
+              <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> Destination: <span className="font-semibold text-foreground">{assignedTrip.destination}</span></div>
+              <div className="flex items-center gap-2 text-muted-foreground"><CalendarDays className="h-4 w-4" /> Start Date: <span className="font-semibold text-foreground">{new Date(assignedTrip.startDate).toLocaleDateString()}</span></div>
+              <div className="flex items-center gap-2 text-muted-foreground"><Users className="h-4 w-4" /> Organizer: <span className="font-semibold text-foreground">{assignedTrip.organizerName}</span></div>
               <Button asChild className="mt-4">
                 <Link href="/itinerary">View Full Itinerary</Link>
               </Button>
@@ -59,7 +60,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h1 className="text-3xl font-bold tracking-tight font-headline">My Tours</h1>
-        <Button onClick={() => addPackage({ name: "New Untitled Tour", destination: "TBD", status: "Draft", price: 0, durationDays: 1, lastUpdated: new Date().toISOString(), organizer: user.username })}>
+        <Button onClick={() => addPackage({ name: "New Untitled Tour", destination: "TBD", status: "Draft", price: 0, durationDays: 1 })}>
           <PlusCircle className="mr-2" />
           Create New Tour
         </Button>

@@ -37,6 +37,7 @@ const formSchema = z.object({
   traffic: z.string({required_error: "Traffic condition is required."}).min(1, "Traffic condition is required."),
   avg_speed_kmph: z.coerce.number().min(1, "Average speed must be at least 1 kmph").max(200, "Average speed cannot exceed 200 kmph"),
   max_speed_kmph: z.coerce.number().min(1, "Max speed must be at least 1 kmph").max(200, "Max speed cannot exceed 200 kmph"),
+  packageId: z.string().min(1, "Please select a tour package for this route."),
 });
 
 
@@ -44,7 +45,7 @@ export default function TourPlannerPage() {
   const [plan, setPlan] = useState<TripPlannerOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { addTrip } = useSharedState();
+  const { user, packages, addTrip } = useSharedState();
   const { toast } = useToast();
 
   const plannerForm = useForm<z.infer<typeof formSchema>>({
@@ -58,6 +59,7 @@ export default function TourPlannerPage() {
       vehicleModel: 'Car',
       avg_speed_kmph: 60,
       max_speed_kmph: 100,
+      packageId: '',
     },
   });
   
@@ -69,6 +71,13 @@ export default function TourPlannerPage() {
     setError(null);
     setPlan(null);
 
+    const selectedPackage = packages.find(p => p.id === values.packageId);
+    if (!selectedPackage || !user) {
+        setError('Could not find the selected package or user.');
+        setIsLoading(false);
+        return;
+    }
+
     try {
       const result = await getTripPlan({
         ...values,
@@ -79,23 +88,54 @@ export default function TourPlannerPage() {
           source: result.source,
           destination: result.destination,
           startDate: new Date().toISOString(),
-          organizerName: "Admin",
-          packageId: "1", // Dummy packageId
+          organizerName: user.username,
+          packageId: selectedPackage.id,
+          packageName: selectedPackage.name, // Pass the package name
           plan: result,
       });
 
       toast({
           title: "Route Plan Generated!",
-          description: `A plan for ${result.source} to ${result.destination} has been created.`
+          description: `A plan for ${result.source} to ${result.destination} has been created and assigned to "${selectedPackage.name}".`
       });
 
       setPlan(result);
 
     } catch (err) {
-      setError('Sorry, I could not generate a trip plan. The AI model might be unavailable. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Sorry, I could not generate a trip plan. The AI model might be unavailable. Please try again.';
+      setError(errorMessage);
+      setPlan(generateFallbackPlan({
+        ...values,
+        loadKg: 100,
+      }));
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function generateFallbackPlan(input: z.infer<typeof formSchema> & { loadKg: number }): TripPlannerOutput {
+    const distance = 450;
+    const duration = '8 hours 30 minutes';
+    
+    return {
+        source: input.source,
+        destination: input.destination,
+        distance: `${distance} km`,
+        duration: duration,
+        estimatedFuelCost: (distance / 12) * 105,
+        estimatedTollCost: distance * 1.5,
+        suggestedRoute: `Take the main national highway from ${input.source} to ${input.destination}.`,
+        routePolyline: [],
+        disclaimer: 'This is a fallback estimated plan. AI model is currently unavailable. Actual values may vary.',
+        routeType: input.routeType,
+        traffic: input.traffic,
+        ecoTip: 'Consider using public transport for parts of your journey to reduce your carbon footprint.',
+        pointsOfInterest: {
+            Hotels: ["Hotel Grand View", "Riverside Inn"],
+            Restaurants: ["Local Heritage Restaurant", "Highway Treats Dhaba"],
+            Monuments: ["Historic Fort", "Ancient Temple Complex"]
+        },
+    };
   }
   
   return (
@@ -116,6 +156,26 @@ export default function TourPlannerPage() {
                             <CardDescription>Enter the source and destination for your trip.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <FormField
+                                control={plannerForm.control}
+                                name="packageId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Tour Package</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger><SelectValue placeholder="Assign this route to a tour" /></SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {packages.map(pkg => (
+                                                <SelectItem key={pkg.id} value={pkg.id}>{pkg.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={plannerForm.control}
                                 name="source"
