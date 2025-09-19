@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useSharedState } from '@/components/AppLayout';
@@ -7,16 +6,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileDown, CheckCircle, XCircle, DollarSign, Activity } from 'lucide-react';
+import { FileDown, DollarSign, Activity, Calendar as CalendarIcon, Filter } from 'lucide-react';
 import type { Expense } from '@/lib/types';
-import { format } from 'date-fns';
-import { useMemo } from 'react';
+import { format, isWithinInterval } from 'date-fns';
+import { useMemo, useState } from 'react';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { DateRange } from 'react-day-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ReportsPage() {
-    const { expenses, user } = useSharedState();
+    const { expenses, user, packages } = useSharedState();
+    const [date, setDate] = useState<DateRange | undefined>();
+    const [selectedTourId, setSelectedTourId] = useState<string>('all');
 
     if (!user) return null;
+
+    const userTours = useMemo(() => {
+        return packages.filter(p => p.organizerName === user.username || p.members.includes(user.username));
+    }, [packages, user.username]);
+
+    const filteredExpenses = useMemo(() => {
+        return expenses.filter(exp => {
+            const isUserExpense = exp.submittedBy === user.username;
+            if (!isUserExpense) return false;
+
+            const isTourMatch = selectedTourId === 'all' || exp.tourId === selectedTourId;
+            
+            const isDateMatch = !date || (!date.from && !date.to) ||
+                (date.from && !date.to && new Date(exp.date) >= date.from) ||
+                (!date.from && date.to && new Date(exp.date) <= date.to) ||
+                (date.from && date.to && isWithinInterval(new Date(exp.date), { start: date.from, end: date.to }));
+
+            return isTourMatch && isDateMatch;
+        });
+    }, [expenses, user.username, selectedTourId, date]);
+
 
     const getStatusBadge = (status: Expense['status']) => {
         switch (status) {
@@ -29,31 +55,32 @@ export default function ReportsPage() {
         }
     };
     
-    const userExpenses = expenses.filter(exp => exp.submittedBy === user.username);
-    const totalSpent = userExpenses.filter(e => e.status === 'approved').reduce((sum, exp) => sum + exp.amount, 0);
+    const totalSpent = filteredExpenses.filter(e => e.status === 'approved').reduce((sum, exp) => sum + exp.amount, 0);
 
     const expenseByCategory = useMemo(() => {
         const categories: { [key: string]: number } = {
             Travel: 0, Food: 0, Hotel: 0, Tickets: 0, Misc: 0,
         };
-        userExpenses.forEach(exp => {
+        filteredExpenses.forEach(exp => {
             if (exp.status === 'approved') {
                 categories[exp.type] = (categories[exp.type] || 0) + exp.amount;
             }
         });
         return Object.entries(categories).map(([name, amount]) => ({ name, amount }));
-    }, [userExpenses]);
+    }, [filteredExpenses]);
 
     const downloadCSV = () => {
-        const headers = ["Submitted By", "Date", "Type", "Amount", "Status"];
+        const headers = ["Submitted By", "Date", "Type", "Amount", "Status", "Description", "Tour ID"];
         const csvRows = [
             headers.join(','),
-            ...userExpenses.map(exp => [
+            ...filteredExpenses.map(exp => [
                 `"${exp.submittedBy}"`,
                 format(new Date(exp.date), 'yyyy-MM-dd'),
                 exp.type,
                 exp.amount.toFixed(2),
-                exp.status
+                exp.status,
+                `"${exp.description || ''}"`,
+                exp.tourId || 'N/A'
             ].join(','))
         ];
 
@@ -62,8 +89,9 @@ export default function ReportsPage() {
         const link = document.createElement('a');
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
+            const tourName = selectedTourId === 'all' ? 'all-tours' : packages.find(p => p.id === selectedTourId)?.name.replace(/\s+/g, '-').toLowerCase() || 'tour';
+            const fileName = `expenses-${user.username}-${tourName}.csv`;
             link.setAttribute('href', url);
-            const fileName = `expenses-${user.username}.csv`;
             link.setAttribute('download', fileName);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
@@ -75,16 +103,72 @@ export default function ReportsPage() {
 
     return (
         <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
-             <div className="flex items-center justify-between">
+             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight font-headline">My Expense Analytics</h1>
                     <p className="text-muted-foreground">Review your spending and generate reports.</p>
                 </div>
                  <Button variant="outline" onClick={downloadCSV}>
                     <FileDown className="mr-2" />
-                    Export My Expenses
+                    Export Filtered Expenses
                 </Button>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Filter /> Filters</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-4">
+                    <Select value={selectedTourId} onValueChange={setSelectedTourId}>
+                        <SelectTrigger className="w-full md:w-[280px]">
+                            <SelectValue placeholder="Filter by tour..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All My Trips</SelectItem>
+                            {userTours.map(tour => (
+                                <SelectItem key={tour.id} value={tour.id}>{tour.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="date"
+                            variant={"outline"}
+                            className="w-full md:w-[300px] justify-start text-left font-normal"
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {date?.from ? (
+                            date.to ? (
+                                <>
+                                {format(date.from, "LLL dd, y")} -{" "}
+                                {format(date.to, "LLL dd, y")}
+                                </>
+                            ) : (
+                                format(date.from, "LLL dd, y")
+                            )
+                            ) : (
+                            <span>Pick a date range</span>
+                            )}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={date?.from}
+                            selected={date}
+                            onSelect={setDate}
+                            numberOfMonths={2}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <Button variant="ghost" onClick={() => { setDate(undefined); setSelectedTourId('all'); }}>
+                        Clear Filters
+                    </Button>
+                </CardContent>
+            </Card>
             
              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -94,6 +178,7 @@ export default function ReportsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">₹{totalSpent.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">Based on current filters</p>
                     </CardContent>
                 </Card>
                  <Card>
@@ -102,7 +187,8 @@ export default function ReportsPage() {
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{userExpenses.filter(e=>e.status==='pending').length}</div>
+                        <div className="text-2xl font-bold">{filteredExpenses.filter(e=>e.status==='pending').length}</div>
+                         <p className="text-xs text-muted-foreground">Based on current filters</p>
                     </CardContent>
                 </Card>
             </div>
@@ -111,7 +197,7 @@ export default function ReportsPage() {
                 <Card className="lg:col-span-4">
                     <CardHeader>
                         <CardTitle>My Submitted Expenses</CardTitle>
-                        <CardDescription>A log of all expenses you have submitted.</CardDescription>
+                        <CardDescription>A log of all your submitted expenses matching the current filters.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
@@ -124,7 +210,7 @@ export default function ReportsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {userExpenses.map((expense) => (
+                                {filteredExpenses.map((expense) => (
                                     <TableRow key={expense.id}>
                                         <TableCell>{format(new Date(expense.date), 'PPP')}</TableCell>
                                         <TableCell><Badge variant="secondary">{expense.type}</Badge></TableCell>
@@ -134,9 +220,9 @@ export default function ReportsPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                        {userExpenses.length === 0 && (
+                        {filteredExpenses.length === 0 && (
                             <div className="text-center p-10 text-muted-foreground">
-                                No expenses have been submitted by you yet.
+                                No expenses match the current filters.
                             </div>
                         )}
                     </CardContent>
