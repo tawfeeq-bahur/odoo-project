@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super ChatBot</title>
+<style>
+body { font-family: Arial; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+#chat-container { width: 400px; background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; }
+#chat-box { flex: 1; padding: 20px; overflow-y: auto; }
+.message { margin: 10px 0; }
+.user { text-align: right; }
+.bot { text-align: left; }
+#input-area { display: flex; border-top: 1px solid #ccc; }
+#user-input { flex: 1; padding: 10px; border: none; outline: none; }
+#send-btn { padding: 10px 15px; border: none; background: #007bff; color: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="chat-container">
+  <div id="chat-box"></div>
+  <div id="input-area">
+    <input type="text" id="user-input" placeholder="Ask me anything..." />
+    <button id="send-btn">Send</button>
+  </div>
+</div>
+
+<script src="chatbot.js"></script>
+</body>
+</html>

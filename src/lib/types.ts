@@ -68,6 +68,7 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   disclaimer?: string;
+  timestamp?: string;
 };
 
 // Simplified User type - no more global role

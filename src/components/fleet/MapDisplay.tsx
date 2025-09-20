@@ -8,7 +8,7 @@ import { getCoordinates, GeocodeOutput } from '@/ai/flows/geocoder';
 import { snapToRoads } from '@/ai/flows/road-snapper';
 import L from 'leaflet';
 import { Polyline } from 'react-leaflet';
-import { Hospital, Fuel, Utensils, Bed, Bath } from 'lucide-react';
+import { Hospital, Fuel, Utensils, Bed, Bath, Phone } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default Leaflet icon path issue with bundlers
@@ -23,6 +23,9 @@ const POI_ICONS: { [key: string]: React.ReactNode } = {
   Restaurants: <Utensils className="h-4 w-4 text-muted-foreground" />,
   Hotels: <Bed className="h-4 w-4 text-muted-foreground" />,
   Restrooms: <Bath className="h-4 w-4 text-muted-foreground" />,
+  'Police Stations': <div className="h-4 w-4 rounded-full bg-blue-600 flex items-center justify-center">
+    <div className="h-2 w-2 rounded-full bg-white"></div>
+  </div>,
   'EV Stations': <div className="h-4 w-4 rounded-full bg-muted-foreground/20 flex items-center justify-center">
     <div className="h-2 w-2 rounded-full bg-muted-foreground"></div>
   </div>,
@@ -81,6 +84,282 @@ function getFallbackCoordinates(location: string): { latitude: number; longitude
   return { latitude: 20.5937, longitude: 78.9629 };
 }
 
+// Overpass API configuration with more reliable endpoints
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter', // Most reliable
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.nchc.org.tw/api/interpreter', 
+  'https://overpass.openstreetmap.ru/api/interpreter'
+];
+
+// Helper function to try multiple Overpass instances with better error handling
+const fetchFromOverpass = async (query: string, timeout: number = 25) => {
+  const errors: string[] = [];
+  
+  for (let i = 0; i < OVERPASS_URLS.length; i++) {
+    const url = OVERPASS_URLS[i];
+    try {
+      console.log(`Trying Overpass instance ${i + 1}/${OVERPASS_URLS.length}: ${url}`);
+      
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout * 1000);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'TourJet/1.0'
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Success with instance ${i + 1}: ${url}`);
+        return data;
+      } else {
+        const errorMsg = `Instance ${i + 1} failed with status ${response.status}: ${url}`;
+        console.warn(`❌ ${errorMsg}`);
+        errors.push(errorMsg);
+      }
+    } catch (error) {
+      const errorMsg = `Instance ${i + 1} error: ${error instanceof Error ? error.message : 'Unknown error'} - ${url}`;
+      console.warn(`❌ ${errorMsg}`);
+      errors.push(errorMsg);
+    }
+  }
+  
+  // Return empty result instead of throwing error to prevent app crash
+  console.warn('All Overpass instances failed, returning empty result');
+  console.warn('Errors:', errors);
+  return { elements: [] };
+};
+
+// Police station functions
+const fetchPoliceStations = async (lat: number, lng: number, radius: number = 5000) => {
+  try {
+    const overpassQuery = `
+      [out:json][timeout:20];
+      (
+        node["amenity"="police"](around:${radius},${lat},${lng});
+        way["amenity"="police"](around:${radius},${lat},${lng});
+        relation["amenity"="police"](around:${radius},${lat},${lng});
+      );
+      out center;
+    `;
+
+    const data = await fetchFromOverpass(overpassQuery, 20);
+    return data.elements || [];
+  } catch (error) {
+    console.error('Error fetching police stations:', error);
+    return [];
+  }
+};
+
+// Enhanced function to fetch police stations along a route
+const fetchPoliceStationsAlongRoute = async (sourceLat: number, sourceLng: number, destLat: number, destLng: number) => {
+  try {
+    // Calculate bounding box for the route
+    const minLat = Math.min(sourceLat, destLat) - 0.1; // Add buffer
+    const maxLat = Math.max(sourceLat, destLat) + 0.1;
+    const minLng = Math.min(sourceLng, destLng) - 0.1;
+    const maxLng = Math.max(sourceLng, destLng) + 0.1;
+
+    const overpassQuery = `
+      [out:json][timeout:20];
+      (
+        node["amenity"="police"](${minLat},${minLng},${maxLat},${maxLng});
+        way["amenity"="police"](${minLat},${minLng},${maxLat},${maxLng});
+        relation["amenity"="police"](${minLat},${minLng},${maxLat},${maxLng});
+      );
+      out center;
+    `;
+
+    console.log('Searching for police stations in bounding box:', { minLat, minLng, maxLat, maxLng });
+
+    const data = await fetchFromOverpass(overpassQuery, 20);
+    return data.elements || [];
+  } catch (error) {
+    console.error('Error fetching police stations along route:', error);
+    return [];
+  }
+};
+
+const createPoliceIcon = (size: number = 30) => {
+  const svgIcon = `
+    <svg width="${size}" height="${size}" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="15" cy="15" r="12" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
+      <path d="M10 12h10v2H10v-2zm0 4h10v2H10v-2zm2-8h6v2h-6V8z" fill="#ffffff"/>
+      <circle cx="15" cy="15" r="3" fill="#ffffff"/>
+    </svg>
+  `;
+
+  const icon = L.icon({
+    iconUrl: 'data:image/svg+xml;base64,' + btoa(svgIcon),
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2],
+    popupAnchor: [0, -size/2],
+    className: 'police-station-icon'
+  });
+  
+  console.log('Created police icon:', icon);
+  return icon;
+};
+
+const showPoliceStationsOnMap = async (map: L.Map, lat: number, lng: number, policeLayerRef: React.MutableRefObject<L.LayerGroup | null>, radius: number = 5000) => {
+  // Remove existing police layer if it exists
+  if (policeLayerRef.current) {
+    map.removeLayer(policeLayerRef.current);
+  }
+
+  // Create a new layer group for police stations
+  const policeLayer = L.layerGroup();
+  policeLayerRef.current = policeLayer;
+  
+  try {
+    const policeStations = await fetchPoliceStations(lat, lng, radius);
+    
+    policeStations.forEach(station => {
+      // Get coordinates - handle both node and way/relation types
+      let stationLat: number, stationLng: number;
+      
+      if (station.type === 'node') {
+        stationLat = station.lat;
+        stationLng = station.lon;
+      } else if (station.center) {
+        stationLat = station.center.lat;
+        stationLng = station.center.lon;
+      } else {
+        return; // Skip if no valid coordinates
+      }
+
+      // Get station name from tags
+      const stationName = station.tags?.name || 
+                         station.tags?.['name:en'] || 
+                         station.tags?.['name:hi'] || 
+                         'Police Station';
+
+      // Create marker with custom icon
+      const marker = L.marker([stationLat, stationLng], {
+        icon: createPoliceIcon(30)
+      });
+
+      // Create popup with station information
+      const popupContent = `
+        <div style="min-width: 150px;">
+          <h4 style="margin: 0 0 8px 0; color: #1e40af; font-weight: bold;">${stationName}</h4>
+          <p style="margin: 0; font-size: 12px; color: #666;">
+            <strong>Coordinates:</strong><br>
+            ${stationLat.toFixed(6)}, ${stationLng.toFixed(6)}
+          </p>
+          ${station.tags?.phone ? `
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
+              <strong>Phone:</strong> ${station.tags.phone}
+            </p>
+          ` : ''}
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      policeLayer.addLayer(marker);
+    });
+
+    // Add the layer group to the map
+    map.addLayer(policeLayer);
+    
+    console.log(`Added ${policeStations.length} police stations to map`);
+    return { layer: policeLayer, count: policeStations.length };
+    
+  } catch (error) {
+    console.error('Error showing police stations on map:', error);
+    return { layer: policeLayer, count: 0 };
+  }
+};
+
+// Function to show police stations along a route
+const showPoliceStationsAlongRoute = async (map: L.Map, sourceLat: number, sourceLng: number, destLat: number, destLng: number, policeLayerRef: React.MutableRefObject<L.LayerGroup | null>) => {
+  // Remove existing police layer if it exists
+  if (policeLayerRef.current) {
+    map.removeLayer(policeLayerRef.current);
+  }
+
+  // Create a new layer group for police stations
+  const policeLayer = L.layerGroup();
+  policeLayerRef.current = policeLayer;
+  
+  console.log('Creating police layer for route:', { sourceLat, sourceLng, destLat, destLng });
+  
+  try {
+    const policeStations = await fetchPoliceStationsAlongRoute(sourceLat, sourceLng, destLat, destLng);
+    console.log('Fetched police stations:', policeStations.length);
+    
+    policeStations.forEach((station, index) => {
+      // Get coordinates - handle both node and way/relation types
+      let stationLat: number, stationLng: number;
+      
+      if (station.type === 'node') {
+        stationLat = station.lat;
+        stationLng = station.lon;
+      } else if (station.center) {
+        stationLat = station.center.lat;
+        stationLng = station.center.lon;
+      } else {
+        return; // Skip if no valid coordinates
+      }
+
+      // Get station name from tags
+      const stationName = station.tags?.name || 
+                         station.tags?.['name:en'] || 
+                         station.tags?.['name:hi'] || 
+                         'Police Station';
+
+      console.log(`Creating police marker ${index + 1}/${policeStations.length}: ${stationName} at ${stationLat}, ${stationLng}`);
+
+      // Create marker with custom icon
+      const policeIcon = createPoliceIcon(30);
+      const marker = L.marker([stationLat, stationLng], {
+        icon: policeIcon
+      });
+
+      // Create popup with station information
+      const popupContent = `
+        <div style="min-width: 150px;">
+          <h4 style="margin: 0 0 8px 0; color: #1e40af; font-weight: bold;">${stationName}</h4>
+          <p style="margin: 0; font-size: 12px; color: #666;">
+            <strong>Coordinates:</strong><br>
+            ${stationLat.toFixed(6)}, ${stationLng.toFixed(6)}
+          </p>
+          ${station.tags?.phone ? `
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
+              <strong>Phone:</strong> ${station.tags.phone}
+            </p>
+          ` : ''}
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      policeLayer.addLayer(marker);
+    });
+
+    // Add the layer group to the map
+    map.addLayer(policeLayer);
+    
+    console.log(`Added ${policeStations.length} police stations along route`);
+    console.log('Police layer added to map:', policeLayer);
+    console.log('Map layers count:', map.eachLayer ? map.eachLayer(() => {}).length : 'unknown');
+    
+    return { layer: policeLayer, count: policeStations.length };
+    
+  } catch (error) {
+    console.error('Error showing police stations along route:', error);
+    return { layer: policeLayer, count: 0 };
+  }
+};
+
 type MapDisplayProps = {
   plan: TripPlannerOutput;
   traffic?: string;
@@ -103,6 +382,31 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
   const markerIndexRef = useRef<Map<string, L.Marker>>(new Map());
   const [poiList, setPoiList] = useState<Record<string, { name: string; lat: number; lon: number }[]>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const policeLayerRef = useRef<L.LayerGroup | null>(null);
+  const [policeStationsCount, setPoliceStationsCount] = useState<number>(0);
+  const [showSOSButton, setShowSOSButton] = useState<boolean>(true);
+  const [showEmergencyContacts, setShowEmergencyContacts] = useState<boolean>(false);
+
+  // Emergency contact configuration
+  const EMERGENCY_NUMBER = "+91100"; // Default to Indian emergency number
+  const EMERGENCY_CONTACTS = [
+    { name: "Police", number: "+91100", color: "bg-red-600" },
+    { name: "Ambulance", number: "+91102", color: "bg-red-500" },
+    { name: "Fire", number: "+91101", color: "bg-orange-600" },
+    { name: "Women Helpline", number: "+91181", color: "bg-pink-600" }
+  ];
+
+  const handleSOSCall = (number: string) => {
+    try {
+      window.location.href = `tel:${number}`;
+    } catch (error) {
+      console.error('Error initiating call:', error);
+      // Fallback: copy number to clipboard
+      navigator.clipboard.writeText(number).then(() => {
+        alert(`Number copied to clipboard: ${number}`);
+      });
+    }
+  };
 
   const getRouteColor = () => {
     const level = (traffic || 'normal').toLowerCase();
@@ -143,6 +447,11 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           map.createPane('poiPane');
           const pp = map.getPane('poiPane') as HTMLElement; pp.style.zIndex = '650';
         }
+        
+        // Load police stations by default
+        showPoliceStationsOnMap(map, 20.5937, 78.9629, policeLayerRef, 10000).then(result => {
+          setPoliceStationsCount(result.count);
+        });
     }
     
     const fetchAndSnapRoute = async () => {
@@ -175,6 +484,14 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             ]);
             setSourceCoords(sourceRes);
             setDestCoords(destRes);
+
+            // Load police stations along the route
+            const map = mapInstance.current;
+            if (map) {
+              showPoliceStationsAlongRoute(map, sourceRes.latitude, sourceRes.longitude, destRes.latitude, destRes.longitude, policeLayerRef).then(result => {
+                setPoliceStationsCount(result.count);
+              });
+            }
 
             // 2. Fetch a road-following route and alternatives from OSRM between source and destination
             try {
@@ -227,6 +544,14 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
               ];
               setRoadPolyline(simpleRoute);
               setError(null); // Clear error since we have a fallback
+
+              // Load police stations for fallback coordinates
+              const map = mapInstance.current;
+              if (map) {
+                showPoliceStationsAlongRoute(map, fallbackSource.latitude, fallbackSource.longitude, fallbackDest.latitude, fallbackDest.longitude, policeLayerRef).then(result => {
+                  setPoliceStationsCount(result.count);
+                });
+              }
             } catch (fallbackErr) {
               console.error("Fallback also failed:", fallbackErr);
               setError("Could not generate the accurate route. Please try again.");
@@ -258,6 +583,10 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     if (endMarkerRef.current) {
       try { map.removeLayer(endMarkerRef.current); } catch {}
       endMarkerRef.current = null;
+    }
+    if (policeLayerRef.current) {
+      try { map.removeLayer(policeLayerRef.current); } catch {}
+      policeLayerRef.current = null;
     }
 
     // Add new layers
@@ -450,7 +779,72 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
               {error ? (
                  <div className="text-center p-4 text-destructive-foreground bg-destructive/80 rounded-md">{error}</div>
               ) : (
-                <div ref={mapRef} className="aspect-video w-full h-[400px] border-2 border-dashed rounded-lg bg-muted/30" />
+                <div className="relative">
+                  <div ref={mapRef} className="aspect-video w-full h-[400px] border-2 border-dashed rounded-lg bg-muted/30" />
+                  
+                  {/* SOS Button */}
+                  {showSOSButton && (
+                    <div className="absolute bottom-4 right-4 z-[1000]">
+                      <div className="flex flex-col gap-2">
+                        {/* Main SOS Button */}
+                        <button
+                          onClick={() => handleSOSCall(EMERGENCY_NUMBER)}
+                          className="w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group animate-pulse"
+                          title="Emergency Call - Police (100)"
+                        >
+                          <Phone className="w-6 h-6" />
+                        </button>
+                        
+                        {/* Toggle Emergency Contacts Button */}
+                        <button
+                          onClick={() => setShowEmergencyContacts(!showEmergencyContacts)}
+                          className="w-12 h-12 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+                          title="Toggle Emergency Contacts"
+                        >
+                          <span className="text-xs font-bold">SOS</span>
+                        </button>
+                        
+                        {/* Emergency Contacts Dropdown */}
+                        {showEmergencyContacts && (
+                          <div className="flex flex-col gap-1 animate-in slide-in-from-bottom-2 duration-200">
+                            {EMERGENCY_CONTACTS.map((contact, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleSOSCall(contact.number)}
+                                className={`w-12 h-12 ${contact.color} hover:opacity-80 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center text-xs font-medium`}
+                                title={`Call ${contact.name} - ${contact.number}`}
+                              >
+                                {contact.name.charAt(0)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Hide SOS Button */}
+                        <button
+                          onClick={() => setShowSOSButton(false)}
+                          className="w-10 h-10 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center"
+                          title="Hide SOS Button"
+                        >
+                          <span className="text-xs">×</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show SOS Button (when hidden) */}
+                  {!showSOSButton && (
+                    <div className="absolute bottom-4 right-4 z-[1000]">
+                      <button
+                        onClick={() => setShowSOSButton(true)}
+                        className="w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+                        title="Show SOS Button"
+                      >
+                        <Phone className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
           </CardContent>
       </Card>
@@ -466,6 +860,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                   Restaurants: (poiList.Restaurants || []) as any,
                   Restrooms: (poiList.Restrooms || []) as any,
                   'Fuel Stations': (poiList['Fuel Stations'] || []) as any,
+                  'Police Stations': Array.from({ length: policeStationsCount }, (_, i) => ({ name: `Police Station ${i + 1}`, lat: 0, lon: 0 })) as any,
                   'EV Stations': (poiList['EV Stations'] || []) as any,
                 }).map(([category, places]) => {
                   const open = expanded[category] ?? false;
