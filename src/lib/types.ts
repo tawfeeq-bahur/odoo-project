@@ -14,6 +14,7 @@ export type TourPackage = {
   inviteCode: string; // Unique code to join the tour
   members: string[] | { name: string; status: 'pending' | 'present' | 'absent' }[]; // List of member usernames who joined, or student objects
   gallery: string[]; // List of image URLs
+  driveLink?: string; // Unique Google Drive link for the tour
   tripType: 'friends' | 'family' | 'school';
   travelStyle: 'day' | 'night' | 'whole-day';
   maxMembers: number;

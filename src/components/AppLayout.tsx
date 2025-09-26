@@ -55,7 +55,7 @@ interface SharedState {
   user: UserType | null;
   login: (username: string, password: string) => boolean;
   logout: () => void;
-  addPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'gallery'>) => void;
+  addPackage: (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'gallery' | 'driveLink'>) => void;
   updatePackage: (pkgId: string, updates: Partial<TourPackage>) => void;
   deletePackage: (pkgId: string) => void;
   addExpense: (expense: Omit<Expense, "id" | "status" | "submittedBy">) => void;
@@ -85,9 +85,9 @@ const generateInviteCode = () => {
 const demoUsers = ["Arun", "Priya", "Ravi"]; // Usernames for login
 
 const initialPackages: TourPackage[] = [
-  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", pricePerPerson: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizerName: "Arun", inviteCode: generateInviteCode(), members: ['Priya'], gallery: ['/placeholders/himalayas1.jpg', '/placeholders/himalayas2.jpg'], tripType: 'friends', travelStyle: 'whole-day', maxMembers: 10, maxBudget: 50000 },
-  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", pricePerPerson: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizerName: "Priya", inviteCode: generateInviteCode(), members: [], gallery: [], tripType: 'family', travelStyle: 'day', maxMembers: 5, maxBudget: 100000 },
-  { id: "3", name: "Solo Backpacking", destination: "Rajasthan", status: "Draft", pricePerPerson: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizerName: "Ravi", inviteCode: generateInviteCode(), members: [], gallery: [], tripType: 'friends', travelStyle: 'night', maxMembers: 15, maxBudget: 40000 },
+  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", pricePerPerson: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizerName: "Arun", inviteCode: generateInviteCode(), members: ['Priya'], gallery: ['/placeholders/himalayas1.jpg', '/placeholders/himalayas2.jpg'], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'friends', travelStyle: 'whole-day', maxMembers: 10, maxBudget: 50000 },
+  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", pricePerPerson: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizerName: "Priya", inviteCode: generateInviteCode(), members: [], gallery: [], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'family', travelStyle: 'day', maxMembers: 5, maxBudget: 100000 },
+  { id: "3", name: "Solo Backpacking", destination: "Rajasthan", status: "Draft", pricePerPerson: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizerName: "Ravi", inviteCode: generateInviteCode(), members: [], gallery: [], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'friends', travelStyle: 'night', maxMembers: 15, maxBudget: 40000 },
 ];
 
 const initialExpenses: Expense[] = [
@@ -117,7 +117,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
   
-  const addPackage = (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'gallery'>) => {
+  const addPackage = (pkg: Omit<TourPackage, 'id' | 'lastUpdated' | 'organizerName' | 'inviteCode' | 'gallery' | 'driveLink'>) => {
     if (!user) {
         toast({ title: "Error", description: "You must be logged in to create a tour.", variant: "destructive"});
         return;
@@ -129,6 +129,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
         organizerName: user.username,
         inviteCode: generateInviteCode(),
         gallery: [],
+        driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing" // Placeholder link
     };
     setPackages(prev => [newPackage, ...prev]);
     toast({ title: "Tour Created!", description: `"${pkg.name}" has been created.`});

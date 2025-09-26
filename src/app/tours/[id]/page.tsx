@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useParams, notFound, useRouter } from 'next/navigation';
@@ -169,8 +170,10 @@ export default function TourDetailsPage() {
                     <CardDescription>A shared Google Drive folder for all tour photos.</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
-                    <Button variant="outline" className="w-full">
-                        <FolderSync className="mr-2" /> Access Shared Album
+                    <Button asChild className="w-full" variant="outline">
+                        <a href={tour.driveLink || '#'} target="_blank" rel="noopener noreferrer">
+                          <FolderSync className="mr-2" /> Access Shared Album
+                        </a>
                     </Button>
                 </CardContent>
              </Card>
