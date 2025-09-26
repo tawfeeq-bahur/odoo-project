@@ -4,16 +4,16 @@
 import { useSharedState } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Eye, Users, BarChart, PieChart, DollarSign, Calendar, Plane, ShoppingBag, UserCheck } from 'lucide-react';
+import { PlusCircle, Eye, Users, BarChart as BarChartIcon, PieChart as PieChartIcon, DollarSign, Calendar, Plane, ShoppingBag, UserCheck, Briefcase, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMemo } from "react";
 import { format, subMonths, parseISO } from "date-fns";
 import { 
-  BarChart as RechartsBarChart, 
-  Bar as RechartsBar,
-  PieChart as RechartsPieChart,
+  BarChart,
+  Bar,
+  PieChart,
   Pie,
   Cell,
   XAxis, 
@@ -31,11 +31,13 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  const { organizedTours, joinedTours, monthlySpending, expenseByCategory } = useMemo(() => {
+  const { organizedTours, joinedTours, monthlySpending, expenseByCategory, totalExpenses } = useMemo(() => {
     const organized = packages.filter(p => p.organizerName === user.username);
-    const joined = packages.filter(p => p.members.includes(user.username) && p.organizerName !== user.username);
+    const joined = packages.filter(p => p.members.some(member => (typeof member === 'string' ? member : member.name) === user.username) && p.organizerName !== user.username);
     
     const userExpenses = expenses.filter(exp => exp.submittedBy === user.username && exp.status === 'approved');
+
+    const totalExp = userExpenses.reduce((sum, exp) => sum + exp.amount, 0);
 
     const months = Array.from({ length: 6 }, (_, i) => subMonths(new Date(), 5 - i));
     const spendingData = months.map(month => ({
@@ -61,12 +63,13 @@ export default function DashboardPage() {
       organizedTours: organized,
       joinedTours: joined,
       monthlySpending: spendingData, 
-      expenseByCategory: categoryData 
+      expenseByCategory: categoryData,
+      totalExpenses: totalExp,
     };
   }, [packages, expenses, user.username]);
   
   return (
-    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-headline">Dashboard</h1>
@@ -81,35 +84,41 @@ export default function DashboardPage() {
             </Button>
         </div>
       </div>
+
+       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <AnimatedCard index={1} icon={Briefcase} title="Organized Tours" value={organizedTours.length} />
+          <AnimatedCard index={2} icon={Users} title="Joined Tours" value={joinedTours.length} />
+          <AnimatedCard index={3} icon={DollarSign} title="Total Approved Spend" value={`₹${totalExpenses.toLocaleString()}`} />
+      </div>
       
        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <Card className="lg:col-span-3">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><BarChart /> Monthly Spending Overview</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BarChartIcon /> Monthly Spending Overview</CardTitle>
                     <CardDescription>Your approved spending over the last 6 months.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                        <RechartsBarChart data={monthlySpending}>
+                        <BarChart data={monthlySpending}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
                             <Legend />
-                            <RechartsBar dataKey="Total Spend (₹)" fill="hsl(var(--primary))" />
-                        </RechartsBarChart>
+                            <Bar dataKey="Total Spend (₹)" fill="hsl(var(--primary))" />
+                        </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
 
              <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><PieChart /> Expense Breakdown</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><PieChartIcon /> Expense Breakdown</CardTitle>
                     <CardDescription>How your spending is distributed across categories.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                         <RechartsPieChart>
+                         <PieChart>
                             <Pie
                                 data={expenseByCategory}
                                 cx="50%"
@@ -127,7 +136,7 @@ export default function DashboardPage() {
                             </Pie>
                             <Tooltip />
                             <Legend />
-                        </RechartsPieChart>
+                        </PieChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
@@ -169,7 +178,7 @@ const TourTable = ({ tours }: { tours: any[] }) => (
       </TableHeader>
       <TableBody>
         {tours.length > 0 ? tours.map(tour => (
-          <TableRow key={tour.id}>
+          <TableRow key={tour.id} className="hover:bg-muted/50 transition-colors">
             <TableCell className="font-medium">{tour.name}</TableCell>
             <TableCell>{tour.destination}</TableCell>
             <TableCell>
@@ -192,5 +201,17 @@ const TourTable = ({ tours }: { tours: any[] }) => (
         )}
       </TableBody>
     </Table>
+);
+    
+const AnimatedCard = ({ icon: Icon, title, value, index }: { icon: React.ElementType; title: string; value: number | string; index: number }) => (
+  <Card className="animate-in fade-in-0 slide-in-from-bottom-6" style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{value}</div>
+    </CardContent>
+  </Card>
 );
     
