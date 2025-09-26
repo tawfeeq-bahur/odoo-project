@@ -45,7 +45,7 @@ export function FloatingChatWidget() {
       {/* Chat Widget */}
       {isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
-          <Card className={`w-[420px] h-[600px] shadow-2xl transition-all duration-300 ${
+          <Card className={`w-[420px] h-[700px] shadow-2xl transition-all duration-300 ${
             isMinimized ? 'h-16' : ''
           }`}>
             {isMinimized ? (
@@ -75,36 +75,7 @@ export function FloatingChatWidget() {
               </div>
             ) : (
               <div className="h-full flex flex-col">
-                <div className="flex items-center justify-between p-4 border-b">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                      <MessageCircle className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">TourJet AI</h3>
-                      <p className="text-xs text-muted-foreground">Online</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsMinimized(true)}
-                    >
-                      <Minimize2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={closeChat}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <ChatBot />
-                </div>
+                <ChatBot isOpen={!isMinimized} onClose={closeChat} />
               </div>
             )}
           </Card>
