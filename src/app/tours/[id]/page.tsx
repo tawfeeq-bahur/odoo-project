@@ -21,7 +21,11 @@ import {
   User as UserIcon,
   CheckCircle,
   FolderSync,
-  Save
+  Save,
+  Briefcase,
+  Sun,
+  Moon,
+  Mountain
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,7 +99,7 @@ export default function TourDetailsPage() {
 
   return (
     <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
         <div>
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-2 -ml-4">
             <ArrowLeft className="mr-2" /> Back to Dashboard
@@ -123,17 +127,19 @@ export default function TourDetailsPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column */}
         <div className="lg:col-span-1 space-y-8">
-            <Card>
+            <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '100ms' }}>
                 <CardHeader>
                 <CardTitle>Trip Overview</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                <InfoItem icon={Calendar} label="Duration" value={`${tour.durationDays} Days`} />
-                <InfoItem icon={Users} label="Organizer" value={tour.organizerName} />
+                  <InfoItem icon={Calendar} label="Duration" value={`${tour.durationDays} Days`} />
+                  <InfoItem icon={Briefcase} label="Organizer" value={tour.organizerName} />
+                  <InfoItem icon={Users} label="Max Group Size" value={`${tour.maxMembers} members`} />
+                  <InfoItem icon={tour.travelStyle === 'day' ? Sun : tour.travelStyle === 'night' ? Moon : Mountain} label="Travel Style" value={tour.travelStyle.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} />
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '200ms' }}>
                 <CardHeader>
                     <CardTitle>Members ({tour.members.length})</CardTitle>
                 </CardHeader>
@@ -153,7 +159,7 @@ export default function TourDetailsPage() {
                 </CardContent>
             </Card>
             
-             <Card>
+             <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '300ms' }}>
                 <CardHeader>
                     <CardTitle>Shared Photo Album</CardTitle>
                     <CardDescription>A shared Google Drive folder for all tour photos.</CardDescription>
@@ -187,7 +193,7 @@ export default function TourDetailsPage() {
         {/* Right Column */}
         <div className="lg:col-span-2 space-y-8">
           {tripPlan && tripPlan.plan ? (
-            <Card>
+            <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '400ms' }}>
                 <CardHeader>
                     <CardTitle>Route Plan</CardTitle>
                 </CardHeader>
@@ -196,7 +202,7 @@ export default function TourDetailsPage() {
                 </CardContent>
             </Card>
           ) : (
-            <Card>
+            <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '400ms' }}>
                 <CardHeader>
                     <CardTitle>Route Plan</CardTitle>
                 </CardHeader>
@@ -208,7 +214,7 @@ export default function TourDetailsPage() {
             </Card>
           )}
 
-          <Card>
+          <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '500ms' }}>
             <CardHeader>
               <CardTitle>Itinerary</CardTitle>
             </CardHeader>
