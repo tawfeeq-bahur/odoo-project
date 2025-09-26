@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, History, ListChecks, PlusCircle, User as UserIcon, Shield, Play } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, History, ListChecks, PlusCircle, User as UserIcon, Shield, Play, Languages } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -44,6 +44,7 @@ const menuItems = [
   { href: "/members", label: "Manage Members", icon: Users },
   { href: "/scanner", label: "Log Expense", icon: Wallet },
   { href: "/reports", label: "Analytics", icon: BarChart },
+  { href: "/transliteration", label: "Transliteration", icon: Languages },
   { href: "/sos", label: "Emergency SOS", icon: Shield },
 ];
 
