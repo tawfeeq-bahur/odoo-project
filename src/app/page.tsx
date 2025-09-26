@@ -4,7 +4,7 @@
 import { useSharedState } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Eye, Users, BarChart as BarChartIcon, PieChart as PieChartIcon, DollarSign, Calendar, Plane, ShoppingBag, UserCheck, Briefcase, ChevronRight } from 'lucide-react';
+import { PlusCircle, Eye, Users, BarChart as BarChartIcon, PieChart as PieChartIcon, DollarSign, Calendar, Plane, ShoppingBag, UserCheck, Briefcase, ChevronRight, Route } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -179,7 +179,7 @@ const TourTable = ({ tours }: { tours: any[] }) => (
       <TableBody>
         {tours.length > 0 ? tours.map(tour => (
           <TableRow key={tour.id} className="hover:bg-muted/50 transition-colors">
-            <TableCell className="font-medium">{tour.name}</TableCell>
+            <TableCell className="font-medium flex items-center gap-2"><Route className="h-4 w-4 text-muted-foreground" /> {tour.name}</TableCell>
             <TableCell>{tour.destination}</TableCell>
             <TableCell>
               <Badge variant={tour.status === 'Active' ? 'default' : 'secondary'}>
@@ -214,4 +214,6 @@ const AnimatedCard = ({ icon: Icon, title, value, index }: { icon: React.Element
     </CardContent>
   </Card>
 );
+    
+
     
