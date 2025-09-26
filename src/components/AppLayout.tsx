@@ -39,6 +39,7 @@ import { FloatingChatWidget } from "@/components/chat/FloatingChatWidget";
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Plan a Route", icon: Route },
+  { href: "/chat", label: "AI Assistant", icon: MessageSquare },
   { href: "/demo", label: "AI Demo", icon: Play },
   { href: "/members", label: "Manage Members", icon: Users },
   { href: "/scanner", label: "Log Expense", icon: Wallet },
