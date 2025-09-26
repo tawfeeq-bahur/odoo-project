@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview An AI flow for extracting text from an image.
+ * @fileOverview An AI flow for extracting and transliterating text from an image.
  *
- * - extractTextFromImage - A function that handles the text extraction process.
+ * - extractTextFromImage - A function that handles the text extraction and transliteration process.
  * - TransliterationInput - The input type for the extractTextFromImage function.
  * - TransliterationOutput - The return type for the extractTextFromImage function.
  */
@@ -16,11 +16,12 @@ const TransliterationInputSchema = z.object({
     .describe(
       "A photo containing text, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  targetLanguage: z.string().describe("The target language for transliteration (e.g., 'Hindi', 'English', 'Tamil').")
 });
 export type TransliterationInput = z.infer<typeof TransliterationInputSchema>;
 
 const TransliterationOutputSchema = z.object({
-    extractedText: z.string().describe("The text extracted from the image.")
+    extractedText: z.string().describe("The transliterated text from the image.")
 });
 export type TransliterationOutput = z.infer<typeof TransliterationOutputSchema>;
 
@@ -33,11 +34,15 @@ const prompt = ai.definePrompt({
   input: {schema: TransliterationInputSchema},
   output: {schema: TransliterationOutputSchema},
   model: 'googleai/gemini-2.5-flash',
-  prompt: `You are an expert Optical Character Recognition (OCR) engine. 
+  prompt: `You are an expert Optical Character Recognition (OCR) and transliteration engine. 
   
-  Your task is to accurately extract all text from the provided image.
-  
-  Return only the extracted text.
+  Your task is to perform two steps:
+  1. Accurately extract all text from the provided image.
+  2. Transliterate the extracted text into the script of the target language: {{targetLanguage}}.
+
+  For example, if the extracted text is "தமிழ்நாடு" and the target language is "Hindi", the output should be "तमिलनाडु". If the target language is "English", the output should be "TAMIL NADU".
+
+  Return only the final transliterated text.
 
 Here is the image to analyze:
 {{media url=photoDataUri}}`,

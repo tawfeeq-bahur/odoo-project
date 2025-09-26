@@ -12,6 +12,17 @@ import { useToast } from '@/hooks/use-toast';
 import { extractTextFromImage, TransliterationOutput } from '@/ai/flows/transliteration';
 import { Textarea } from '@/components/ui/textarea';
 import { Copy } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+
+
+const indianLanguages = [
+    "English", "Hindi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali", 
+    "Gujarati", "Marathi", "Odia", "Punjabi", "Urdu", "Assamese", 
+    "Bodo", "Dogri", "Kashmiri", "Konkani", "Maithili", "Meitei (Manipuri)", 
+    "Nepali", "Sanskrit", "Santali", "Sindhi"
+];
+
 
 export default function TransliterationPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -19,6 +30,7 @@ export default function TransliterationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TransliterationOutput | null>(null);
+  const [targetLanguage, setTargetLanguage] = useState<string>("English");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -51,12 +63,15 @@ export default function TransliterationPage() {
     setResult(null);
 
     try {
-      const analysisResult = await extractTextFromImage({ photoDataUri: imagePreview });
+      const analysisResult = await extractTextFromImage({ 
+          photoDataUri: imagePreview,
+          targetLanguage: targetLanguage
+      });
       if (analysisResult.extractedText) {
         setResult(analysisResult);
         toast({
-          title: 'Text Extracted',
-          description: 'The text from the image has been successfully extracted.',
+          title: 'Text Extracted & Transliterated',
+          description: `The text has been processed into ${targetLanguage}.`,
         });
       } else {
         setError('No text could be identified in the image. Please try a clearer picture.');
@@ -73,7 +88,7 @@ export default function TransliterationPage() {
       navigator.clipboard.writeText(result.extractedText);
       toast({
         title: "Copied!",
-        description: "The extracted text has been copied to your clipboard.",
+        description: "The transliterated text has been copied to your clipboard.",
       });
     }
   };
@@ -83,7 +98,7 @@ export default function TransliterationPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2"><Languages /> Transliteration</h1>
         <p className="text-muted-foreground">
-          Extract text from any image using AI-powered Optical Character Recognition (OCR).
+          Extract and transliterate text from any image into one of the 22 official Indian languages.
         </p>
       </div>
 
@@ -91,13 +106,13 @@ export default function TransliterationPage() {
         <div className="space-y-8">
             <Card>
               <CardHeader>
-                  <CardTitle>1. Upload Image</CardTitle>
-                  <CardDescription>Choose an image containing the text you want to extract.</CardDescription>
+                  <CardTitle>1. Upload Image & Select Language</CardTitle>
+                  <CardDescription>Choose an image and the target language for transliteration.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                   <div
-                  className="relative aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
-                  onClick={() => fileInputRef.current?.click()}
+                    className="relative aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
+                    onClick={() => fileInputRef.current?.click()}
                   >
                   {imagePreview ? (
                       <Image src={imagePreview} alt="Text image preview" layout="fill" objectFit="contain" className="rounded-md" />
@@ -115,16 +130,32 @@ export default function TransliterationPage() {
                   className="hidden"
                   onChange={handleImageChange}
                   />
+
+                  <div>
+                    <Label htmlFor="language-select">Target Language</Label>
+                    <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+                        <SelectTrigger id="language-select">
+                            <SelectValue placeholder="Select a language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {indianLanguages.map(lang => (
+                                <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                  </div>
+
+
                   <Button onClick={handleAnalyzeClick} disabled={isLoading || !imageFile} className="w-full">
                   {isLoading ? (
                       <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                      Extracting...
+                      Processing...
                       </>
                   ) : (
                       <>
                       <ScanText className="mr-2 h-4 w-4" />
-                      Extract Text
+                      Extract & Transliterate
                       </>
                   )}
                   </Button>
@@ -134,8 +165,8 @@ export default function TransliterationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>2. Extracted Text</CardTitle>
-            <CardDescription>The text found in the image will appear below.</CardDescription>
+            <CardTitle>2. Transliterated Text</CardTitle>
+            <CardDescription>The text from the image, transliterated into <span className="font-bold">{targetLanguage}</span>, will appear below.</CardDescription>
           </CardHeader>
           <CardContent className="relative">
             {isLoading && <ResultsSkeleton />}
@@ -151,7 +182,7 @@ export default function TransliterationPage() {
             {!isLoading && !error && !result && (
               <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-64">
                 <Text className="mx-auto h-12 w-12" />
-                <p>The extracted text will appear here after analysis.</p>
+                <p>The result will appear here after analysis.</p>
               </div>
             )}
             
