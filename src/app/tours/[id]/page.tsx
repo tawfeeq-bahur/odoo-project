@@ -16,7 +16,10 @@ import {
   Clock,
   Home,
   Utensils,
-  Ticket
+  Ticket,
+  User as UserIcon,
+  CheckCircle,
+  FolderSync
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,6 +27,8 @@ import { useMemo, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const MapDisplay = dynamic(
   () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -52,7 +57,8 @@ export default function TourDetailsPage() {
   }
 
   // Check if current user is part of the tour (either organizer or member)
-  const isMember = tour.organizerName === user?.username || tour.members.includes(user?.username || '');
+  const isMember = tour.organizerName === user?.username || (Array.isArray(tour.members) && tour.members.some(member => (typeof member === 'string' ? member : member.name) === user?.username));
+
   if (!isMember) {
     // If not a member, deny access by showing a 404.
     notFound(); 
@@ -76,8 +82,6 @@ export default function TourDetailsPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        // In a real app, you'd upload this to a server and get back a URL.
-        // For this demo, we'll just use the base64 data URI.
         addPhotoToTour(tour.id, result);
         toast({
           title: "Photo Added!",
@@ -103,29 +107,25 @@ export default function TourDetailsPage() {
     <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <Button variant="ghost" onClick={() => router.push('/')} className="mb-2">
+          <Button variant="ghost" onClick={() => router.push('/')} className="mb-2 -ml-4">
             <ArrowLeft className="mr-2" /> Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">{tour.name}</h1>
-          <p className="text-muted-foreground flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold tracking-tight font-headline">{tour.name}</h1>
+            <Badge variant={tour.status === 'Active' ? 'default' : 'secondary'}>{tour.status}</Badge>
+          </div>
+          <p className="text-muted-foreground flex items-center gap-2 mt-1">
             <MapPin className="h-4 w-4" /> {tour.destination}
           </p>
         </div>
         <div className="flex gap-2">
-            <Button asChild variant="outline">
+            <Button variant="outline">
+                <CheckCircle className="mr-2" /> Check-in Location
+            </Button>
+            <Button asChild>
                 <Link href={`/scanner?tourId=${tour.id}`}>
                     <Wallet className="mr-2" /> Log Expense
                 </Link>
-            </Button>
-            <Button onClick={() => fileInputRef.current?.click()}>
-              <Camera className="mr-2"/> Add Photo
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-                />
             </Button>
         </div>
       </div>
@@ -133,16 +133,73 @@ export default function TourDetailsPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column */}
         <div className="lg:col-span-1 space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Trip Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <InfoItem icon={Calendar} label="Duration" value={`${tour.durationDays} Days`} />
-              <InfoItem icon={Users} label="Organizer" value={tour.organizerName} />
-              <InfoItem icon={Users} label="Members" value={`${tour.members.length + 1} Total`} />
-            </CardContent>
-          </Card>
+            <Card>
+                <CardHeader>
+                <CardTitle>Trip Overview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                <InfoItem icon={Calendar} label="Duration" value={`${tour.durationDays} Days`} />
+                <InfoItem icon={Users} label="Organizer" value={tour.organizerName} />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Members ({tour.members.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {tour.members.length > 0 ? (
+                        <div className="space-y-3">
+                        {tour.members.map((member, index) => (
+                            <div key={index} className="flex items-center justify-between">
+                                <span className="font-medium flex items-center gap-2"><UserIcon className="h-4 w-4 text-muted-foreground" /> {typeof member === 'string' ? member : member.name}</span>
+                                <span className="text-xs text-muted-foreground">Location not shared</span>
+                            </div>
+                        ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">No members have joined yet.</p>
+                    )}
+                </CardContent>
+            </Card>
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle>Shared Photo Album</CardTitle>
+                    <CardDescription>A shared Google Drive folder for all tour photos.</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                    <Button variant="outline" className="w-full">
+                        <FolderSync className="mr-2" /> Access Shared Album
+                    </Button>
+                </CardContent>
+             </Card>
+
+        </div>
+
+        {/* Right Column */}
+        <div className="lg:col-span-2 space-y-8">
+          {tripPlan && tripPlan.plan ? (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Route Plan</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <MapDisplay plan={tripPlan.plan} traffic={tripPlan.plan.traffic}/>
+                </CardContent>
+            </Card>
+          ) : (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Route Plan</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center text-muted-foreground py-12">
+                     <Route className="mx-auto h-12 w-12 mb-4" />
+                    <h3 className="font-semibold">No Route Planned Yet</h3>
+                    <p>The organizer hasn't generated a route plan for this tour.</p>
+                </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -172,75 +229,7 @@ export default function TourDetailsPage() {
                 )}
             </CardContent>
           </Card>
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-2 space-y-8">
-          {tripPlan && tripPlan.plan ? (
-            <MapDisplay plan={tripPlan.plan} traffic={tripPlan.plan.traffic}/>
-          ) : (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Route Plan</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center text-muted-foreground py-12">
-                     <Route className="mx-auto h-12 w-12 mb-4" />
-                    <h3 className="font-semibold">No Route Planned Yet</h3>
-                    <p>The organizer hasn't generated a route plan for this tour.</p>
-                </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-                <CardTitle>Photo Gallery</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {tour.gallery.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {tour.gallery.map((url, index) => (
-                            <div key={index} className="aspect-square rounded-lg overflow-hidden border">
-                                <Image src={url} alt={`Tour photo ${index + 1}`} width={200} height={200} className="object-cover w-full h-full" data-ai-hint="travel landscape"/>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                     <div className="text-center text-muted-foreground py-12">
-                        <Camera className="mx-auto h-12 w-12 mb-4" />
-                        <h3 className="font-semibold">No Photos Yet</h3>
-                        <p>Be the first to add a photo to this tour's gallery!</p>
-                    </div>
-                )}
-            </CardContent>
-          </Card>
-
-           <Card>
-                <CardHeader>
-                    <CardTitle>Expense Summary</CardTitle>
-                    <CardDescription>
-                        Total amount spent on this tour: <span className="font-bold">₹{totalExpenses.toLocaleString()}</span>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <ul className="space-y-2">
-                    {expenseByCategory.map(([category, amount]) => (
-                        <li key={category} className="flex justify-between items-center text-sm">
-                            <span className="flex items-center gap-2">
-                                {getCategoryIcon(category)}
-                                {category}
-                            </span>
-                            <span className="font-medium">₹{amount.toLocaleString()}</span>
-                        </li>
-                    ))}
-                   </ul>
-                   {tourExpenses.length === 0 && (
-                     <div className="text-center text-muted-foreground py-8">
-                        <Wallet className="mx-auto h-8 w-8 mb-2" />
-                        <p>No expenses have been logged for this tour.</p>
-                    </div>
-                   )}
-                </CardContent>
-            </Card>
+          
         </div>
       </div>
     </div>
@@ -248,12 +237,12 @@ export default function TourDetailsPage() {
 }
 
 const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string | React.ReactNode }) => (
-    <div className="flex items-start gap-3">
+    <div className="flex items-center gap-3">
         <div className="p-2 bg-muted rounded-md">
             <Icon className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-            <p className="text-muted-foreground">{label}</p>
+            <p className="text-muted-foreground text-xs">{label}</p>
             <p className="font-semibold">{value}</p>
         </div>
     </div>
