@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "postinstall": "patch-package",
     "setup": "node setup-admin-routes.js",
     "test-routes": "node test-routes-admin.js",
     "debug-routes": "node test-routes-debug.js",
