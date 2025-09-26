@@ -33,13 +33,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { subDays } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { FloatingChatWidget } from "@/components/chat/FloatingChatWidget";
 
 // Unified menu for all users
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Plan a Route", icon: Route },
-  { href: "/chat", label: "AI Assistant", icon: MessageSquare },
   { href: "/demo", label: "AI Demo", icon: Play },
   { href: "/members", label: "Manage Members", icon: Users },
   { href: "/scanner", label: "Log Expense", icon: Wallet },
@@ -338,7 +336,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarInset>{children}</SidebarInset>
             </div>
           </div>
-          <FloatingChatWidget />
     </SidebarProvider>
   );
 }
