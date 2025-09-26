@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 48 33% 94%; /* Light Parchment */
+    --background: 48 33% 94%; /* Light Parchment/Khaki */
     --foreground: 20 14% 12%; /* Dark Charcoal */
     --card: 0 0% 100%;
     --card-foreground: 20 14% 12%;
@@ -30,14 +30,14 @@
     --chart-3: 20 14% 30%;
     --chart-4: 48 10% 80%;
     --chart-5: 20 14% 50%;
-    --sidebar-background: 20 14% 10%;
+    --sidebar-background: 90 40% 15%; /* Dark Green */
     --sidebar-foreground: 48 33% 96%;
-    --sidebar-primary: 48 33% 96%;
-    --sidebar-primary-foreground: 20 14% 10%;
-    --sidebar-accent: 20 14% 18%;
+    --sidebar-primary: 24 93% 52%; /* Saffron/Orange for active items */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 90 40% 20%;
     --sidebar-accent-foreground: 48 33% 96%;
-    --sidebar-border: 20 14% 18%;
-    --sidebar-ring: 48 33% 96%;
+    --sidebar-border: 90 40% 20%;
+    --sidebar-ring: 24 93% 52%;
   }
 
   .dark {
@@ -65,13 +65,13 @@
     --chart-3: 48 33% 80%;
     --chart-4: 20 14% 30%;
     --chart-5: 48 33% 60%;
-    --sidebar-background: 20 14% 8%;
+    --sidebar-background: 90 40% 8%; /* Even Darker Green */
     --sidebar-foreground: 48 33% 96%;
-    --sidebar-primary: 48 33% 96%;
+    --sidebar-primary: 26 95% 58%;
     --sidebar-primary-foreground: 20 14% 8%;
-    --sidebar-accent: 20 14% 15%;
+    --sidebar-accent: 90 40% 15%;
     --sidebar-accent-foreground: 48 33% 96%;
-    --sidebar-border: 20 14% 15%;
+    --sidebar-border: 90 40% 15%;
     --sidebar-ring: 48 33% 80%;
   }
 }
