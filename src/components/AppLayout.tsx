@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, History, ListChecks, PlusCircle, User as UserIcon, Shield, Bot, Play } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, History, ListChecks, PlusCircle, User as UserIcon, Shield, Play } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -39,7 +39,6 @@ import { FloatingChatWidget } from "@/components/chat/FloatingChatWidget";
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/guide", label: "Plan a Route", icon: Route },
-  { href: "/chat", label: "AI Assistant", icon: Bot },
   { href: "/demo", label: "AI Demo", icon: Play },
   { href: "/members", label: "Manage Members", icon: Users },
   { href: "/scanner", label: "Log Expense", icon: Wallet },

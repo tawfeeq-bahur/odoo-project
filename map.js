@@ -77,13 +77,23 @@ async function fetchPoliceStations(lat, lng, radius = 5000) {
  * @param {number} size - Icon size in pixels (default: 30)
  * @returns {L.Icon} Leaflet icon object
  */
-function createPoliceIcon(size = 30) {
+function createPoliceIcon(size = 24) {
   // Create a custom SVG icon for police stations
   const svgIcon = `
-    <svg width="${size}" height="${size}" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="15" cy="15" r="12" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
-      <path d="M10 12h10v2H10v-2zm0 4h10v2H10v-2zm2-8h6v2h-6V8z" fill="#ffffff"/>
-      <circle cx="15" cy="15" r="3" fill="#ffffff"/>
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="2" stdDeviation="1" flood-color="rgba(0,0,0,0.3)"/>
+        </filter>
+        <linearGradient id="policeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1e3a8a;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <circle cx="12" cy="12" r="10" fill="url(#policeGradient)" stroke="#ffffff" stroke-width="2" filter="url(#shadow)"/>
+      <path d="M8 10h8v1.5H8V10zm0 3h8v1.5H8V13zm1.5-6h5v1.5h-5V7z" fill="#ffffff"/>
+      <circle cx="12" cy="12" r="2.5" fill="#ffffff"/>
+      <path d="M10 12h4v1h-4v-1zm0 2h4v1h-4v-1z" fill="#1e40af"/>
     </svg>
   `;
 
@@ -102,16 +112,71 @@ function createPoliceIcon(size = 30) {
  * @param {number} lat - Latitude
  * @param {number} lng - Longitude
  * @param {number} radius - Search radius in meters (default: 5000)
+ * @param {Array} routePolyline - Optional route polyline for distance filtering
  * @returns {Promise<L.LayerGroup>} Layer group containing police station markers
  */
-async function showPoliceStationsOnMap(map, lat, lng, radius = 5000) {
+async function showPoliceStationsOnMap(map, lat, lng, radius = 5000, routePolyline = null) {
   // Create a layer group for police stations
   const policeLayer = L.layerGroup();
   
   try {
     const policeStations = await fetchPoliceStations(lat, lng, radius);
     
-    policeStations.forEach(station => {
+    // If we have a route polyline, filter stations by distance to route
+    let filteredStations = policeStations;
+    if (routePolyline && routePolyline.length > 0) {
+      const MAX_DISTANCE_M = 300; // 300m in meters - very strict
+      const MAX_STATIONS = 5; // Limit to 5 main police stations
+      
+      filteredStations = policeStations.filter(station => {
+        // Get coordinates - handle both node and way/relation types
+        let stationLat, stationLng;
+        
+        if (station.type === 'node') {
+          stationLat = station.lat;
+          stationLng = station.lon;
+        } else if (station.center) {
+          stationLat = station.center.lat;
+          stationLng = station.center.lon;
+        } else {
+          return false; // Skip if no valid coordinates
+        }
+
+        // Calculate distance from station to route
+        const stationPoint = [stationLat, stationLng];
+        const distance = distanceToPolyline(stationPoint, routePolyline);
+        
+        console.log(`Police station ${station.tags?.name || 'Unknown'} distance to route: ${distance.toFixed(0)}m`);
+        return distance <= MAX_DISTANCE_M;
+      });
+      
+      // Sort by distance and limit to MAX_STATIONS
+      const stationsWithDistance = filteredStations.map(station => {
+        let stationLat, stationLng;
+        
+        if (station.type === 'node') {
+          stationLat = station.lat;
+          stationLng = station.lon;
+        } else if (station.center) {
+          stationLat = station.center.lat;
+          stationLng = station.center.lon;
+        }
+        
+        const stationPoint = [stationLat, stationLng];
+        const distance = distanceToPolyline(stationPoint, routePolyline);
+        
+        return { ...station, distance };
+      });
+      
+      // Sort by distance (closest first) and take only the first 5
+      filteredStations = stationsWithDistance
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, MAX_STATIONS);
+      
+      console.log(`Filtered police stations from ${policeStations.length} to ${filteredStations.length} (closest 5 within 300m of route)`);
+    }
+    
+    filteredStations.forEach(station => {
       // Get coordinates - handle both node and way/relation types
       let stationLat, stationLng;
       
@@ -133,8 +198,18 @@ async function showPoliceStationsOnMap(map, lat, lng, radius = 5000) {
 
       // Create marker with custom icon
       const marker = L.marker([stationLat, stationLng], {
-        icon: createPoliceIcon(30)
+        icon: createPoliceIcon(24)
       });
+
+      // Calculate distance to route for popup display
+      let distanceText = '';
+      if (routePolyline && routePolyline.length > 0) {
+        const stationPoint = [stationLat, stationLng];
+        const distance = distanceToPolyline(stationPoint, routePolyline);
+        distanceText = `<p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
+          <strong>Distance from route:</strong> ${distance.toFixed(0)}m
+        </p>`;
+      }
 
       // Create popup with station information
       const popupContent = `
@@ -144,6 +219,7 @@ async function showPoliceStationsOnMap(map, lat, lng, radius = 5000) {
             <strong>Coordinates:</strong><br>
             ${stationLat.toFixed(6)}, ${stationLng.toFixed(6)}
           </p>
+          ${distanceText}
           ${station.tags?.phone ? `
             <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
               <strong>Phone:</strong> ${station.tags.phone}
@@ -159,7 +235,7 @@ async function showPoliceStationsOnMap(map, lat, lng, radius = 5000) {
     // Add the layer group to the map
     map.addLayer(policeLayer);
     
-    console.log(`Added ${policeStations.length} police stations to map`);
+    console.log(`Added ${filteredStations.length} police stations to map (within 300m)`);
     return policeLayer;
     
   } catch (error) {
@@ -318,6 +394,50 @@ function createCustomIcon(amenity, color, size = 30) {
   });
 }
 
+/**
+ * Calculate distance from a point to a polyline
+ * @param {Array} point - [lat, lng] coordinates of the point
+ * @param {Array} polyline - Array of [lat, lng] coordinates forming the polyline
+ * @returns {number} Distance in meters
+ */
+function distanceToPolyline(point, polyline) {
+  const toMeters = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000;
+    const toRad = (d) => (d * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const pointToSegmentDistance = (pt, a, b) => {
+    // Approximate using planar projection for small deltas
+    const [py, px] = pt;
+    const [ay, ax] = a;
+    const [by, bx] = b;
+    const A = { x: ax, y: ay };
+    const B = { x: bx, y: by };
+    const P = { x: px, y: py };
+    const ABx = B.x - A.x, ABy = B.y - A.y;
+    const APx = P.x - A.x, APy = P.y - A.y;
+    const ab2 = ABx * ABx + ABy * ABy || 1e-12;
+    let t = (APx * ABx + APy * ABy) / ab2;
+    t = Math.max(0, Math.min(1, t));
+    const proj = { x: A.x + t * ABx, y: A.y + t * ABy };
+    return toMeters(P.y, P.x, proj.y, proj.x);
+  };
+
+  let best = Number.POSITIVE_INFINITY;
+  for (let i = 1; i < polyline.length; i++) {
+    const d = pointToSegmentDistance(point, polyline[i - 1], polyline[i]);
+    if (d < best) best = d;
+  }
+  return best;
+}
+
 // Export functions for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -327,6 +447,7 @@ if (typeof module !== 'undefined' && module.exports) {
     showAmenitiesOnMap,
     createPoliceIcon,
     createCustomIcon,
+    distanceToPolyline,
     DEFAULT_LAT,
     DEFAULT_LNG
   };
@@ -341,6 +462,7 @@ if (typeof window !== 'undefined') {
     showAmenitiesOnMap,
     createPoliceIcon,
     createCustomIcon,
+    distanceToPolyline,
     DEFAULT_LAT,
     DEFAULT_LNG
   };

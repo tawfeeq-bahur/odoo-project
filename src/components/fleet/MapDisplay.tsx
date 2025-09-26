@@ -9,23 +9,40 @@ import { snapToRoads } from '@/ai/flows/road-snapper';
 import L from 'leaflet';
 import { Polyline } from 'react-leaflet';
 import { Hospital, Fuel, Utensils, Bed, Bath, Phone } from 'lucide-react';
+import { HeritageSiteCard } from './HeritageSiteCard';
 import 'leaflet/dist/leaflet.css';
+import * as turf from '@turf/turf';
 
 // Fix for default Leaflet icon path issue with bundlers
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
+// Configurable parameters for route-based POI filtering
+// To adjust POI display, modify these values:
+// - BUFFER_KM: Buffer distance from route (in kilometers) - currently 0.2km (extremely strict)
+// - MAX_POLICE_STATIONS: Maximum number of police stations to display - currently 3
+// - MAX_OTHER_POIS: Maximum number of other POIs per category - currently 3
+const ROUTE_POI_CONFIG = {
+  BUFFER_KM: 0.2, // 0.2km buffer from route (extremely strict - only directly on route)
+  MAX_POLICE_STATIONS: 3, // Limit to 3 closest police stations
+  MAX_OTHER_POIS: 3, // Limit to 3 other POIs per category
+  DEFAULT_RADIUS_M: 5000, // Default search radius for initial load
+};
+
 
 const POI_ICONS: { [key: string]: React.ReactNode } = {
+  'Heritage Sites': <div className="h-4 w-4 rounded-full bg-purple-600 flex items-center justify-center">
+    <span className="text-white text-xs">🏛️</span>
+  </div>,
+  'Police Stations': <div className="h-4 w-4 rounded-full bg-blue-600 flex items-center justify-center">
+    <div className="h-2 w-2 rounded-full bg-white"></div>
+  </div>,
   Hospitals: <Hospital className="h-4 w-4 text-muted-foreground" />,
   'Fuel Stations': <Fuel className="h-4 w-4 text-muted-foreground" />,
   Restaurants: <Utensils className="h-4 w-4 text-muted-foreground" />,
   Hotels: <Bed className="h-4 w-4 text-muted-foreground" />,
   Restrooms: <Bath className="h-4 w-4 text-muted-foreground" />,
-  'Police Stations': <div className="h-4 w-4 rounded-full bg-blue-600 flex items-center justify-center">
-    <div className="h-2 w-2 rounded-full bg-white"></div>
-  </div>,
   'EV Stations': <div className="h-4 w-4 rounded-full bg-muted-foreground/20 flex items-center justify-center">
     <div className="h-2 w-2 rounded-full bg-muted-foreground"></div>
   </div>,
@@ -163,11 +180,12 @@ const fetchPoliceStations = async (lat: number, lng: number, radius: number = 50
 // Enhanced function to fetch police stations along a route
 const fetchPoliceStationsAlongRoute = async (sourceLat: number, sourceLng: number, destLat: number, destLng: number) => {
   try {
-    // Calculate bounding box for the route
-    const minLat = Math.min(sourceLat, destLat) - 0.1; // Add buffer
-    const maxLat = Math.max(sourceLat, destLat) + 0.1;
-    const minLng = Math.min(sourceLng, destLng) - 0.1;
-    const maxLng = Math.max(sourceLng, destLng) + 0.1;
+    // Calculate tighter bounding box for the route (approximately 5km buffer)
+    const bufferDegrees = 0.045; // ~5km buffer in degrees
+    const minLat = Math.min(sourceLat, destLat) - bufferDegrees;
+    const maxLat = Math.max(sourceLat, destLat) + bufferDegrees;
+    const minLng = Math.min(sourceLng, destLng) - bufferDegrees;
+    const maxLng = Math.max(sourceLng, destLng) + bufferDegrees;
 
     const overpassQuery = `
       [out:json][timeout:20];
@@ -189,12 +207,61 @@ const fetchPoliceStationsAlongRoute = async (sourceLat: number, sourceLng: numbe
   }
 };
 
-const createPoliceIcon = (size: number = 30) => {
+// Calculate distance from a point to a polyline
+const distanceToPolyline = (point: L.LatLngTuple, polyline: L.LatLngTuple[]) => {
+  const toMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371000;
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const pointToSegmentDistance = (pt: L.LatLngTuple, a: L.LatLngTuple, b: L.LatLngTuple) => {
+    // Approximate using planar projection for small deltas
+    const [py, px] = pt;
+    const [ay, ax] = a;
+    const [by, bx] = b;
+    const A = { x: ax, y: ay };
+    const B = { x: bx, y: by };
+    const P = { x: px, y: py };
+    const ABx = B.x - A.x, ABy = B.y - A.y;
+    const APx = P.x - A.x, APy = P.y - A.y;
+    const ab2 = ABx * ABx + ABy * ABy || 1e-12;
+    let t = (APx * ABx + APy * ABy) / ab2;
+    t = Math.max(0, Math.min(1, t));
+    const proj = { x: A.x + t * ABx, y: A.y + t * ABy };
+    return toMeters(P.y, P.x, proj.y, proj.x);
+  };
+
+  let best = Number.POSITIVE_INFINITY;
+  for (let i = 1; i < polyline.length; i++) {
+    const d = pointToSegmentDistance(point, polyline[i - 1], polyline[i]);
+    if (d < best) best = d;
+  }
+  return best;
+};
+
+const createPoliceIcon = (size: number = 24) => {
   const svgIcon = `
-    <svg width="${size}" height="${size}" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="15" cy="15" r="12" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
-      <path d="M10 12h10v2H10v-2zm0 4h10v2H10v-2zm2-8h6v2h-6V8z" fill="#ffffff"/>
-      <circle cx="15" cy="15" r="3" fill="#ffffff"/>
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="2" stdDeviation="1" flood-color="rgba(0,0,0,0.3)"/>
+        </filter>
+        <linearGradient id="policeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1e3a8a;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <circle cx="12" cy="12" r="10" fill="url(#policeGradient)" stroke="#ffffff" stroke-width="2" filter="url(#shadow)"/>
+      <path d="M8 10h8v1.5H8V10zm0 3h8v1.5H8V13zm1.5-6h5v1.5h-5V7z" fill="#ffffff"/>
+      <circle cx="12" cy="12" r="2.5" fill="#ffffff"/>
+      <path d="M10 12h4v1h-4v-1zm0 2h4v1h-4v-1z" fill="#1e40af"/>
     </svg>
   `;
 
@@ -280,8 +347,8 @@ const showPoliceStationsOnMap = async (map: L.Map, lat: number, lng: number, pol
   }
 };
 
-// Function to show police stations along a route
-const showPoliceStationsAlongRoute = async (map: L.Map, sourceLat: number, sourceLng: number, destLat: number, destLng: number, policeLayerRef: React.MutableRefObject<L.LayerGroup | null>) => {
+// Function to show police stations along a route with distance filtering
+const showPoliceStationsAlongRoute = async (map: L.Map, sourceLat: number, sourceLng: number, destLat: number, destLng: number, policeLayerRef: React.MutableRefObject<L.LayerGroup | null>, routePolyline?: L.LatLngTuple[]) => {
   // Remove existing police layer if it exists
   if (policeLayerRef.current) {
     map.removeLayer(policeLayerRef.current);
@@ -297,7 +364,88 @@ const showPoliceStationsAlongRoute = async (map: L.Map, sourceLat: number, sourc
     const policeStations = await fetchPoliceStationsAlongRoute(sourceLat, sourceLng, destLat, destLng);
     console.log('Fetched police stations:', policeStations.length);
     
-    policeStations.forEach((station, index) => {
+      // If we have a route polyline, filter stations by distance to route
+      let filteredStations = policeStations;
+      if (routePolyline && routePolyline.length > 0) {
+        const MAX_DISTANCE_M = ROUTE_POI_CONFIG.BUFFER_KM * 1000; // Convert km to meters (200m)
+        const MAX_STATIONS = ROUTE_POI_CONFIG.MAX_POLICE_STATIONS; // Limit to 3 closest police stations
+      
+      // First filter by distance
+      let debugCount = 0;
+      const distanceFiltered = policeStations.filter(station => {
+        // Get coordinates - handle both node and way/relation types
+        let stationLat: number, stationLng: number;
+        
+        if (station.type === 'node') {
+          stationLat = station.lat;
+          stationLng = station.lon;
+        } else if (station.center) {
+          stationLat = station.center.lat;
+          stationLng = station.center.lon;
+        } else {
+          return false; // Skip if no valid coordinates
+        }
+
+        // Calculate distance from station to route
+        const stationPoint: L.LatLngTuple = [stationLat, stationLng];
+        const distance = distanceToPolyline(stationPoint, routePolyline);
+        
+        // Debug logging for first few stations
+        if (debugCount < 3) {
+          console.log(`Police station ${station.tags?.name || 'Unknown'} at ${stationLat.toFixed(4)}, ${stationLng.toFixed(4)}: ${distance.toFixed(0)}m from route`);
+          debugCount++;
+        }
+        
+        return distance <= MAX_DISTANCE_M;
+      });
+      
+      // Then sort by distance and limit to MAX_STATIONS
+      const stationsWithDistance = distanceFiltered.map(station => {
+        let stationLat: number, stationLng: number;
+        
+        if (station.type === 'node') {
+          stationLat = station.lat;
+          stationLng = station.lon;
+        } else if (station.center) {
+          stationLat = station.center.lat;
+          stationLng = station.center.lon;
+        }
+        
+        const stationPoint: L.LatLngTuple = [stationLat, stationLng];
+        const distance = distanceToPolyline(stationPoint, routePolyline);
+        
+        // Calculate quality score based on station name and tags
+        let qualityScore = 0;
+        const stationName = (station.tags?.name || '').toLowerCase();
+        
+        // Prioritize main police stations, headquarters, and stations with phone numbers
+        if (stationName.includes('main') || stationName.includes('headquarters') || stationName.includes('commissioner')) {
+          qualityScore += 10;
+        }
+        if (station.tags?.phone) {
+          qualityScore += 5;
+        }
+        if (stationName.includes('police') && !stationName.includes('outpost')) {
+          qualityScore += 3;
+        }
+        
+        return { ...station, distance, qualityScore };
+      });
+      
+      // Sort by quality score first, then by distance, and take only the first 5
+      filteredStations = stationsWithDistance
+        .sort((a, b) => {
+          if (b.qualityScore !== a.qualityScore) {
+            return b.qualityScore - a.qualityScore; // Higher quality first
+          }
+          return a.distance - b.distance; // Then by distance
+        })
+        .slice(0, MAX_STATIONS);
+      
+      console.log(`Filtered police stations from ${policeStations.length} to ${filteredStations.length} (closest ${MAX_STATIONS} within ${MAX_DISTANCE_M/1000}km buffer of route - EXTREMELY STRICT FILTERING)`);
+    }
+    
+    filteredStations.forEach((station, index) => {
       // Get coordinates - handle both node and way/relation types
       let stationLat: number, stationLng: number;
       
@@ -317,27 +465,43 @@ const showPoliceStationsAlongRoute = async (map: L.Map, sourceLat: number, sourc
                          station.tags?.['name:hi'] || 
                          'Police Station';
 
-      console.log(`Creating police marker ${index + 1}/${policeStations.length}: ${stationName} at ${stationLat}, ${stationLng}`);
+      console.log(`Creating police marker ${index + 1}/${filteredStations.length}: ${stationName} at ${stationLat}, ${stationLng}`);
 
       // Create marker with custom icon
-      const policeIcon = createPoliceIcon(30);
+      const policeIcon = createPoliceIcon(24);
       const marker = L.marker([stationLat, stationLng], {
         icon: policeIcon
       });
 
+      // Calculate distance to route for popup display
+      let distanceText = '';
+      if (routePolyline && routePolyline.length > 0) {
+        const stationPoint: L.LatLngTuple = [stationLat, stationLng];
+        const distance = distanceToPolyline(stationPoint, routePolyline);
+        distanceText = `<div style="margin: 6px 0; padding: 4px 8px; background: #dbeafe; border-radius: 4px; font-size: 12px; color: #1e40af;">
+          <strong>🛣️ Distance from route:</strong> ${distance < 1000 ? distance.toFixed(0) + 'm' : (distance/1000).toFixed(1) + 'km'}
+        </div>`;
+      }
+
       // Create popup with station information
       const popupContent = `
-        <div style="min-width: 150px;">
-          <h4 style="margin: 0 0 8px 0; color: #1e40af; font-weight: bold;">${stationName}</h4>
-          <p style="margin: 0; font-size: 12px; color: #666;">
-            <strong>Coordinates:</strong><br>
-            ${stationLat.toFixed(6)}, ${stationLng.toFixed(6)}
-          </p>
+        <div style="min-width: 180px; padding: 8px;">
+          <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <div style="width: 16px; height: 16px; background: #1e40af; border-radius: 50%; margin-right: 8px; display: flex; align-items: center; justify-content: center;">
+              <span style="color: white; font-size: 10px; font-weight: bold;">P</span>
+            </div>
+            <h4 style="margin: 0; color: #1e40af; font-weight: bold; font-size: 14px;">${stationName}</h4>
+          </div>
+          ${distanceText}
           ${station.tags?.phone ? `
-            <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
-              <strong>Phone:</strong> ${station.tags.phone}
-            </p>
+            <div style="margin: 6px 0; padding: 4px 8px; background: #f3f4f6; border-radius: 4px; font-size: 12px;">
+              <strong>📞 Phone:</strong> ${station.tags.phone}
+            </div>
           ` : ''}
+          <div style="margin-top: 6px; font-size: 11px; color: #6b7280;">
+            <strong>📍 Location:</strong><br>
+            ${stationLat.toFixed(4)}, ${stationLng.toFixed(4)}
+          </div>
         </div>
       `;
 
@@ -348,11 +512,11 @@ const showPoliceStationsAlongRoute = async (map: L.Map, sourceLat: number, sourc
     // Add the layer group to the map
     map.addLayer(policeLayer);
     
-    console.log(`Added ${policeStations.length} police stations along route`);
+    console.log(`Added ${filteredStations.length} police stations along route (closest ${ROUTE_POI_CONFIG.MAX_POLICE_STATIONS} within ${ROUTE_POI_CONFIG.BUFFER_KM}km - EXTREMELY STRICT FILTERING)`);
     console.log('Police layer added to map:', policeLayer);
     console.log('Map layers count:', map.eachLayer ? map.eachLayer(() => {}).length : 'unknown');
     
-    return { layer: policeLayer, count: policeStations.length };
+    return { layer: policeLayer, count: filteredStations.length };
     
   } catch (error) {
     console.error('Error showing police stations along route:', error);
@@ -386,6 +550,13 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
   const [policeStationsCount, setPoliceStationsCount] = useState<number>(0);
   const [showSOSButton, setShowSOSButton] = useState<boolean>(true);
   const [showEmergencyContacts, setShowEmergencyContacts] = useState<boolean>(false);
+  
+  // Route management state
+  const [activeRouteId, setActiveRouteId] = useState<string>('main');
+  const [routePolylines, setRoutePolylines] = useState<Map<string, L.LatLngTuple[]>>(new Map());
+  const [routePOICache, setRoutePOICache] = useState<Map<string, any>>(new Map());
+  const activePOILayerRef = useRef<L.LayerGroup | null>(null);
+  const routeLayerRefs = useRef<Map<string, L.Polyline>>(new Map());
 
   // Emergency contact configuration
   const EMERGENCY_NUMBER = "+91100"; // Default to Indian emergency number
@@ -406,6 +577,208 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
         alert(`Number copied to clipboard: ${number}`);
       });
     }
+  };
+
+  // Route-based POI rendering function using Turf.js
+  const renderRoutePOIs = async (routeGeoJSON: any, options: { bufferKm: number; maxPoliceStations: number; maxOtherPOIs: number }) => {
+    const map = mapInstance.current;
+    if (!map || !routeGeoJSON) return;
+
+    // Clear previous POI layer
+    if (activePOILayerRef.current) {
+      map.removeLayer(activePOILayerRef.current);
+    }
+
+    const activePOILayer = L.layerGroup();
+    activePOILayerRef.current = activePOILayer;
+    map.addLayer(activePOILayer);
+
+    try {
+      // Create buffer around route
+      const buffer = turf.buffer(routeGeoJSON, options.bufferKm, { units: 'kilometers' });
+      
+      // Fetch POIs in the route area
+      const bounds = turf.bbox(buffer);
+      const [minLng, minLat, maxLng, maxLat] = bounds;
+      
+      const overpassQuery = `
+        [out:json][timeout:25];
+        (
+          node["amenity"~"^(hospital|fuel|restaurant|toilets|police)$"](${minLat},${minLng},${maxLat},${maxLng});
+          node["tourism"="hotel"](${minLat},${minLng},${maxLat},${maxLng});
+          way["amenity"~"^(hospital|fuel|restaurant|toilets|police)$"](${minLat},${minLng},${maxLat},${maxLng});
+          way["tourism"="hotel"](${minLat},${minLng},${maxLat},${maxLng});
+        );
+        out center;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(overpassQuery)}`
+      });
+
+      if (!response.ok) return;
+      const data = await response.json();
+      const elements = data.elements || [];
+
+      // Categorize and filter POIs
+      const poiCategories: Record<string, any[]> = {
+        police: [],
+        hospital: [],
+        fuel: [],
+        restaurant: [],
+        hotel: [],
+        toilets: []
+      };
+
+      elements.forEach((element: any) => {
+        const lat = element.lat || element.center?.lat;
+        const lon = element.lon || element.center?.lon;
+        if (!lat || !lon) return;
+
+        const point = turf.point([lon, lat]);
+        
+        // Check if point is within buffer
+        if (turf.booleanPointInPolygon(point, buffer)) {
+          const tags = element.tags || {};
+          const amenity = tags.amenity;
+          const tourism = tags.tourism;
+          
+          if (amenity === 'police') {
+            poiCategories.police.push({ ...element, distance: turf.pointToLineDistance(point, routeGeoJSON, { units: 'kilometers' }) });
+          } else if (amenity === 'hospital') {
+            poiCategories.hospital.push({ ...element, distance: turf.pointToLineDistance(point, routeGeoJSON, { units: 'kilometers' }) });
+          } else if (amenity === 'fuel') {
+            poiCategories.fuel.push({ ...element, distance: turf.pointToLineDistance(point, routeGeoJSON, { units: 'kilometers' }) });
+          } else if (amenity === 'restaurant') {
+            poiCategories.restaurant.push({ ...element, distance: turf.pointToLineDistance(point, routeGeoJSON, { units: 'kilometers' }) });
+          } else if (amenity === 'toilets') {
+            poiCategories.toilets.push({ ...element, distance: turf.pointToLineDistance(point, routeGeoJSON, { units: 'kilometers' }) });
+          } else if (tourism === 'hotel') {
+            poiCategories.hotel.push({ ...element, distance: turf.pointToLineDistance(point, routeGeoJSON, { units: 'kilometers' }) });
+          }
+        }
+      });
+
+      // Sort by distance and apply limits
+      const poiStyles = {
+        police: { color: '#1e40af', emoji: '🚔' },
+        hospital: { color: '#ef4444', emoji: '🏥' },
+        fuel: { color: '#f59e0b', emoji: '⛽' },
+        restaurant: { color: '#fb923c', emoji: '🍽️' },
+        hotel: { color: '#3b82f6', emoji: '🏨' },
+        toilets: { color: '#10b981', emoji: '🚻' }
+      };
+
+      // Render police stations with limit
+      const policeStations = poiCategories.police
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, options.maxPoliceStations);
+
+      policeStations.forEach(station => {
+        const lat = station.lat || station.center?.lat;
+        const lon = station.lon || station.center?.lon;
+        const name = station.tags?.name || 'Police Station';
+        
+        const icon = L.divIcon({
+          className: 'poi-marker',
+          html: `<div style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid #1e40af;background:#1e40afdd;box-shadow:0 2px 4px rgba(0,0,0,.3);backdrop-filter:blur(1px)"><span style="font-size:12px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">🚔</span></div>`
+        });
+
+        const marker = L.marker([lat, lon], { icon }).bindPopup(`
+          <div style="min-width: 150px;">
+            <h4 style="margin: 0 0 8px 0; color: #1e40af; font-weight: bold;">${name}</h4>
+            <p style="margin: 0; font-size: 12px; color: #666;">
+              <strong>Distance from route:</strong> ${station.distance.toFixed(2)}km
+            </p>
+          </div>
+        `);
+        
+        activePOILayer.addLayer(marker);
+      });
+
+      // Render other POI categories with limits
+      Object.entries(poiCategories).forEach(([category, pois]) => {
+        if (category === 'police') return; // Already handled above
+        
+        const limitedPOIs = pois
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, options.maxOtherPOIs);
+
+        limitedPOIs.forEach(poi => {
+          const lat = poi.lat || poi.center?.lat;
+          const lon = poi.lon || poi.center?.lon;
+          const name = poi.tags?.name || poi.tags?.brand || category;
+          const style = poiStyles[category as keyof typeof poiStyles];
+          
+          const icon = L.divIcon({
+            className: 'poi-marker',
+            html: `<div style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid ${style.color};background:${style.color}dd;box-shadow:0 2px 4px rgba(0,0,0,.3);backdrop-filter:blur(1px)"><span style="font-size:12px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${style.emoji}</span></div>`
+          });
+
+          const marker = L.marker([lat, lon], { icon }).bindPopup(`
+            <div style="min-width: 120px;">
+              <strong style="color: ${style.color};">${name}</strong><br>
+              <small style="color: #666;">${category}</small><br>
+              <small style="color: #999;">Distance: ${poi.distance.toFixed(2)}km</small>
+            </div>
+          `);
+          
+          activePOILayer.addLayer(marker);
+        });
+      });
+
+      console.log(`Rendered POIs for route: ${policeStations.length} police, ${Object.values(poiCategories).reduce((sum, pois) => sum + pois.length, 0) - poiCategories.police.length} other POIs`);
+
+    } catch (error) {
+      console.error('Error rendering route POIs:', error);
+    }
+  };
+
+  // Set active route and update styling
+  const setActiveRoute = async (routeId: string) => {
+    const map = mapInstance.current;
+    if (!map) return;
+
+    setActiveRouteId(routeId);
+
+    // Update route styling
+    routeLayerRefs.current.forEach((polyline, id) => {
+      if (id === routeId) {
+        // Active route styling
+        polyline.setStyle({
+          color: 'green',
+          weight: 6,
+          opacity: 0.8
+        });
+        polyline.bringToFront();
+      } else {
+        // Inactive route styling
+        polyline.setStyle({
+          color: 'red',
+          weight: 3,
+          opacity: 0.6,
+          dashArray: '10, 10'
+        });
+      }
+    });
+
+    // Render POIs for active route
+    const routePolyline = routePolylines.get(routeId);
+    if (routePolyline && routePolyline.length > 0) {
+      // Convert Leaflet polyline to GeoJSON LineString
+      const coordinates = routePolyline.map(([lat, lng]) => [lng, lat]);
+      const routeGeoJSON = turf.lineString(coordinates);
+
+      await renderRoutePOIs(routeGeoJSON, {
+        bufferKm: ROUTE_POI_CONFIG.BUFFER_KM,
+        maxPoliceStations: ROUTE_POI_CONFIG.MAX_POLICE_STATIONS,
+        maxOtherPOIs: ROUTE_POI_CONFIG.MAX_OTHER_POIS
+      });
+    }
+
+    console.log(`Switched to active route: ${routeId}`);
   };
 
   const getRouteColor = () => {
@@ -448,8 +821,8 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           const pp = map.getPane('poiPane') as HTMLElement; pp.style.zIndex = '650';
         }
         
-        // Load police stations by default
-        showPoliceStationsOnMap(map, 20.5937, 78.9629, policeLayerRef, 10000).then(result => {
+        // Load police stations by default with configurable radius
+        showPoliceStationsOnMap(map, 20.5937, 78.9629, policeLayerRef, ROUTE_POI_CONFIG.DEFAULT_RADIUS_M).then(result => {
           setPoliceStationsCount(result.count);
         });
     }
@@ -485,7 +858,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             setSourceCoords(sourceRes);
             setDestCoords(destRes);
 
-            // Load police stations along the route
+            // Load police stations along the route (will be updated with route polyline later)
             const map = mapInstance.current;
             if (map) {
               showPoliceStationsAlongRoute(map, sourceRes.latitude, sourceRes.longitude, destRes.latitude, destRes.longitude, policeLayerRef).then(result => {
@@ -548,7 +921,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
               // Load police stations for fallback coordinates
               const map = mapInstance.current;
               if (map) {
-                showPoliceStationsAlongRoute(map, fallbackSource.latitude, fallbackSource.longitude, fallbackDest.latitude, fallbackDest.longitude, policeLayerRef).then(result => {
+                showPoliceStationsAlongRoute(map, fallbackSource.latitude, fallbackSource.longitude, fallbackDest.latitude, fallbackDest.longitude, policeLayerRef, simpleRoute).then(result => {
                   setPoliceStationsCount(result.count);
                 });
               }
@@ -614,15 +987,61 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             // Create a group so we can manage multiple lines together
             const group = L.layerGroup([], { pane: 'routePane' as any }).addTo(map);
             routeGroupRef.current = group;
-            // Primary route in green
-            L.polyline(roadPolyline, { color: '#16a34a', weight: 6 }).addTo(group);
-            // Alternative routes in red
-            altPolylines.forEach(alt => {
-              L.polyline(alt, { color: '#ef4444', weight: 4, dashArray: '6,6' }).addTo(group);
+            
+            // Store route polylines for management
+            const newRoutePolylines = new Map<string, L.LatLngTuple[]>();
+            newRoutePolylines.set('main', roadPolyline);
+            setRoutePolylines(newRoutePolylines);
+            
+            // Primary route in green (active by default)
+            const mainRoute = L.polyline(roadPolyline, { 
+              color: '#16a34a', 
+              weight: 6,
+              opacity: 0.8
+            }).addTo(group);
+            routeLayerRefs.current.set('main', mainRoute);
+            
+            // Add click handler for main route
+            mainRoute.on('click', () => setActiveRoute('main'));
+            
+            // Alternative routes in red (inactive)
+            altPolylines.forEach((alt, index) => {
+              const altId = `alt${index}`;
+              newRoutePolylines.set(altId, alt);
+              
+              const altRoute = L.polyline(alt, { 
+                color: '#ef4444', 
+                weight: 3, 
+                opacity: 0.6,
+                dashArray: '10, 10'
+              }).addTo(group);
+              routeLayerRefs.current.set(altId, altRoute);
+              
+              // Add click handler for alternative route
+              altRoute.on('click', () => setActiveRoute(altId));
             });
+            
+            // Set main route as active by default
+            setActiveRouteId('main');
+            
         } else if (snappedPolyline.length > 0) {
             // Fallback single route should still be primary style (green)
-            routeLineRef.current = L.polyline(snappedPolyline, { color: '#16a34a', weight: 5, pane: 'routePane' }).addTo(map);
+            const newRoutePolylines = new Map<string, L.LatLngTuple[]>();
+            newRoutePolylines.set('main', snappedPolyline);
+            setRoutePolylines(newRoutePolylines);
+            
+            routeLineRef.current = L.polyline(snappedPolyline, { 
+              color: '#16a34a', 
+              weight: 5, 
+              pane: 'routePane' 
+            }).addTo(map);
+            routeLayerRefs.current.set('main', routeLineRef.current);
+            
+            // Add click handler for single route
+            routeLineRef.current.on('click', () => setActiveRoute('main'));
+            
+            // Set main route as active by default
+            setActiveRouteId('main');
         }
     }
   }, [sourceCoords, destCoords, roadPolyline, altPolylines, snappedPolyline, plan]);
@@ -650,7 +1069,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     const buildDivIcon = (bg: string, emoji: string) =>
       L.divIcon({
         className: 'poi-marker',
-        html: `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid ${bg};background:${bg}22;box-shadow:0 2px 6px rgba(0,0,0,.25)"><span style="font-size:16px;line-height:1">${emoji}</span></div>`
+        html: `<div style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid ${bg};background:${bg}dd;box-shadow:0 2px 4px rgba(0,0,0,.3);backdrop-filter:blur(1px)"><span style="font-size:12px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${emoji}</span></div>`
       });
 
     const CATEGORY_STYLES: Record<string, { query: string; color: string; emoji: string }> = {
@@ -660,6 +1079,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
       Hotels: { query: 'node[tourism=hotel]', color: '#3b82f6', emoji: '🏨' },
       Restrooms: { query: 'node[amenity=toilets]', color: '#10b981', emoji: '🚻' },
       'EV Stations': { query: 'node[amenity=charging_station]', color: '#22c55e', emoji: '⚡' },
+      'Heritage Sites': { query: 'node[historic]', color: '#8b5cf6', emoji: '🏛️' },
     };
 
     const bounds = L.latLngBounds(activeRoute as L.LatLngTuple[]);
@@ -721,12 +1141,22 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
         const data = await resp.json();
         const elements = Array.isArray(data?.elements) ? data.elements : [];
 
-        // 1200 meters threshold to the route
-        const MAX_DISTANCE_M = 1200;
+        // 200 meters threshold to the route for neat landmark visibility (extremely strict)
+        const MAX_DISTANCE_M = 200;
         const counts: Record<string, number> = {};
-        const LIMIT_PER_CAT = 20;
+        const LIMIT_PER_CAT = 3;
 
         const nextList: Record<string, { name: string; lat: number; lon: number }[]> = {};
+
+        // First pass: collect all valid POIs with distance
+        const poisWithDistance: Array<{
+          element: any;
+          lat: number;
+          lon: number;
+          distance: number;
+          category: keyof typeof CATEGORY_STYLES | null;
+          name: string;
+        }> = [];
 
         elements.forEach((e: any) => {
           const lat = e.lat || e.center?.lat;
@@ -743,20 +1173,42 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           else if (tags.amenity === 'restaurant') category = 'Restaurants';
           else if (tags.amenity === 'toilets') category = 'Restrooms';
           else if (tags.tourism === 'hotel') category = 'Hotels';
+          else if (tags.historic) category = 'Heritage Sites';
           if (!category) return;
 
-          counts[category] = (counts[category] || 0) + 1;
-          if (counts[category] > LIMIT_PER_CAT) return;
-
-          const style = CATEGORY_STYLES[category];
-          const icon = buildDivIcon(style.color, style.emoji);
           const name = (tags.name || tags.brand || category) as string;
-          const key = `${name}-${lat.toFixed(5)}-${lon.toFixed(5)}`;
-          const marker = L.marker(pt, { icon, zIndexOffset: 500, pane: 'poiPane' }).addTo(layer).bindPopup(`<strong>${name}</strong><br>${category}`);
-          markerIndexRef.current.set(key, marker);
-          if (!nextList[category]) nextList[category] = [];
-          nextList[category].push({ name, lat, lon });
+          poisWithDistance.push({
+            element: e,
+            lat,
+            lon,
+            distance: dist,
+            category,
+            name
+          });
         });
+
+        // Sort by distance (closest first) and apply category limits
+        console.log(`Found ${poisWithDistance.length} POIs within ${MAX_DISTANCE_M}m of route`);
+        poisWithDistance
+          .filter(poi => poi.category !== null) // Filter out null categories
+          .sort((a, b) => a.distance - b.distance)
+          .forEach((poi) => {
+            const { element, lat, lon, category, name } = poi;
+            
+            if (!category) return; // Additional safety check
+            
+            counts[category] = (counts[category] || 0) + 1;
+            if (counts[category] > LIMIT_PER_CAT) return;
+
+            const style = CATEGORY_STYLES[category];
+            const icon = buildDivIcon(style.color, style.emoji);
+            const pt: L.LatLngTuple = [lat, lon];
+            const key = `${name}-${lat.toFixed(5)}-${lon.toFixed(5)}`;
+            const marker = L.marker(pt, { icon, zIndexOffset: 500, pane: 'poiPane' }).addTo(layer).bindPopup(`<div style="min-width: 120px;"><strong style="color: ${style.color};">${name}</strong><br><small style="color: #666;">${category}</small><br><small style="color: #999;">Distance: ${poi.distance.toFixed(0)}m</small></div>`);
+            markerIndexRef.current.set(key, marker);
+            if (!nextList[category]) nextList[category] = [];
+            nextList[category].push({ name, lat, lon });
+          });
 
         setPoiList(nextList);
       } catch (err) {
@@ -766,6 +1218,22 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
 
     fetchPOIs();
   }, [roadPolyline, snappedPolyline]);
+
+  // Update police stations when route polyline changes
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map || !sourceCoords || !destCoords) return;
+
+    // Use roadPolyline if available, otherwise fall back to snappedPolyline
+    const activeRoute = roadPolyline.length > 0 ? roadPolyline : snappedPolyline;
+    
+    if (activeRoute.length > 0) {
+      console.log('Updating police stations with route polyline filtering');
+      showPoliceStationsAlongRoute(map, sourceCoords.latitude, sourceCoords.longitude, destCoords.latitude, destCoords.longitude, policeLayerRef, activeRoute).then(result => {
+        setPoliceStationsCount(result.count);
+      });
+    }
+  }, [roadPolyline, snappedPolyline, sourceCoords, destCoords]);
 
 
   return (
@@ -781,6 +1249,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
               ) : (
                 <div className="relative">
                   <div ref={mapRef} className="aspect-video w-full h-[400px] border-2 border-dashed rounded-lg bg-muted/30" />
+                  
                   
                   {/* SOS Button */}
                   {showSOSButton && (
@@ -848,19 +1317,21 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
               )}
           </CardContent>
       </Card>
+      {/* Points of Interest Along Route */}
       {(plan.pointsOfInterest || poiList) && (
         <Card>
             <CardHeader>
                 <CardTitle>Points of Interest Along Route</CardTitle>
-                <CardDescription>Key locations identified by the AI near your suggested path.</CardDescription>
+                <CardDescription>Essential services and facilities near your suggested path.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 {Object.entries({
+                  'Heritage Sites': (poiList['Heritage Sites'] || []) as any,
+                  'Police Stations': Array.from({ length: policeStationsCount }, (_, i) => ({ name: `Police Station ${i + 1}`, lat: 0, lon: 0 })) as any,
                   Hospitals: (poiList.Hospitals || []) as any,
                   Restaurants: (poiList.Restaurants || []) as any,
                   Restrooms: (poiList.Restrooms || []) as any,
                   'Fuel Stations': (poiList['Fuel Stations'] || []) as any,
-                  'Police Stations': Array.from({ length: policeStationsCount }, (_, i) => ({ name: `Police Station ${i + 1}`, lat: 0, lon: 0 })) as any,
                   'EV Stations': (poiList['EV Stations'] || []) as any,
                 }).map(([category, places]) => {
                   const open = expanded[category] ?? false;
