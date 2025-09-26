@@ -20,7 +20,8 @@ import {
   Ticket,
   User as UserIcon,
   CheckCircle,
-  FolderSync
+  FolderSync,
+  Save
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +31,8 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 const MapDisplay = dynamic(
   () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -43,7 +46,7 @@ export default function TourDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const { packages, trips, expenses, user, addPhotoToTour } = useSharedState();
+  const { packages, trips, expenses, user, updatePackage } = useSharedState();
   
   const tourId = params.id as string;
   const tour = packages.find(p => p.id === tourId);
@@ -51,14 +54,15 @@ export default function TourDetailsPage() {
   const tourExpenses = expenses.filter(e => e.tourId === tourId);
   const itinerary = tripPlan?.plan?.itinerary || [];
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [driveLink, setDriveLink] = useState(tour?.driveLink || '');
 
   if (!tour) {
     notFound();
   }
 
   // Check if current user is part of the tour (either organizer or member)
-  const isMember = tour.organizerName === user?.username || (Array.isArray(tour.members) && tour.members.some(member => (typeof member === 'string' ? member : member.name) === user?.username));
+  const isOrganizer = tour.organizerName === user?.username;
+  const isMember = isOrganizer || (Array.isArray(tour.members) && tour.members.some(member => (typeof member === 'string' ? member : member.name) === user?.username));
 
   if (!isMember) {
     // If not a member, deny access by showing a 404.
@@ -69,28 +73,13 @@ export default function TourDetailsPage() {
     return tourExpenses.reduce((total, exp) => total + exp.amount, 0);
   }, [tourExpenses]);
 
-  const expenseByCategory = useMemo(() => {
-    const categoryMap: { [key: string]: number } = {};
-    tourExpenses.forEach(exp => {
-        categoryMap[exp.type] = (categoryMap[exp.type] || 0) + exp.amount;
-    });
-    return Object.entries(categoryMap);
-  }, [tourExpenses]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        addPhotoToTour(tour.id, result);
-        toast({
-          title: "Photo Added!",
-          description: "Your photo has been added to the tour gallery.",
-        });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleSaveDriveLink = () => {
+    updatePackage(tour.id, { driveLink: driveLink });
+    toast({
+      title: "Drive Link Saved!",
+      description: "The shared album link has been updated.",
+    });
   };
 
   const getCategoryIcon = (type: string) => {
@@ -169,12 +158,27 @@ export default function TourDetailsPage() {
                     <CardTitle>Shared Photo Album</CardTitle>
                     <CardDescription>A shared Google Drive folder for all tour photos.</CardDescription>
                 </CardHeader>
-                <CardContent className="text-center">
-                    <Button asChild className="w-full" variant="outline">
+                <CardContent className="space-y-4">
+                     <Button asChild className="w-full" variant="outline">
                         <a href={tour.driveLink || '#'} target="_blank" rel="noopener noreferrer">
                           <FolderSync className="mr-2" /> Access Shared Album
                         </a>
                     </Button>
+
+                    {isOrganizer && (
+                      <div className="space-y-2 pt-4 border-t">
+                        <Label htmlFor="driveLinkInput">Edit Drive Link</Label>
+                        <Input 
+                          id="driveLinkInput"
+                          placeholder="Paste Google Drive link here"
+                          value={driveLink}
+                          onChange={(e) => setDriveLink(e.target.value)}
+                        />
+                        <Button onClick={handleSaveDriveLink} className="w-full">
+                          <Save className="mr-2" /> Save Link
+                        </Button>
+                      </div>
+                    )}
                 </CardContent>
              </Card>
 
