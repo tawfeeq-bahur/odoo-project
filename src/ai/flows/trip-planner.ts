@@ -20,6 +20,7 @@ const TripPlannerInputSchema = z.object({
   loadKg: z.number().optional().describe("A dummy value, not used for tourism."),
   avg_speed_kmph: z.number().describe("The average speed expected for the trip in kmph."),
   max_speed_kmph: z.number().describe("The maximum speed expected for the trip in kmph."),
+  durationDays: z.number().describe("The total number of days for the trip."),
 });
 export type TripPlannerInput = z.infer<typeof TripPlannerInputSchema>;
 
@@ -80,10 +81,12 @@ function generateFallbackPlan(input: TripPlannerInput): TripPlannerOutput {
         routeType: input.routeType,
         traffic: input.traffic,
         ecoTip: 'Consider using public transport for parts of your journey to reduce your carbon footprint.',
-        itinerary: [
-            { day: 1, time: 'Morning', activity: 'Start journey', notes: 'Have a safe trip!' },
-            { day: 1, time: 'Evening', activity: `Arrive at ${input.destination}`, notes: 'Check into hotel.' },
-        ],
+        itinerary: Array.from({ length: input.durationDays || 1 }).map((_, i) => ({
+            day: i + 1,
+            time: 'Morning',
+            activity: i === 0 ? 'Start journey' : `Explore ${input.destination}`,
+            notes: i === 0 ? 'Have a safe trip!' : 'Discover local sights.',
+        })),
     };
 }
 
@@ -96,8 +99,8 @@ const prompt = ai.definePrompt({
     prompt: `
         You are an expert trip planner for Indian tourism.
         
-        Your task is to create a detailed trip plan based on the provided travel information.
-        
+        Your task is to create a detailed trip plan based on the provided travel information. The total duration of the trip is {{durationDays}} days.
+
         Travel Information:
         - Mode of Travel: {{vehicleModel}}
         - Average Speed: {{avg_speed_kmph}} kmph
@@ -108,6 +111,7 @@ const prompt = ai.definePrompt({
         - Destination: {{destination}}
         - Route Type: {{routeType}}
         - Traffic: {{traffic}}
+        - Duration: {{durationDays}} days
 
         Instructions:
         1.  Calculate the estimated distance in kilometers.
@@ -116,7 +120,7 @@ const prompt = ai.definePrompt({
         4.  Estimate toll charges if traveling by road.
         5.  Provide a brief summary of the suggested route (e.g., "Take NH44 towards...").
         6.  Generate an accurate, detailed route polyline with enough points to trace the roads on a map.
-        7.  Based on the route, create a logical, day-wise itinerary with 3-5 activities. Include key monuments, restaurants, and hotels as activities in the itinerary.
+        7.  Based on the route and the total {{durationDays}}-day duration, create a logical, day-wise itinerary. Each day should have 2-3 activities. Include key monuments, restaurants, and hotels as activities in the itinerary.
         8.  Include a standard disclaimer about the estimates.
     `,
 });

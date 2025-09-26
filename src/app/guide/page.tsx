@@ -81,6 +81,7 @@ export default function TourPlannerPage() {
     try {
       const result = await getTripPlan({
         ...values,
+        durationDays: selectedPackage.durationDays,
         loadKg: 100, // Dummy value
       });
       
@@ -106,6 +107,7 @@ export default function TourPlannerPage() {
       setError(errorMessage);
       const fallbackPlan = generateFallbackPlan({
         ...values,
+        durationDays: selectedPackage.durationDays,
         loadKg: 100,
       });
       addTrip({
@@ -123,7 +125,7 @@ export default function TourPlannerPage() {
     }
   }
 
-  function generateFallbackPlan(input: z.infer<typeof formSchema> & { loadKg: number }): TripPlannerOutput {
+  function generateFallbackPlan(input: z.infer<typeof formSchema> & { loadKg: number, durationDays: number }): TripPlannerOutput {
     const distance = 450;
     const duration = '8 hours 30 minutes';
     
@@ -140,11 +142,12 @@ export default function TourPlannerPage() {
         routeType: input.routeType,
         traffic: input.traffic,
         ecoTip: 'Consider using public transport for parts of your journey to reduce your carbon footprint.',
-        pointsOfInterest: {
-            Hotels: ["Hotel Grand View", "Riverside Inn"],
-            Restaurants: ["Local Heritage Restaurant", "Highway Treats Dhaba"],
-            Monuments: ["Historic Fort", "Ancient Temple Complex"]
-        },
+        itinerary: Array.from({ length: input.durationDays || 1 }).map((_, i) => ({
+            day: i + 1,
+            time: 'Morning',
+            activity: i === 0 ? 'Start journey' : `Explore ${input.destination}`,
+            notes: i === 0 ? 'Have a safe trip!' : 'Discover local sights.',
+        })),
     };
   }
   
