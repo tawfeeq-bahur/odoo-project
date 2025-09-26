@@ -12,7 +12,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221 83% 53%; /* Strong blue */
+    --primary: 24 93% 52%; /* Vibrant Saffron/Orange */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -24,9 +24,8 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221 83% 53%;
-    --radius: 0.5rem;
-    --chart-1: 221 83% 53%;
+    --ring: 24 93% 52%;
+    --chart-1: 24 93% 52%;
     --chart-2: 142 76% 36%;
     --chart-3: 222.2 47.4% 30%;
     --chart-4: 210 40% 90%;
@@ -48,7 +47,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%; /* Lighter blue for dark mode */
+    --primary: 26 95% 58%; /* Brighter Saffron/Orange for dark mode */
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -60,8 +59,8 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 217 91% 60%;
-    --chart-1: 217 91% 60%;
+    --ring: 26 95% 58%;
+    --chart-1: 26 95% 58%;
     --chart-2: 142 71% 45%;
     --chart-3: 210 40% 80%;
     --chart-4: 217.2 32.6% 30%;
