@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Upload, AlertTriangle, ScanText, LoaderCircle, Text, Languages } from 'lucide-react';
+import { Upload, AlertTriangle, ScanText, LoaderCircle, Text, Languages, Camera, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { extractTextFromImage, TransliterationOutput } from '@/ai/flows/transliteration';
@@ -14,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Copy } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 
 const indianLanguages = [
@@ -31,7 +33,11 @@ export default function TransliterationPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TransliterationOutput | null>(null);
   const [targetLanguage, setTargetLanguage] = useState<string>("English");
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
   const { toast } = useToast();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,8 +49,11 @@ export default function TransliterationPage() {
         setImagePreview(reader.result as string);
         setResult(null);
         setError(null);
+        setIsUploadDialogOpen(false); // Close dialog on file selection
       };
       reader.readAsDataURL(file);
+    } else {
+        setIsUploadDialogOpen(false);
     }
   };
 
@@ -110,25 +119,50 @@ export default function TransliterationPage() {
                   <CardDescription>Choose an image and the target language for transliteration.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                  <div
-                    className="relative aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                  {imagePreview ? (
-                      <Image src={imagePreview} alt="Text image preview" layout="fill" objectFit="contain" className="rounded-md" />
-                  ) : (
-                      <div className="text-center text-muted-foreground">
-                      <Upload className="mx-auto h-12 w-12" />
-                      <p>Click to upload or drag & drop</p>
+                  <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+                    <DialogTrigger asChild>
+                      <div
+                        className="relative aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
+                      >
+                      {imagePreview ? (
+                          <Image src={imagePreview} alt="Text image preview" layout="fill" objectFit="contain" className="rounded-md" />
+                      ) : (
+                          <div className="text-center text-muted-foreground">
+                          <Upload className="mx-auto h-12 w-12" />
+                          <p>Click to upload or drag & drop</p>
+                          </div>
+                      )}
                       </div>
-                  )}
-                  </div>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Choose Image Source</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid grid-cols-2 gap-4 py-4">
+                        <Button variant="outline" onClick={() => cameraInputRef.current?.click()}>
+                           <Camera className="mr-2"/> Use Camera
+                        </Button>
+                         <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                           <ImageIcon className="mr-2"/> From Gallery
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
                   <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
                   />
 
                   <div>
