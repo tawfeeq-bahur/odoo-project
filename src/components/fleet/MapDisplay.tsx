@@ -8,7 +8,7 @@ import { getCoordinates, GeocodeOutput } from '@/ai/flows/geocoder';
 import { snapToRoads } from '@/ai/flows/road-snapper';
 import L from 'leaflet';
 import { Polyline } from 'react-leaflet';
-import { Hospital, Fuel, Utensils, Bed, Bath, Phone } from 'lucide-react';
+import { Hospital, Fuel, Utensils, Bed, Bath, Phone, Car } from 'lucide-react';
 import { HeritageSiteCard } from './HeritageSiteCard';
 import 'leaflet/dist/leaflet.css';
 import * as turf from '@turf/turf';
@@ -43,9 +43,7 @@ const POI_ICONS: { [key: string]: React.ReactNode } = {
   Restaurants: <Utensils className="h-4 w-4 text-muted-foreground" />,
   Hotels: <Bed className="h-4 w-4 text-muted-foreground" />,
   Restrooms: <Bath className="h-4 w-4 text-muted-foreground" />,
-  'EV Stations': <div className="h-4 w-4 rounded-full bg-muted-foreground/20 flex items-center justify-center">
-    <div className="h-2 w-2 rounded-full bg-muted-foreground"></div>
-  </div>,
+  'EV Stations': <Car className="h-4 w-4 text-muted-foreground" />,
 };
 
 // Fallback coordinates for common Indian cities
@@ -1074,6 +1072,12 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
 
     const CATEGORY_STYLES: Record<string, { query: string; color: string; emoji: string }> = {
       'Heritage Sites': { query: 'node[historic]', color: '#8b5cf6', emoji: '🏛️' },
+      'Police Stations': { query: 'node["amenity"="police"]', color: '#3b82f6', emoji: '🚔' },
+      'Hospitals': { query: 'node["amenity"="hospital"]', color: '#ef4444', emoji: '🏥' },
+      'Restaurants': { query: 'node["amenity"="restaurant"]', color: '#f97316', emoji: '🍽️' },
+      'Restrooms': { query: 'node["amenity"="toilets"]', color: '#10b981', emoji: '🚻' },
+      'Fuel Stations': { query: 'node["amenity"="fuel"]', color: '#eab308', emoji: '⛽' },
+      'EV Stations': { query: 'node["amenity"="charging_station"]', color: '#14b8a6', emoji: '⚡' },
     };
 
     const bounds = L.latLngBounds(activeRoute as L.LatLngTuple[]);
@@ -1163,6 +1167,13 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           const tags = e.tags || {};
           let category: keyof typeof CATEGORY_STYLES | null = null;
           if (tags.historic) category = 'Heritage Sites';
+          else if (tags.amenity === 'police') category = 'Police Stations';
+          else if (tags.amenity === 'hospital') category = 'Hospitals';
+          else if (tags.amenity === 'restaurant') category = 'Restaurants';
+          else if (tags.amenity === 'toilets') category = 'Restrooms';
+          else if (tags.amenity === 'fuel') category = 'Fuel Stations';
+          else if (tags.amenity === 'charging_station') category = 'EV Stations';
+          
           if (!category) return;
 
           const name = (tags.name || tags.brand || category) as string;
@@ -1315,7 +1326,13 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             </CardHeader>
             <CardContent className="space-y-4">
                 {Object.entries({
-                  'Heritage Sites': (poiList['Heritage Sites'] || []) as any,
+                  'Heritage Sites': (poiList['Heritage Sites'] || []),
+                  'Police Stations': (poiList['Police Stations'] || []),
+                  'Hospitals': (poiList['Hospitals'] || []),
+                  'Restaurants': (poiList['Restaurants'] || []),
+                  'Restrooms': (poiList['Restrooms'] || []),
+                  'Fuel Stations': (poiList['Fuel Stations'] || []),
+                  'EV Stations': (poiList['EV Stations'] || []),
                 }).map(([category, places]) => {
                   const open = expanded[category] ?? true; // Default to open
                   const placesCount = (places as any[]).length;
@@ -1371,4 +1388,3 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     </>
   );
 }
-
