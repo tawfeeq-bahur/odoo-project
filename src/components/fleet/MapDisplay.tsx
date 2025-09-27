@@ -819,10 +819,6 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           const pp = map.getPane('poiPane') as HTMLElement; pp.style.zIndex = '650';
         }
         
-        // Load police stations by default with configurable radius
-        showPoliceStationsOnMap(map, 20.5937, 78.9629, policeLayerRef, ROUTE_POI_CONFIG.DEFAULT_RADIUS_M).then(result => {
-          setPoliceStationsCount(result.count);
-        });
     }
     
     const fetchAndSnapRoute = async () => {
@@ -855,14 +851,6 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             ]);
             setSourceCoords(sourceRes);
             setDestCoords(destRes);
-
-            // Load police stations along the route (will be updated with route polyline later)
-            const map = mapInstance.current;
-            if (map) {
-              showPoliceStationsAlongRoute(map, sourceRes.latitude, sourceRes.longitude, destRes.latitude, destRes.longitude, policeLayerRef).then(result => {
-                setPoliceStationsCount(result.count);
-              });
-            }
 
             // 2. Fetch a road-following route and alternatives from OSRM between source and destination
             try {
@@ -915,14 +903,6 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
               ];
               setRoadPolyline(simpleRoute);
               setError(null); // Clear error since we have a fallback
-
-              // Load police stations for fallback coordinates
-              const map = mapInstance.current;
-              if (map) {
-                showPoliceStationsAlongRoute(map, fallbackSource.latitude, fallbackSource.longitude, fallbackDest.latitude, fallbackDest.longitude, policeLayerRef, simpleRoute).then(result => {
-                  setPoliceStationsCount(result.count);
-                });
-              }
             } catch (fallbackErr) {
               console.error("Fallback also failed:", fallbackErr);
               setError("Could not generate the accurate route. Please try again.");
@@ -954,10 +934,6 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     if (endMarkerRef.current) {
       try { map.removeLayer(endMarkerRef.current); } catch {}
       endMarkerRef.current = null;
-    }
-    if (policeLayerRef.current) {
-      try { map.removeLayer(policeLayerRef.current); } catch {}
-      policeLayerRef.current = null;
     }
 
     // Add new layers
@@ -1072,7 +1048,6 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
 
     const CATEGORY_STYLES: Record<string, { query: string; color: string; emoji: string }> = {
       'Heritage Sites': { query: 'node[historic]', color: '#8b5cf6', emoji: '🏛️' },
-      'Police Stations': { query: 'node["amenity"="police"]', color: '#3b82f6', emoji: '🚔' },
       'Hospitals': { query: 'node["amenity"="hospital"]', color: '#ef4444', emoji: '🏥' },
       'Restaurants': { query: 'node["amenity"="restaurant"]', color: '#f97316', emoji: '🍽️' },
       'Restrooms': { query: 'node["amenity"="toilets"]', color: '#10b981', emoji: '🚻' },
@@ -1167,7 +1142,6 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           const tags = e.tags || {};
           let category: keyof typeof CATEGORY_STYLES | null = null;
           if (tags.historic) category = 'Heritage Sites';
-          else if (tags.amenity === 'police') category = 'Police Stations';
           else if (tags.amenity === 'hospital') category = 'Hospitals';
           else if (tags.amenity === 'restaurant') category = 'Restaurants';
           else if (tags.amenity === 'toilets') category = 'Restrooms';
