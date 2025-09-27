@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
@@ -33,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { subDays } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
+import { AddPackageDialog } from "./fleet/AddVehicleDialog";
 
 // Unified menu for all users
 const menuItems = [
@@ -244,7 +244,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, logout } = useSharedState();
+  const { user, logout, addPackage } = useSharedState();
 
   if (!user) {
     return <LoginPage />;
@@ -333,7 +333,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                      <ThemeToggle />
                   </div>
                 </header>
-                <SidebarInset>{children}</SidebarInset>
+                <SidebarInset>
+                  <AddPackageDialog onAddPackage={addPackage}>
+                    <div />
+                  </AddPackageDialog>
+                  {children}
+                </SidebarInset>
             </div>
           </div>
     </SidebarProvider>

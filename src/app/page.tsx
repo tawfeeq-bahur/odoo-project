@@ -23,11 +23,12 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function DashboardPage() {
-  const { user, packages, expenses } = useSharedState();
+  const { user, packages, expenses, addPackage } = useSharedState();
 
   if (!user) return null;
 
@@ -79,9 +80,11 @@ export default function DashboardPage() {
             <Button asChild variant="outline">
                 <Link href="/join"><Users className="mr-2"/> Join a Tour</Link>
             </Button>
-            <Button asChild>
-                <Link href="/guide"><PlusCircle className="mr-2"/> Organize Tour</Link>
-            </Button>
+            <AddPackageDialog onAddPackage={addPackage}>
+                <Button>
+                    <PlusCircle className="mr-2"/> Organize Tour
+                </Button>
+            </AddPackageDialog>
         </div>
       </div>
 
