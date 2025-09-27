@@ -153,7 +153,7 @@ export default function TransliterationPage() {
                     ref={cameraInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"
+                    capture
                     className="hidden"
                     onChange={handleImageChange}
                   />
