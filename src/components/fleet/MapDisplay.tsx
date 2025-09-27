@@ -240,7 +240,7 @@ const distanceToPolyline = (point: L.LatLngTuple, polyline: L.LatLngTuple[]) => 
 
   let best = Number.POSITIVE_INFINITY;
   for (let i = 1; i < polyline.length; i++) {
-    const d = pointToSegmentDistance(point, polyline[i - 1], polyline[i]);
+    const d = pointToSegmentDistance(pt, polyline[i - 1], polyline[i]);
     if (d < best) best = d;
   }
   return best;
@@ -1073,12 +1073,6 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
       });
 
     const CATEGORY_STYLES: Record<string, { query: string; color: string; emoji: string }> = {
-      Hospitals: { query: 'node[amenity=hospital]', color: '#ef4444', emoji: '🏥' },
-      'Fuel Stations': { query: 'node[amenity=fuel]', color: '#f59e0b', emoji: '⛽' },
-      Restaurants: { query: 'node[amenity=restaurant]', color: '#fb923c', emoji: '🍽️' },
-      Hotels: { query: 'node[tourism=hotel]', color: '#3b82f6', emoji: '🏨' },
-      Restrooms: { query: 'node[amenity=toilets]', color: '#10b981', emoji: '🚻' },
-      'EV Stations': { query: 'node[amenity=charging_station]', color: '#22c55e', emoji: '⚡' },
       'Heritage Sites': { query: 'node[historic]', color: '#8b5cf6', emoji: '🏛️' },
     };
 
@@ -1144,7 +1138,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
         // 200 meters threshold to the route for neat landmark visibility (extremely strict)
         const MAX_DISTANCE_M = 200;
         const counts: Record<string, number> = {};
-        const LIMIT_PER_CAT = 3;
+        const LIMIT_PER_CAT = 20;
 
         const nextList: Record<string, { name: string; lat: number; lon: number }[]> = {};
 
@@ -1168,12 +1162,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
 
           const tags = e.tags || {};
           let category: keyof typeof CATEGORY_STYLES | null = null;
-          if (tags.amenity === 'hospital') category = 'Hospitals';
-          else if (tags.amenity === 'fuel') category = 'Fuel Stations';
-          else if (tags.amenity === 'restaurant') category = 'Restaurants';
-          else if (tags.amenity === 'toilets') category = 'Restrooms';
-          else if (tags.tourism === 'hotel') category = 'Hotels';
-          else if (tags.historic) category = 'Heritage Sites';
+          if (tags.historic) category = 'Heritage Sites';
           if (!category) return;
 
           const name = (tags.name || tags.brand || category) as string;
@@ -1327,14 +1316,8 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             <CardContent className="space-y-4">
                 {Object.entries({
                   'Heritage Sites': (poiList['Heritage Sites'] || []) as any,
-                  'Police Stations': Array.from({ length: policeStationsCount }, (_, i) => ({ name: `Police Station ${i + 1}`, lat: 0, lon: 0 })) as any,
-                  Hospitals: (poiList.Hospitals || []) as any,
-                  Restaurants: (poiList.Restaurants || []) as any,
-                  Restrooms: (poiList.Restrooms || []) as any,
-                  'Fuel Stations': (poiList['Fuel Stations'] || []) as any,
-                  'EV Stations': (poiList['EV Stations'] || []) as any,
                 }).map(([category, places]) => {
-                  const open = expanded[category] ?? false;
+                  const open = expanded[category] ?? true; // Default to open
                   const placesCount = (places as any[]).length;
                   const hasPlaces = placesCount > 0;
                   
@@ -1388,3 +1371,4 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     </>
   );
 }
+
