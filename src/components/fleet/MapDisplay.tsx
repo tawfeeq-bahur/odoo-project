@@ -238,7 +238,7 @@ const distanceToPolyline = (point: L.LatLngTuple, polyline: L.LatLngTuple[]) => 
 
   let best = Number.POSITIVE_INFINITY;
   for (let i = 1; i < polyline.length; i++) {
-    const d = pointToSegmentDistance(pt, polyline[i - 1], polyline[i]);
+    const d = pointToSegmentDistance(point, polyline[i - 1], polyline[i]);
     if (d < best) best = d;
   }
   return best;
