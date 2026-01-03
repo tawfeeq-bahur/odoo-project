@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import type { TourPackage, Expense, Member } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Suitcase, CircleDollarSign, Users, Wrench, Lightbulb, AlertTriangle } from 'lucide-react';
+import { Briefcase, CircleDollarSign, Users, Wrench, Lightbulb, AlertTriangle } from 'lucide-react';
 import { getTourInsights, TourInsightsOutput } from '@/ai/flows/vehicle-insights';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -26,7 +26,7 @@ export function TourSummary({ packages, expenses, members }: TourSummaryProps) {
       try {
         const result = await getTourInsights({
           totalPackages: packages.length,
-          activeTours: packages.filter(p => p.status === 'Active').length,
+          activeTours: packages.filter(p => p.status === 'Ongoing').length,
           totalExpenses: totalExpenses,
           totalMembers: members.length,
         });
@@ -48,10 +48,10 @@ export function TourSummary({ packages, expenses, members }: TourSummaryProps) {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard icon={Suitcase} title="Total Packages" value={packages.length} />
+        <SummaryCard icon={Briefcase} title="Total Packages" value={packages.length} />
         <SummaryCard icon={CircleDollarSign} title="Total Expenses" value={`₹${totalExpenses.toLocaleString()}`} />
         <SummaryCard icon={Users} title="Total Members" value={members.length} />
-        <SummaryCard icon={Wrench} title="Draft Packages" value={packages.filter(p => p.status === 'Draft').length} />
+        <SummaryCard icon={Wrench} title="Up-Coming Packages" value={packages.filter(p => p.status === 'Up-Coming').length} />
       </div>
 
       <Card className="md:col-span-2 lg:col-span-4">

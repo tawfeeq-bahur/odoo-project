@@ -56,7 +56,7 @@ export function PackageList({ packages, onDeletePackage }: PackageListProps) {
                 <TableCell className="font-medium">{pkg.name}</TableCell>
                 <TableCell>{pkg.destination}</TableCell>
                 <TableCell>
-                    <Badge variant={pkg.status === 'Active' ? 'default' : 'secondary'}>{pkg.status}</Badge>
+                  <Badge variant={pkg.status === 'Ongoing' ? 'default' : 'secondary'}>{pkg.status}</Badge>
                 </TableCell>
                 <TableCell>₹{pkg.price.toLocaleString()}</TableCell>
                 <TableCell>{format(new Date(pkg.lastUpdated), 'PPP')}</TableCell>

@@ -14,13 +14,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { getTripPlan, TripPlannerOutput } from '@/ai/flows/trip-planner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Map as MapIcon, Milestone, Fuel, Clock, AlertTriangle, Route, Compass, Send, Plane, Train as TrainIcon, Car as CarIcon } from 'lucide-react';
+import { Map as MapIcon, Milestone, Fuel, Clock, AlertTriangle, Route, Compass, Send, Plane, Train as TrainIcon, Car as CarIcon, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import dynamic from 'next/dynamic';
 import { useSharedState } from '@/components/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TransportMode, getTransportRecommendation, isInternationalRoute } from '@/utils/distance-calculator';
+import { TransportMode, getTransportRecommendation, calculateDistance } from '@/utils/distance-calculator';
+import { getDestinationAttractions, AttractionsOutput } from '@/ai/flows/attractions';
+import { AttractionCard } from '@/components/AttractionCard';
 
 const MapDisplay = dynamic(
     () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -52,6 +54,9 @@ export default function TourPlannerPage() {
     const [recommendedMode, setRecommendedMode] = useState<TransportMode>('road');
     const [distance, setDistance] = useState<number>(0);
     const [pendingFormData, setPendingFormData] = useState<any>(null);
+    const [currentTransportMode, setCurrentTransportMode] = useState<TransportMode>('road');
+    const [attractions, setAttractions] = useState<AttractionsOutput | null>(null);
+    const [attractionsLoading, setAttractionsLoading] = useState(false);
     const { user, packages, addTrip } = useSharedState();
     const { toast } = useToast();
 
@@ -92,10 +97,11 @@ export default function TourPlannerPage() {
             const dstLat = parseFloat(dstData[0].lat);
             const dstLon = parseFloat(dstData[0].lon);
 
+            // Calculate distance using proper Haversine formula
+            const distanceKm = calculateDistance(srcLat, srcLon, dstLat, dstLon);
+
             // Get transport recommendation
-            const recommendation = getTransportRecommendation(
-                Math.sqrt(Math.pow((dstLat - srcLat) * 111, 2) + Math.pow((dstLon - srcLon) * 111, 2))
-            );
+            const recommendation = getTransportRecommendation(distanceKm);
 
             setDistance(recommendation.distance);
             setRecommendedMode(recommendation.recommendedMode);
@@ -104,12 +110,14 @@ export default function TourPlannerPage() {
             // If distance is short, proceed directly with road
             if (recommendation.distance < 300) {
                 setSelectedMode('road');
+                setCurrentTransportMode('road');
                 proceedWithPlanGeneration(values, 'road');
             } else {
                 // Show mode selection dialog
                 setShowModeDialog(true);
             }
         } catch (err) {
+            console.error('Distance calculation error:', err);
             setError('Error calculating distance. Please try again.');
         }
     }
@@ -117,6 +125,7 @@ export default function TourPlannerPage() {
     // Step 2: Generate plan with selected mode
     async function proceedWithPlanGeneration(values: z.infer<typeof formSchema>, mode: TransportMode) {
         setShowModeDialog(false);
+        setCurrentTransportMode(mode);
         setIsLoading(true);
         setError(null);
         setPlan(null);
@@ -153,6 +162,9 @@ export default function TourPlannerPage() {
 
             setPlan(result);
 
+            // Fetch tourist attractions for destination
+            fetchAttractions(result.destination);
+
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Sorry, I could not generate a trip plan. The AI model might be unavailable. Please try again.';
             setError(errorMessage);
@@ -160,6 +172,7 @@ export default function TourPlannerPage() {
                 ...values,
                 durationDays: selectedPackage.durationDays,
                 loadKg: 100,
+                transportMode: mode,
             });
             addTrip({
                 source: fallbackPlan.source,
@@ -176,23 +189,62 @@ export default function TourPlannerPage() {
         }
     }
 
-    function generateFallbackPlan(input: z.infer<typeof formSchema> & { loadKg: number, durationDays: number }): TripPlannerOutput {
+    // Fetch tourist attractions for destination
+    async function fetchAttractions(destination: string) {
+        setAttractionsLoading(true);
+        try {
+            const result = await getDestinationAttractions({ destination });
+            setAttractions(result);
+        } catch (err) {
+            console.error('Failed to fetch attractions:', err);
+            // Silently fail - attractions are optional
+        } finally {
+            setAttractionsLoading(false);
+        }
+    }
+
+    function generateFallbackPlan(input: z.infer<typeof formSchema> & { loadKg: number, durationDays: number, transportMode?: TransportMode }): TripPlannerOutput {
         const distance = 450;
-        const duration = '8 hours 30 minutes';
+        const mode = input.transportMode || 'road';
+
+        // Calculate duration and costs based on mode
+        let duration = '';
+        let fuelCost = 0;
+        let tollCost = 0;
+
+        if (mode === 'flight' || mode === 'multi-modal') {
+            const hours = Math.floor(distance / 800);
+            const minutes = Math.round((distance / 800 - hours) * 60);
+            duration = `${hours} hours ${minutes} minutes (flight time)`;
+            fuelCost = distance * 8; // Airfare: ~₹8 per km
+            tollCost = 0; // No tolls
+        } else if (mode === 'train') {
+            const hours = Math.floor(distance / 80);
+            const minutes = Math.round((distance / 80 - hours) * 60);
+            duration = `${hours} hours ${minutes} minutes`;
+            fuelCost = distance * 1.5; // Train ticket: ~₹1.5 per km
+            tollCost = 0; // No tolls
+        } else {
+            const hours = Math.floor(distance / 60);
+            const minutes = Math.round((distance / 60 - hours) * 60);
+            duration = `${hours} hours ${minutes} minutes`;
+            fuelCost = (distance / 12) * 105; // Fuel: 12 km/L @ ₹105/L
+            tollCost = distance * 1.5; // Toll: ₹1.5 per km
+        }
 
         return {
             source: input.source,
             destination: input.destination,
             distance: `${distance} km`,
             duration: duration,
-            estimatedFuelCost: (distance / 12) * 105,
-            estimatedTollCost: distance * 1.5,
-            suggestedRoute: `Take the main national highway from ${input.source} to ${input.destination}.`,
+            estimatedFuelCost: fuelCost,
+            estimatedTollCost: tollCost,
+            suggestedRoute: mode === 'flight' ? `Flight from ${input.source} to ${input.destination}` : mode === 'train' ? `Train route from ${input.source} to ${input.destination}` : `Take the main national highway from ${input.source} to ${input.destination}.`,
             routePolyline: [],
             disclaimer: 'This is a fallback estimated plan. AI model is currently unavailable. Actual values may vary.',
             routeType: input.routeType,
             traffic: input.traffic,
-            ecoTip: 'Consider using public transport for parts of your journey to reduce your carbon footprint.',
+            ecoTip: mode === 'train' ? 'Train travel is eco-friendly and scenic!' : mode === 'flight' ? 'Consider carbon offsetting for your flight.' : 'Consider using public transport to reduce carbon footprint.',
             itinerary: Array.from({ length: input.durationDays || 1 }).map((_, i) => ({
                 day: i + 1,
                 time: 'Morning',
@@ -456,8 +508,14 @@ export default function TourPlannerPage() {
                                         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
                                             <InfoCard icon={Route} title="Distance" content={plan.distance} />
                                             <InfoCard icon={Clock} title="Duration" content={plan.duration} />
-                                            <InfoCard icon={Fuel} title="Fuel Cost" content={`₹${plan.estimatedFuelCost.toFixed(2)}`} />
-                                            <InfoCard icon={Milestone} title="Toll Cost" content={`₹${plan.estimatedTollCost.toFixed(2)}`} />
+                                            <InfoCard
+                                                icon={Fuel}
+                                                title={currentTransportMode === 'flight' || currentTransportMode === 'multi-modal' ? "Airfare" : currentTransportMode === 'train' ? "Train Fare" : "Fuel Cost"}
+                                                content={`₹${plan.estimatedFuelCost.toFixed(2)}`}
+                                            />
+                                            {(currentTransportMode === 'road') && (
+                                                <InfoCard icon={Milestone} title="Toll Cost" content={`₹${plan.estimatedTollCost.toFixed(2)}`} />
+                                            )}
                                         </div>
                                         <Separator />
                                         <Alert>
@@ -470,6 +528,48 @@ export default function TourPlannerPage() {
                                     </CardContent>
                                 </Card>
                                 <MapDisplay plan={plan} traffic={currentTraffic} />
+
+                                {/* Must-Visit Places Section */}
+                                {(attractions || attractionsLoading) && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <MapPin /> Must-Visit Places in {plan.destination}
+                                            </CardTitle>
+                                            <CardDescription>
+                                                {attractionsLoading ? 'Loading attractions...' : `Top ${attractions?.attractions.length || 0} places to visit`}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {attractionsLoading ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                                                        <Skeleton key={i} className="h-40 w-full rounded-lg" />
+                                                    ))}
+                                                </div>
+                                            ) : attractions ? (
+                                                <>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                                        {attractions.attractions.map((attraction, idx) => (
+                                                            <AttractionCard key={idx} attraction={attraction} />
+                                                        ))}
+                                                    </div>
+                                                    <Separator className="my-4" />
+                                                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                                        <div>
+                                                            <strong className="text-primary">Best Time to Visit:</strong>
+                                                            <p className="text-muted-foreground mt-1">{attractions.bestTimeToVisit}</p>
+                                                        </div>
+                                                        <div>
+                                                            <strong className="text-primary">Travel Tip:</strong>
+                                                            <p className="text-muted-foreground mt-1">{attractions.travelTip}</p>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            ) : null}
+                                        </CardContent>
+                                    </Card>
+                                )}
                             </div>
                         )}
                     </div>

@@ -73,8 +73,6 @@ export default function DashboardPage() {
 
   // Place search (global destination search)
   const [placeSearch, setPlaceSearch] = useState("");
-  const [placeResults, setPlaceResults] = useState<PlaceSearchOutput[]>([]);
-  const [placeLoading, setPlaceLoading] = useState(false);
 
   // Tours filter search (for My Tours section)
   const [toursSearchQuery, setToursSearchQuery] = useState("");
@@ -85,24 +83,6 @@ export default function DashboardPage() {
   const [sortBy, setSortBy] = useState<"name" | "date" | "budget" | "duration">(
     "name",
   );
-
-  // Handle place search
-  const handlePlaceSearch = async () => {
-    if (!placeSearch.trim()) return;
-    setPlaceLoading(true);
-    try {
-      const results = await searchPlaces({ query: placeSearch });
-      setPlaceResults((prev) => [...prev, results]);
-    } catch (err) {
-      console.error("Place search failed:", err);
-    } finally {
-      setPlaceLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handlePlaceSearch();
-  };
 
   if (!user) return null;
 
@@ -244,55 +224,41 @@ export default function DashboardPage() {
               placeholder="Search destinations... (e.g., Goa, Kashmir, Ladakh, Dubai)"
               value={placeSearch}
               onChange={(e) => setPlaceSearch(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="pl-12 pr-32 py-6 text-lg"
+              className="pl-12 pr-4 py-6 text-lg"
             />
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
-              {placeSearch && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setPlaceSearch("");
-                    setPlaceResults([]);
-                  }}
-                >
-                  Clear
-                </Button>
-              )}
+            {placeSearch && (
               <Button
+                variant="ghost"
                 size="sm"
-                onClick={handlePlaceSearch}
-                disabled={!placeSearch.trim() || placeLoading}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                onClick={() => setPlaceSearch("")}
               >
-                {placeLoading ? "Searching..." : "Search"}
+                Clear
               </Button>
-            </div>
+            )}
           </div>
-          {placeLoading && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-96 w-full rounded-lg" />
-              ))}
-            </div>
-          )}
-          {placeResults.length > 0 && !placeLoading && (
-            <div className="mt-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">All Search Results</h3>
-                <div className="flex items-center gap-2">
-                  <Badge>
-                    {placeResults.reduce((acc, r) => acc + r.results.length, 0)} results from {placeResults.length} {placeResults.length === 1 ? "search" : "searches"}
-                  </Badge>
-                  <Button variant="outline" size="sm" onClick={() => setPlaceResults([])}>
-                    Clear All
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {placeResults.flatMap((r) => r.results).map((place, idx) => (
-                  <PlaceCard key={idx} place={place} />
-                ))}
+          {placeSearch && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">
+                Quick Actions:
+              </p>
+              <div className="flex gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    href={`/guide?destination=${encodeURIComponent(placeSearch)}`}
+                  >
+                    <Route className="mr-2 h-4 w-4" />
+                    Plan Route to {placeSearch}
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    href={`/guide?source=${encodeURIComponent(placeSearch)}`}
+                  >
+                    <Plane className="mr-2 h-4 w-4" />
+                    Start from {placeSearch}
+                  </Link>
+                </Button>
               </div>
             </div>
           )}

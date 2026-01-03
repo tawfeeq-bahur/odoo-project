@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, History, ListChecks, PlusCircle, User as UserIcon, Shield, Play, Languages } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Wallet, BarChart, Route, LogOut, Bell, Compass, MessageSquare, History, ListChecks, PlusCircle, User as UserIcon, Shield, Play, Languages, Calendar as CalendarIcon } from "lucide-react";
 import {
   SidebarProvider,
   Sidebar,
@@ -37,6 +37,7 @@ import { AddPackageDialog } from "./fleet/AddVehicleDialog";
 // Unified menu for all users
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/calendar", label: "Travel Calendar", icon: CalendarIcon },
   { href: "/guide", label: "Plan a Route", icon: Route },
   { href: "/demo", label: "AI Demo", icon: Play },
   { href: "/members", label: "Manage Members", icon: Users },
@@ -85,9 +86,9 @@ const generateInviteCode = () => {
 const demoUsers = ["Arun", "Priya", "Ravi"]; // Usernames for login
 
 const initialPackages: TourPackage[] = [
-  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Active", pricePerPerson: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizerName: "Arun", inviteCode: generateInviteCode(), members: ['Priya'], gallery: ['/placeholders/himalayas1.jpg', '/placeholders/himalayas2.jpg'], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'friends', travelStyle: 'whole-day', maxMembers: 10, maxBudget: 50000 },
-  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Active", pricePerPerson: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizerName: "Priya", inviteCode: generateInviteCode(), members: [], gallery: [], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'family', travelStyle: 'day', maxMembers: 5, maxBudget: 100000 },
-  { id: "3", name: "Solo Backpacking", destination: "Rajasthan", status: "Draft", pricePerPerson: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizerName: "Ravi", inviteCode: generateInviteCode(), members: [], gallery: [], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'friends', travelStyle: 'night', maxMembers: 15, maxBudget: 40000 },
+  { id: "1", name: "Himalayan Adventure", destination: "Manali", status: "Ongoing", pricePerPerson: 25000, durationDays: 7, lastUpdated: new Date().toISOString(), organizerName: "Arun", inviteCode: generateInviteCode(), members: ['Priya'], gallery: ['/placeholders/himalayas1.jpg', '/placeholders/himalayas2.jpg'], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'friends', travelStyle: 'whole-day', maxMembers: 10, maxBudget: 50000, startDate: new Date(2024, 0, 10).toISOString(), endDate: new Date(2024, 0, 17).toISOString() },
+  { id: "2", name: "Coastal Wonders", destination: "Goa", status: "Ongoing", pricePerPerson: 18000, durationDays: 5, lastUpdated: new Date().toISOString(), organizerName: "Priya", inviteCode: generateInviteCode(), members: [], gallery: [], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'family', travelStyle: 'day', maxMembers: 5, maxBudget: 100000, startDate: new Date(2026, 1, 15).toISOString(), endDate: new Date(2026, 1, 20).toISOString() },
+  { id: "3", name: "Solo Backpacking", destination: "Rajasthan", status: "Up-Coming", pricePerPerson: 30000, durationDays: 8, lastUpdated: new Date().toISOString(), organizerName: "Ravi", inviteCode: generateInviteCode(), members: [], gallery: [], driveLink: "https://docs.google.com/document/d/1B4t_V21K2c-A_i_L2o3d_4E5f_6G7h_8i9J0k_L1m_N2o/edit?usp=sharing", tripType: 'friends', travelStyle: 'night', maxMembers: 15, maxBudget: 40000, startDate: new Date(2026, 2, 25).toISOString(), endDate: new Date(2026, 3, 2).toISOString() },
 ];
 
 const initialExpenses: Expense[] = [

@@ -1,0 +1,15 @@
+﻿  const handlePlaceSearch = async () => {
+    if (!placeSearch.trim()) return;
+    setPlaceLoading(true);
+    try {
+      const results = await searchPlaces({ query: placeSearch });
+      setPlaceResults(results);
+    } catch (err) {
+      console.error('Place search failed:', err);
+    } finally {
+      setPlaceLoading(false);
+    }
+  };
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handlePlaceSearch();
+  };

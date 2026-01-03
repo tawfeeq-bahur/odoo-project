@@ -6,7 +6,7 @@ export type TourPackage = {
   id: string;
   name: string;
   destination: string;
-  status: "Active" | "Draft" | "Archived";
+  status: "Ongoing" | "Up-Coming" | "Completed";
   pricePerPerson: number;
   durationDays: number;
   lastUpdated: string; // ISO Date
@@ -21,10 +21,12 @@ export type TourPackage = {
   maxBudget: number;
   schoolName?: string;
   schoolLocation?: string;
+  startDate?: string; // ISO Date - Trip start date
+  endDate?: string; // ISO Date - Trip end date
 };
 
 export type Expense = {
-  id:string;
+  id: string;
   type: "Travel" | "Food" | "Hotel" | "Tickets" | "Misc";
   amount: number;
   date: string; // YYYY-MM-DD
@@ -35,10 +37,10 @@ export type Expense = {
 };
 
 export type ItineraryItem = {
-    day: number;
-    time: string;
-    activity: string;
-    notes?: string;
+  day: number;
+  time: string;
+  activity: string;
+  notes?: string;
 }
 
 export type Trip = {
@@ -57,11 +59,11 @@ export type Trip = {
 };
 
 export type Member = {
-    id: string;
-    name: string;
-    contact: string;
-    role: 'Organizer' | 'Member';
-    tourId?: string;
+  id: string;
+  name: string;
+  contact: string;
+  role: 'Organizer' | 'Member';
+  tourId?: string;
 };
 
 
