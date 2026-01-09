@@ -16,7 +16,7 @@ TourJet is a smart, AI-driven web application designed to simplify tour and trav
 ## Technology Stack
 
 *   **Frontend:**
-    *   **Framework:** Next.js 15 (with App Router)
+    *   **Framework:** Next.js 15 (with App Router),
     *   **Language:** TypeScript
     *   **UI Library:** React 18
     *   **Styling:** Tailwind CSS
