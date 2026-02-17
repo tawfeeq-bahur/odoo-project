@@ -99,7 +99,7 @@ export default function SignupPage() {
                             <Globe className="h-8 w-8 text-emerald-500" />
                             <h1 className="text-3xl font-bold font-headline">Registration</h1>
                         </div>
-                        <p className="text-sm text-muted-foreground text-center">Create your GlobeTrotter account</p>
+                        <p className="text-sm text-muted-foreground text-center">Create your TourJet account</p>
                     </div>
 
                     {/* Photo Upload */}

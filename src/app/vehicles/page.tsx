@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { AddVehicleDialog } from '@/components/fleet/AddVehicleDialog';
+import { AddPackageDialog as AddVehicleDialog } from '@/components/fleet/AddVehicleDialog';
 import type { Vehicle } from '@/lib/types';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';

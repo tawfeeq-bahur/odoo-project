@@ -1311,7 +1311,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                   'Fuel Stations': (poiList['Fuel Stations'] || []),
                   'EV Stations': (poiList['EV Stations'] || []),
                 }).map(([category, places]) => {
-                  const open = expanded[category] ?? true; // Default to open
+                  const open = expanded[category] ?? false; // Default to collapsed
                   const placesCount = (places as any[]).length;
                   const hasPlaces = placesCount > 0;
                   
@@ -1333,7 +1333,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                       </button>
                       {open && hasPlaces && (
                         <div className="mt-3 space-y-2">
-                          {(places as { name: string; lat: number; lon: number }[]).map((place, index) => {
+                          {(places as { name: string; lat: number; lon: number }[]).slice(0, 5).map((place, index) => {
                             const key = `${place.name}-${place.lat.toFixed(5)}-${place.lon.toFixed(5)}`;
                             return (
                               <div key={index} className="flex items-center gap-2">
@@ -1354,6 +1354,9 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                               </div>
                             );
                           })}
+                          {placesCount > 5 && (
+                            <p className="text-xs text-muted-foreground pt-1">+ {placesCount - 5} more</p>
+                          )}
                         </div>
                       )}
                     </div>

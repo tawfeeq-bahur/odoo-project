@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import { AppLayout, SharedStateProvider } from '@/components/AppLayout';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,9 +32,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SharedStateProvider>
-            <AppLayout>
-              {children}
-            </AppLayout>
+            <LanguageProvider>
+              <AppLayout>
+                {children}
+              </AppLayout>
+            </LanguageProvider>
           </SharedStateProvider>
           <Toaster />
         </ThemeProvider>

@@ -57,6 +57,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Select,
   SelectContent,
@@ -70,6 +71,7 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
 export default function DashboardPage() {
   const { user, packages, expenses, addPackage } = useSharedState();
+  const { t } = useLanguage();
 
   // Place search (global destination search)
   const [placeSearch, setPlaceSearch] = useState("");
@@ -212,24 +214,24 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between space-y-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">
-            Dashboard
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-headline">
+            {t("Dashboard")}
           </h1>
-          <p className="text-muted-foreground">
-            Welcome back, {user.username}! Here's your travel analysis.
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {t("Welcome back,")} {user.username}! {t("Here's your travel analysis.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm" className="sm:size-default">
             <Link href="/join">
-              <Users className="mr-2" /> Join a Tour
+              <Users className="mr-1 sm:mr-2 h-4 w-4" /> {t("Join a Tour")}
             </Link>
           </Button>
           <AddPackageDialog onAddPackage={addPackage}>
-            <Button>
-              <PlusCircle className="mr-2" /> Organize Tour
+            <Button size="sm" className="sm:size-default">
+              <PlusCircle className="mr-1 sm:mr-2 h-4 w-4" /> {t("Organize Tour")}
             </Button>
           </AddPackageDialog>
         </div>
@@ -239,15 +241,15 @@ export default function DashboardPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
             <Input
-              placeholder="Search destinations... (e.g., Goa, Kashmir, Ladakh, Dubai)"
+              placeholder={t("Search destinations...")}
               value={placeSearch}
               onChange={(e) => setPlaceSearch(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="pl-12 pr-32 py-6 text-lg"
+              className="pl-10 sm:pl-12 pr-24 sm:pr-32 py-4 sm:py-6 text-sm sm:text-lg"
             />
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
+            <div className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 flex gap-1 sm:gap-2">
               {placeSearch && (
                 <Button
                   variant="ghost"
@@ -257,7 +259,7 @@ export default function DashboardPage() {
                     setPlaceResults([]);
                   }}
                 >
-                  Clear
+                  {t("Clear")}
                 </Button>
               )}
               <Button
@@ -265,7 +267,7 @@ export default function DashboardPage() {
                 onClick={handlePlaceSearch}
                 disabled={!placeSearch.trim() || placeLoading}
               >
-                {placeLoading ? "Searching..." : "Search"}
+                {placeLoading ? t("Searching...") : t("Search")}
               </Button>
             </div>
           </div>
@@ -279,13 +281,13 @@ export default function DashboardPage() {
           {placeResults.length > 0 && !placeLoading && (
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">All Search Results</h3>
+                <h3 className="text-lg font-semibold">{t("All Search Results")}</h3>
                 <div className="flex items-center gap-2">
                   <Badge>
                     {placeResults.reduce((acc, r) => acc + r.results.length, 0)} results from {placeResults.length} {placeResults.length === 1 ? "search" : "searches"}
                   </Badge>
                   <Button variant="outline" size="sm" onClick={() => setPlaceResults([])}>
-                    Clear All
+                    {t("Clear All")}
                   </Button>
                 </div>
               </div>
@@ -299,23 +301,23 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatedCard
           index={1}
           icon={Briefcase}
-          title="Organized Tours"
+          title={t("Organized Tours")}
           value={organizedTours.length}
         />
         <AnimatedCard
           index={2}
           icon={Users}
-          title="Joined Tours"
+          title={t("Joined Tours")}
           value={joinedTours.length}
         />
         <AnimatedCard
           index={3}
           icon={DollarSign}
-          title="Total Approved Spend"
+          title={t("Total Approved Spend")}
           value={`₹${totalExpenses.toLocaleString()}`}
         />
       </div>
@@ -324,12 +326,12 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShoppingBag /> My Tours
+            <ShoppingBag /> {t("My Tours")}
           </CardTitle>
           <CardDescription>
             {toursSearchQuery
-              ? `Search results for "${toursSearchQuery}"`
-              : "View and manage your tours"}
+              ? `${t("Search results for")} "${toursSearchQuery}"`
+              : t("View and manage your tours")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -338,7 +340,7 @@ export default function DashboardPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Filter your tours by name or destination..."
+                placeholder={t("Filter your tours by name or destination...")}
                 value={toursSearchQuery}
                 onChange={(e) => setToursSearchQuery(e.target.value)}
                 className="pl-10"
@@ -357,9 +359,9 @@ export default function DashboardPage() {
                   <SelectValue placeholder="Group by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Tours</SelectItem>
-                  <SelectItem value="conducted">Conducted</SelectItem>
-                  <SelectItem value="joined">Joined</SelectItem>
+                  <SelectItem value="all">{t("All Tours")}</SelectItem>
+                  <SelectItem value="conducted">{t("Conducted")}</SelectItem>
+                  <SelectItem value="joined">{t("Joined")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -373,10 +375,10 @@ export default function DashboardPage() {
                   <SelectValue placeholder="Filter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="ongoing">Ongoing</SelectItem>
-                  <SelectItem value="up-coming">Upcoming</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="all">{t("All Status")}</SelectItem>
+                  <SelectItem value="ongoing">{t("Ongoing")}</SelectItem>
+                  <SelectItem value="up-coming">{t("Upcoming")}</SelectItem>
+                  <SelectItem value="completed">{t("Completed")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -389,10 +391,10 @@ export default function DashboardPage() {
                   <SelectValue placeholder="Sort by..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="budget">Budget</SelectItem>
-                  <SelectItem value="duration">Duration</SelectItem>
+                  <SelectItem value="name">{t("Name")}</SelectItem>
+                  <SelectItem value="date">{t("Date")}</SelectItem>
+                  <SelectItem value="budget">{t("Budget")}</SelectItem>
+                  <SelectItem value="duration">{t("Duration")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -403,10 +405,10 @@ export default function DashboardPage() {
             <Tabs defaultValue="conducted" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="conducted">
-                  Conducted Tours ({displayedOrganizedTours.length})
+                  {t("Conducted Tours")} ({displayedOrganizedTours.length})
                 </TabsTrigger>
                 <TabsTrigger value="joined">
-                  Joined Tours ({displayedJoinedTours.length})
+                  {t("Joined Tours")} ({displayedJoinedTours.length})
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="conducted">
@@ -420,7 +422,7 @@ export default function DashboardPage() {
             <>
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">
-                  Conducted Tours ({displayedOrganizedTours.length})
+                  {t("Conducted Tours")} ({displayedOrganizedTours.length})
                 </h3>
               </div>
               <TourTable tours={displayedOrganizedTours} />
@@ -429,7 +431,7 @@ export default function DashboardPage() {
             <>
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">
-                  Joined Tours ({displayedJoinedTours.length})
+                  {t("Joined Tours")} ({displayedJoinedTours.length})
                 </h3>
               </div>
               <TourTable tours={displayedJoinedTours} />
@@ -438,20 +440,20 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-8">
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChartIcon /> Monthly Spending Overview
+              <BarChartIcon /> {t("Monthly Spending Overview")}
             </CardTitle>
             <CardDescription>
-              Your approved spending over the last 6 months.
+              {t("Your approved spending over the last 6 months.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {monthlySpending.every((d) => d["Total Spend (₹)"] === 0) ? (
               <p className="text-muted-foreground text-center py-8">
-                No approved expenses yet.
+                {t("No approved expenses yet.")}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
@@ -471,16 +473,16 @@ export default function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <PieChartIcon /> Expense Breakdown
+              <PieChartIcon /> {t("Expense Breakdown")}
             </CardTitle>
             <CardDescription>
-              How your spending is distributed across categories.
+              {t("How your spending is distributed across categories.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {expenseByCategory.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                No expense data available.
+                {t("No expense data available.")}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
@@ -517,56 +519,67 @@ export default function DashboardPage() {
   );
 }
 
-const TourTable = ({ tours }: { tours: any[] }) => (
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead>Tour Name</TableHead>
-        <TableHead>Destination</TableHead>
-        <TableHead>Status</TableHead>
-        <TableHead className="text-right">Actions</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {tours.length > 0 ? (
-        tours.map((tour) => (
-          <TableRow
-            key={tour.id}
-            className="hover:bg-muted/50 transition-colors"
-          >
-            <TableCell className="font-medium flex items-center gap-2">
-              <Route className="h-4 w-4 text-muted-foreground" /> {tour.name}
-            </TableCell>
-            <TableCell>{tour.destination}</TableCell>
-            <TableCell>
-              <Badge
-                variant={tour.status === "Ongoing" ? "default" : "secondary"}
-              >
-                {tour.status}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right">
-              <Button asChild variant="ghost" size="sm">
-                <Link href={`/tours/${tour.id}`}>
-                  <Eye className="mr-2" /> View
-                </Link>
-              </Button>
+const TourTable = ({ tours }: { tours: any[] }) => {
+  const { t } = useLanguage();
+  return (
+  <div className="overflow-x-auto -mx-4 sm:mx-0">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="min-w-[140px]">{t("Tour Name")}</TableHead>
+          <TableHead className="hidden sm:table-cell">{t("Destination")}</TableHead>
+          <TableHead>{t("Status")}</TableHead>
+          <TableHead className="text-right">{t("Actions")}</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {tours.length > 0 ? (
+          tours.map((tour) => (
+            <TableRow
+              key={tour.id}
+              className="hover:bg-muted/50 transition-colors"
+            >
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <Route className="h-4 w-4 text-muted-foreground shrink-0" /> 
+                  <div>
+                    <span>{tour.name}</span>
+                    <p className="text-xs text-muted-foreground sm:hidden">{tour.destination}</p>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="hidden sm:table-cell">{tour.destination}</TableCell>
+              <TableCell>
+                <Badge
+                  variant={tour.status === "Ongoing" ? "default" : "secondary"}
+                >
+                  {t(tour.status)}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <Button asChild variant="ghost" size="sm">
+                  <Link href={`/tours/${tour.id}`}>
+                    <Eye className="sm:mr-2" /> <span className="hidden sm:inline">{t("View")}</span>
+                  </Link>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell
+              colSpan={4}
+              className="text-center text-muted-foreground h-24"
+            >
+              {t("No tours in this category yet.")}
             </TableCell>
           </TableRow>
-        ))
-      ) : (
-        <TableRow>
-          <TableCell
-            colSpan={4}
-            className="text-center text-muted-foreground h-24"
-          >
-            No tours in this category yet.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  </Table>
-);
+        )}
+      </TableBody>
+    </Table>
+  </div>
+  );
+};
 
 const AnimatedCard = ({
   icon: Icon,

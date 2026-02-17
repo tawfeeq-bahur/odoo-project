@@ -33,6 +33,9 @@ import {
 import { subDays } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { AddPackageDialog } from "./fleet/AddVehicleDialog";
+import { RightPanel } from "./RightPanel";
+import { LanguageSelector } from "./LanguageSelector";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Unified menu for all users
 const menuItems = [
@@ -257,6 +260,7 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const { user, logout, addPackage } = useSharedState();
 
   // Allow signup page without login
@@ -297,13 +301,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     asChild
                     isActive={pathname === item.href}
                     tooltip={{
-                      children: item.label,
+                      children: t(item.label),
                       className: "bg-primary text-primary-foreground",
                     }}
                   >
                     <Link href={item.href}>
                       <item.icon />
-                      <span>{item.label}</span>
+                      <span>{t(item.label)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -312,7 +316,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarContent>
           <SidebarFooter className="space-y-3">
             <Button variant="ghost" className="w-full justify-start" onClick={logout}>
-              <LogOut className="mr-2" /> Logout
+              <LogOut className="mr-2" /> {t("Logout")}
             </Button>
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
@@ -326,38 +330,42 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </SidebarFooter>
         </Sidebar>
-        <div className="flex flex-col w-full">
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
-            <SidebarTrigger className="md:hidden" />
+        <div className="flex flex-1 min-w-0">
+          <div className="flex flex-col flex-1 min-w-0">
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
+              <SidebarTrigger className="md:hidden" />
 
-            <div className="flex-1">
-              {/* Placeholder for breadcrumbs or page title */}
-            </div>
+              <div className="flex-1">
+                {/* Placeholder for breadcrumbs or page title */}
+              </div>
 
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Bell />
-                    <span className="sr-only">Notifications</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>New member joined 'Himalayan Adventure'</DropdownMenuItem>
-                  <DropdownMenuItem>Expense for Food approved</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <ThemeToggle />
-            </div>
-          </header>
-          <SidebarInset>
-            <AddPackageDialog onAddPackage={addPackage}>
-              <div />
-            </AddPackageDialog>
-            {children}
-          </SidebarInset>
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Bell />
+                      <span className="sr-only">Notifications</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>{t("Notifications")}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>{t("New member joined 'Himalayan Adventure'")}</DropdownMenuItem>
+                    <DropdownMenuItem>{t("Expense for Food approved")}</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <LanguageSelector />
+                <ThemeToggle />
+              </div>
+            </header>
+            <main className="flex-1 overflow-y-auto">
+              <AddPackageDialog onAddPackage={addPackage}>
+                <div />
+              </AddPackageDialog>
+              {children}
+            </main>
+          </div>
+          <RightPanel />
         </div>
       </div>
     </SidebarProvider>

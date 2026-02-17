@@ -2,6 +2,7 @@
 'use client';
 
 import { useSharedState } from '@/components/AppLayout';
+import { useLanguage } from '@/context/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function ReportsPage() {
     const { expenses, user, packages } = useSharedState();
+    const { t } = useLanguage();
     const [date, setDate] = useState<DateRange | undefined>();
     const [selectedTourId, setSelectedTourId] = useState<string>('all');
 
@@ -47,11 +49,11 @@ export default function ReportsPage() {
     const getStatusBadge = (status: Expense['status']) => {
         switch (status) {
             case 'approved':
-                return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border-green-200 dark:border-green-700">Approved</Badge>;
+                return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border-green-200 dark:border-green-700">{t("Approved")}</Badge>;
             case 'pending':
-                return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700">Pending</Badge>;
+                return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700">{t("Pending")}</Badge>;
             case 'rejected':
-                return <Badge variant="destructive">Rejected</Badge>;
+                return <Badge variant="destructive">{t("Rejected")}</Badge>;
         }
     };
     
@@ -103,28 +105,28 @@ export default function ReportsPage() {
 
     return (
         <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
-             <div className="flex flex-wrap items-center justify-between gap-4">
+             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight font-headline">My Expense Analytics</h1>
-                    <p className="text-muted-foreground">Review your spending and generate reports.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-headline">{t("My Expense Analytics")}</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground">{t("Review your spending and generate reports.")}</p>
                 </div>
-                 <Button variant="outline" onClick={downloadCSV}>
-                    <FileDown className="mr-2" />
-                    Export Filtered Expenses
+                 <Button variant="outline" size="sm" className="w-fit" onClick={downloadCSV}>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    {t("Export Expenses")}
                 </Button>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Filter /> Filters</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Filter /> {t("Filters")}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4">
                     <Select value={selectedTourId} onValueChange={setSelectedTourId}>
                         <SelectTrigger className="w-full md:w-[280px]">
-                            <SelectValue placeholder="Filter by tour..." />
+                            <SelectValue placeholder={t("Filter by tour...")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All My Trips</SelectItem>
+                            <SelectItem value="all">{t("All My Trips")}</SelectItem>
                             {userTours.map(tour => (
                                 <SelectItem key={tour.id} value={tour.id}>{tour.name}</SelectItem>
                             ))}
@@ -149,7 +151,7 @@ export default function ReportsPage() {
                                 format(date.from, "LLL dd, y")
                             )
                             ) : (
-                            <span>Pick a date range</span>
+                            <span>{t("Pick a date range")}</span>
                             )}
                         </Button>
                         </PopoverTrigger>
@@ -160,12 +162,12 @@ export default function ReportsPage() {
                             defaultMonth={date?.from}
                             selected={date}
                             onSelect={setDate}
-                            numberOfMonths={2}
+                            numberOfMonths={1}
                         />
                         </PopoverContent>
                     </Popover>
                     <Button variant="ghost" onClick={() => { setDate(undefined); setSelectedTourId('all'); }}>
-                        Clear Filters
+                        {t("Clear Filters")}
                     </Button>
                 </CardContent>
             </Card>
@@ -173,56 +175,58 @@ export default function ReportsPage() {
              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Approved Spend</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("Total Approved Spend")}</CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">₹{totalSpent.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Based on current filters</p>
+                        <p className="text-xs text-muted-foreground">{t("Based on current filters")}</p>
                     </CardContent>
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Pending Expenses</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("Pending Expenses")}</CardTitle>
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{filteredExpenses.filter(e=>e.status==='pending').length}</div>
-                         <p className="text-xs text-muted-foreground">Based on current filters</p>
+                         <p className="text-xs text-muted-foreground">{t("Based on current filters")}</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
                 <Card className="lg:col-span-4">
                     <CardHeader>
-                        <CardTitle>My Submitted Expenses</CardTitle>
-                        <CardDescription>A log of all your submitted expenses matching the current filters.</CardDescription>
+                        <CardTitle>{t("My Submitted Expenses")}</CardTitle>
+                        <CardDescription>{t("A log of all your submitted expenses matching the current filters.")}</CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <div className="overflow-x-auto -mx-4 sm:mx-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead className="min-w-[90px]">{t("Date")}</TableHead>
+                                    <TableHead>{t("Type")}</TableHead>
+                                    <TableHead>{t("Amount")}</TableHead>
+                                    <TableHead className="hidden sm:table-cell">{t("Status")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredExpenses.map((expense) => (
                                     <TableRow key={expense.id}>
-                                        <TableCell>{format(new Date(expense.date), 'PPP')}</TableCell>
-                                        <TableCell><Badge variant="secondary">{expense.type}</Badge></TableCell>
-                                        <TableCell className="font-medium">₹{expense.amount.toFixed(2)}</TableCell>
-                                        <TableCell>{getStatusBadge(expense.status)}</TableCell>
+                                        <TableCell className="text-xs sm:text-sm">{format(new Date(expense.date), 'MMM dd')}</TableCell>
+                                        <TableCell><Badge variant="secondary" className="text-xs">{expense.type}</Badge></TableCell>
+                                        <TableCell className="font-medium text-xs sm:text-sm">₹{expense.amount.toFixed(0)}</TableCell>
+                                        <TableCell className="hidden sm:table-cell">{getStatusBadge(expense.status)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
+                        </div>
                         {filteredExpenses.length === 0 && (
                             <div className="text-center p-10 text-muted-foreground">
-                                No expenses match the current filters.
+                                {t("No expenses match the current filters.")}
                             </div>
                         )}
                     </CardContent>
@@ -230,8 +234,8 @@ export default function ReportsPage() {
 
                 <Card className="lg:col-span-3">
                     <CardHeader>
-                        <CardTitle>Spending by Category</CardTitle>
-                        <CardDescription>Visual breakdown of your approved spending.</CardDescription>
+                        <CardTitle>{t("Spending by Category")}</CardTitle>
+                        <CardDescription>{t("Visual breakdown of your approved spending.")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>

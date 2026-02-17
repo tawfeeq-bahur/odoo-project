@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { TransportMode, getTransportRecommendation, calculateDistance } from '@/utils/distance-calculator';
 import { getDestinationAttractions, AttractionsOutput } from '@/ai/flows/attractions';
 import { AttractionCard } from '@/components/AttractionCard';
+import { useLanguage } from '@/context/LanguageContext';
 
 const MapDisplay = dynamic(
     () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -58,6 +59,7 @@ export default function TourPlannerPage() {
     const [attractions, setAttractions] = useState<AttractionsOutput | null>(null);
     const [attractionsLoading, setAttractionsLoading] = useState(false);
     const { user, packages, addTrip } = useSharedState();
+    const { t } = useLanguage();
     const { toast } = useToast();
 
     const plannerForm = useForm<z.infer<typeof formSchema>>({
@@ -256,11 +258,11 @@ export default function TourPlannerPage() {
 
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 min-w-0 overflow-x-hidden">
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight font-headline">Route Planner</h1>
-                <p className="text-muted-foreground">
-                    Generate a detailed travel plan with AI, including route, costs, and points of interest.
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-headline">{t("Route Planner")}</h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                    {t("Generate a detailed travel plan with AI, including route, costs, and points of interest.")}
                 </p>
             </div>
 
@@ -268,9 +270,9 @@ export default function TourPlannerPage() {
             <Dialog open={showModeDialog} onOpenChange={setShowModeDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Select Transport Mode</DialogTitle>
+                        <DialogTitle>{t("Select Transport Mode")}</DialogTitle>
                         <DialogDescription>
-                            Distance: {distance.toFixed(0)} km - {recommendedMode === 'multi-modal' ? 'Flight recommended for this distance' : `${recommendedMode} recommended`}
+                            {t("Distance")}: {distance.toFixed(0)} km - {recommendedMode === 'multi-modal' ? t('Flight recommended for this distance') : `${t(recommendedMode)} ${t('recommended')}`}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -285,7 +287,7 @@ export default function TourPlannerPage() {
                             >
                                 <CarIcon className="mr-3 h-6 w-6" />
                                 <div className="text-left">
-                                    <div className="font-semibold">Road (Car/Bus)</div>
+                                    <div className="font-semibold">{t("Road (Car/Bus)")}</div>
                                     <div className="text-sm text-muted-foreground">~{Math.round(distance / 60)} hours</div>
                                 </div>
                             </Button>
@@ -302,7 +304,7 @@ export default function TourPlannerPage() {
                             >
                                 <TrainIcon className="mr-3 h-6 w-6" />
                                 <div className="text-left">
-                                    <div className="font-semibold">Train</div>
+                                    <div className="font-semibold">{t("Train")}</div>
                                     <div className="text-sm text-muted-foreground">~{Math.round(distance / 80)} hours (Recommended)</div>
                                 </div>
                             </Button>
@@ -319,7 +321,7 @@ export default function TourPlannerPage() {
                             >
                                 <Plane className="mr-3 h-6 w-6" />
                                 <div className="text-left">
-                                    <div className="font-semibold">Flight {distance > 2000 && '(Multi-Modal)'}</div>
+                                    <div className="font-semibold">{t("Flight")} {distance > 2000 && `(${t('Multi-Modal')})`}</div>
                                     <div className="text-sm text-muted-foreground">~{Math.round(distance / 800)} hours (Fastest)</div>
                                 </div>
                             </Button>
@@ -329,13 +331,13 @@ export default function TourPlannerPage() {
             </Dialog>
 
             <Form {...plannerForm}>
-                <div className="grid lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-1 flex flex-col gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+                    <div className="lg:col-span-1 lg:sticky lg:top-16 lg:self-start flex flex-col gap-4 sm:gap-8">
                         <form onSubmit={plannerForm.handleSubmit(onPlannerSubmit)} className="space-y-8">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>1. Trip Details</CardTitle>
-                                    <CardDescription>Enter the source and destination for your trip.</CardDescription>
+                                    <CardTitle>{t("1. Trip Details")}</CardTitle>
+                                    <CardDescription>{t("Enter the source and destination for your trip.")}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <FormField
@@ -343,10 +345,10 @@ export default function TourPlannerPage() {
                                         name="packageId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Tour Package</FormLabel>
+                                                <FormLabel>{t("Tour Package")}</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
-                                                        <SelectTrigger><SelectValue placeholder="Assign this route to a tour" /></SelectTrigger>
+                                                        <SelectTrigger><SelectValue placeholder={t("Assign this route to a tour")} /></SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
                                                         {packages.map(pkg => (
@@ -363,7 +365,7 @@ export default function TourPlannerPage() {
                                         name="source"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Source</FormLabel>
+                                                <FormLabel>{t("Source")}</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="e.g., Chennai, TN" {...field} />
                                                 </FormControl>
@@ -376,7 +378,7 @@ export default function TourPlannerPage() {
                                         name="destination"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Destination</FormLabel>
+                                                <FormLabel>{t("Destination")}</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="e.g., Manali, HP" {...field} />
                                                 </FormControl>
@@ -388,8 +390,8 @@ export default function TourPlannerPage() {
                             </Card>
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>2. Travel Conditions</CardTitle>
-                                    <CardDescription>Describe the conditions expected for this trip.</CardDescription>
+                                    <CardTitle>{t("2. Travel Conditions")}</CardTitle>
+                                    <CardDescription>{t("Describe the conditions expected for this trip.")}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <FormField
@@ -397,10 +399,10 @@ export default function TourPlannerPage() {
                                         name="vehicleModel"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Primary Mode of Travel</FormLabel>
+                                                <FormLabel>{t("Primary Mode of Travel")}</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
-                                                        <SelectTrigger><SelectValue placeholder="Select travel mode" /></SelectTrigger>
+                                                        <SelectTrigger><SelectValue placeholder={t("Select travel mode")} /></SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="Car">Car</SelectItem>
@@ -418,10 +420,10 @@ export default function TourPlannerPage() {
                                         name="routeType"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Route Type</FormLabel>
+                                                <FormLabel>{t("Route Type")}</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
-                                                        <SelectTrigger><SelectValue placeholder="Select route type" /></SelectTrigger>
+                                                        <SelectTrigger><SelectValue placeholder={t("Select route type")} /></SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="City">City</SelectItem>
@@ -438,10 +440,10 @@ export default function TourPlannerPage() {
                                         name="traffic"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Expected Traffic</FormLabel>
+                                                <FormLabel>{t("Expected Traffic")}</FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
-                                                        <SelectTrigger><SelectValue placeholder="Select traffic condition" /></SelectTrigger>
+                                                        <SelectTrigger><SelectValue placeholder={t("Select traffic condition")} /></SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="Light">Light</SelectItem>
@@ -458,7 +460,7 @@ export default function TourPlannerPage() {
                                         name="avg_speed_kmph"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Average Speed (kmph)</FormLabel>
+                                                <FormLabel>{t("Average Speed (kmph)")}</FormLabel>
                                                 <FormControl><Input type="number" placeholder="e.g., 60" {...field} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -469,7 +471,7 @@ export default function TourPlannerPage() {
                                         name="max_speed_kmph"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Maximum Speed (kmph)</FormLabel>
+                                                <FormLabel>{t("Maximum Speed (kmph)")}</FormLabel>
                                                 <FormControl><Input type="number" placeholder="e.g., 100" {...field} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -478,8 +480,8 @@ export default function TourPlannerPage() {
                                 </CardContent>
                             </Card>
                             <Button type="submit" disabled={isLoading || !isFormValid} className="w-full">
-                                <Send className="mr-2" />
-                                {isLoading ? 'Generating Plan...' : 'Generate Travel Plan'}
+                                <Send className="mr-2 h-4 w-4" />
+                                {isLoading ? t('Generating Plan...') : t('Generate Travel Plan')}
                             </Button>
                         </form>
                     </div>
@@ -491,8 +493,8 @@ export default function TourPlannerPage() {
                             <Card className="h-full">
                                 <CardContent className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-8">
                                     <Compass className="h-24 w-24 mb-4 text-primary/50" />
-                                    <h2 className="text-2xl font-semibold">Your AI-Generated Travel Plan Will Appear Here</h2>
-                                    <p className="max-w-md mt-2">Fill out the fields and click "Generate Travel Plan" to see the magic happen.</p>
+                                    <h2 className="text-2xl font-semibold">{t("Your AI-Generated Travel Plan Will Appear Here")}</h2>
+                                    <p className="max-w-md mt-2">{t('Fill out the fields and click "Generate Travel Plan" to see the magic happen.')}</p>
                                 </CardContent>
                             </Card>
                         )}
@@ -501,26 +503,26 @@ export default function TourPlannerPage() {
                             <div className="space-y-8">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-2xl font-headline">Travel Plan: {plan.source} to {plan.destination}</CardTitle>
-                                        <CardDescription>{plan.suggestedRoute}</CardDescription>
+                                        <CardTitle className="text-lg sm:text-2xl font-headline break-words">{t("Travel Plan:")}{" "}{plan.source} {t("to")} {plan.destination}</CardTitle>
+                                        <CardDescription className="break-words">{plan.suggestedRoute}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-                                            <InfoCard icon={Route} title="Distance" content={plan.distance} />
-                                            <InfoCard icon={Clock} title="Duration" content={plan.duration} />
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 text-center">
+                                            <InfoCard icon={Route} title={t("Distance")} content={plan.distance} />
+                                            <InfoCard icon={Clock} title={t("Duration")} content={plan.duration} />
                                             <InfoCard
                                                 icon={Fuel}
-                                                title={currentTransportMode === 'flight' || currentTransportMode === 'multi-modal' ? "Airfare" : currentTransportMode === 'train' ? "Train Fare" : "Fuel Cost"}
+                                                title={currentTransportMode === 'flight' || currentTransportMode === 'multi-modal' ? t("Airfare") : currentTransportMode === 'train' ? t("Train Fare") : t("Fuel Cost")}
                                                 content={`₹${plan.estimatedFuelCost.toFixed(2)}`}
                                             />
                                             {(currentTransportMode === 'road') && (
-                                                <InfoCard icon={Milestone} title="Toll Cost" content={`₹${plan.estimatedTollCost.toFixed(2)}`} />
+                                                <InfoCard icon={Milestone} title={t("Toll Cost")} content={`₹${plan.estimatedTollCost.toFixed(2)}`} />
                                             )}
                                         </div>
                                         <Separator />
                                         <Alert>
                                             <AlertTriangle className="h-5 w-5" />
-                                            <AlertTitle>Disclaimer</AlertTitle>
+                                            <AlertTitle>{t("Disclaimer")}</AlertTitle>
                                             <AlertDescription>
                                                 {plan.disclaimer}
                                             </AlertDescription>
@@ -533,11 +535,11 @@ export default function TourPlannerPage() {
                                 {(attractions || attractionsLoading) && (
                                     <Card>
                                         <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <MapPin /> Must-Visit Places in {plan.destination}
+                                            <CardTitle className="flex items-center gap-2 text-base sm:text-lg break-words">
+                                                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" /> <span className="break-words">{t("Must-Visit Places in")} {plan.destination}</span>
                                             </CardTitle>
                                             <CardDescription>
-                                                {attractionsLoading ? 'Loading attractions...' : `Top ${attractions?.attractions.length || 0} places to visit`}
+                                                {attractionsLoading ? t('Loading attractions...') : `${t('Top')} ${attractions?.attractions.length || 0} ${t('places to visit')}`}
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent>
@@ -557,11 +559,11 @@ export default function TourPlannerPage() {
                                                     <Separator className="my-4" />
                                                     <div className="grid md:grid-cols-2 gap-4 text-sm">
                                                         <div>
-                                                            <strong className="text-primary">Best Time to Visit:</strong>
+                                                            <strong className="text-primary">{t("Best Time to Visit:")} </strong>
                                                             <p className="text-muted-foreground mt-1">{attractions.bestTimeToVisit}</p>
                                                         </div>
                                                         <div>
-                                                            <strong className="text-primary">Travel Tip:</strong>
+                                                            <strong className="text-primary">{t("Travel Tip:")} </strong>
                                                             <p className="text-muted-foreground mt-1">{attractions.travelTip}</p>
                                                         </div>
                                                     </div>
@@ -580,17 +582,17 @@ export default function TourPlannerPage() {
 }
 
 const InfoCard = ({ icon: Icon, title, content }: { icon: React.ElementType, title: string, content: string }) => (
-    <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-muted/50">
-        <Icon className="h-8 w-8 text-primary" />
-        <div>
-            <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
-            <p className="text-xl font-bold">{content}</p>
+    <div className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-muted/50 min-w-0 overflow-hidden">
+        <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+        <div className="min-w-0 w-full text-center">
+            <h3 className="font-semibold text-xs sm:text-sm text-muted-foreground truncate">{title}</h3>
+            <p className="text-base sm:text-xl font-bold truncate">{content}</p>
         </div>
     </div>
 );
 
 const PlanSkeleton = () => (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
         <Card>
             <CardHeader>
                 <div className="space-y-2">
@@ -599,11 +601,11 @@ const PlanSkeleton = () => (
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-4 gap-6">
-                    <Skeleton className="h-28 w-full" />
-                    <Skeleton className="h-28 w-full" />
-                    <Skeleton className="h-28 w-full" />
-                    <Skeleton className="h-28 w-full" />
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    <Skeleton className="h-24 sm:h-28 w-full" />
+                    <Skeleton className="h-24 sm:h-28 w-full" />
+                    <Skeleton className="h-24 sm:h-28 w-full" />
+                    <Skeleton className="h-24 sm:h-28 w-full" />
                 </div>
                 <Skeleton className="h-16 w-full" />
             </CardContent>
