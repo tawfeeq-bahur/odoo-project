@@ -12,10 +12,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Truck, Fuel, Wrench, Upload, Send, Gauge } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function VehicleHealthPage() {
   const { user, vehicles, updateVehicleFuelLevel } = useSharedState();
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const assignedVehicle = vehicles.find(v => v.id === user?.assignedVehicleId);
   
@@ -39,10 +41,10 @@ export default function VehicleHealthPage() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Card>
           <CardHeader>
-            <CardTitle>No Vehicle Assigned</CardTitle>
+            <CardTitle>{t("No Vehicle Assigned")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>You must be assigned a vehicle to view this page. Please contact your administrator.</p>
+            <p>{t("You must be assigned a vehicle to view this page. Please contact your administrator.")}</p>
           </CardContent>
         </Card>
       </div>
@@ -592,15 +594,15 @@ export default function VehicleHealthPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Vehicle Health</h1>
-        <p className="text-muted-foreground">Update fuel status and report issues for your assigned vehicle.</p>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Vehicle Health")}</h1>
+        <p className="text-muted-foreground">{t("Update fuel status and report issues for your assigned vehicle.")}</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Assigned Vehicle</CardTitle>
+              <CardTitle>{t("Assigned Vehicle")}</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center gap-4">
               <Truck className="h-10 w-10 text-primary" />
@@ -613,8 +615,8 @@ export default function VehicleHealthPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Gauge /> Update Fuel Level</CardTitle>
-              <CardDescription>Drag the slider and upload a geotagged photo of the dashboard's fuel gauge as proof.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><Gauge /> {t("Update Fuel Level")}</CardTitle>
+              <CardDescription>{t("Drag the slider and upload a geotagged photo of the dashboard's fuel gauge as proof.")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -631,7 +633,7 @@ export default function VehicleHealthPage() {
                     <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                        Analyzing photo...
+                        {t("Analyzing photo...")}
                       </div>
                     </div>
                   )}
@@ -640,11 +642,11 @@ export default function VehicleHealthPage() {
               </div>
               
               <div className="text-sm text-muted-foreground">
-                <p>💡 <strong>Tip:</strong> Upload a clear photo of your fuel gauge. The system will automatically detect the fuel level, or you can manually adjust the slider.</p>
+                <p>💡 <strong>{t("Tip")}:</strong> {t("Upload a clear photo of your fuel gauge. The system will automatically detect the fuel level, or you can manually adjust the slider.")}</p>
               </div>
               
               <div>
-                <Label>Dashboard Photo Proof</Label>
+                <Label>{t("Dashboard Photo Proof")}</Label>
                 <div
                   className="relative mt-1 aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
                   onClick={() => fuelFileInputRef.current?.click()}
@@ -654,7 +656,7 @@ export default function VehicleHealthPage() {
                   ) : (
                     <div className="text-center text-muted-foreground p-4">
                       <Upload className="mx-auto h-8 w-8" />
-                      <p>Click to upload a photo</p>
+                      <p>{t("Click to upload a photo")}</p>
                     </div>
                   )}
                 </div>
@@ -671,10 +673,10 @@ export default function VehicleHealthPage() {
                 {isAnalyzing ? (
                   <>
                     <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                    Analyzing Photo...
+                    {t("Analyzing Photo...")}
                   </>
                 ) : (
-                  'Save Fuel Level'
+                  t('Save Fuel Level')
                 )}
               </Button>
             </CardContent>
@@ -683,17 +685,17 @@ export default function VehicleHealthPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Wrench /> Report an Issue</CardTitle>
-            <CardDescription>Fill out the form below to report a fault with your vehicle.</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Wrench /> {t("Report an Issue")}</CardTitle>
+            <CardDescription>{t("Fill out the form below to report a fault with your vehicle.")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleReportIssue} className="space-y-4">
               <div>
-                <Label htmlFor="issue-description">Issue Description</Label>
+                <Label htmlFor="issue-description">{t("Issue Description")}</Label>
                 <Textarea id="issue-description" placeholder="e.g., Engine is making a strange noise, there is a flat tire..." required />
               </div>
               <div>
-                <Label>Upload Photo (Optional)</Label>
+                <Label>{t("Upload Photo (Optional)")}</Label>
                 <div
                   className="relative mt-1 aspect-video w-full border-2 border-dashed border-muted-foreground/50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/50"
                   onClick={() => issueFileInputRef.current?.click()}
@@ -703,7 +705,7 @@ export default function VehicleHealthPage() {
                   ) : (
                     <div className="text-center text-muted-foreground p-4">
                       <Upload className="mx-auto h-8 w-8" />
-                      <p>Click to upload a photo</p>
+                      <p>{t("Click to upload a photo")}</p>
                     </div>
                   )}
                 </div>
@@ -716,7 +718,7 @@ export default function VehicleHealthPage() {
                 />
               </div>
               <Button type="submit" className="w-full">
-                <Send className="mr-2" /> Report Issue
+                <Send className="mr-2" /> {t("Report Issue")}
               </Button>
             </form>
           </CardContent>

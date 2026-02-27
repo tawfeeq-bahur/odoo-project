@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users, Plus, Mail, Phone, Building, Car, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddEmployeeDialog } from '@/components/fleet/AddEmployeeDialog';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface EmployeeProfile {
   id: string;
@@ -34,6 +35,7 @@ export default function EmployeesPage() {
   const [error, setError] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const fetchEmployees = async () => {
     try {
@@ -46,11 +48,11 @@ export default function EmployeesPage() {
       if (data.success) {
         setEmployees(data.data || []);
       } else {
-        setError(data.message || 'Failed to fetch employees');
+        setError(data.message || t('Failed to fetch employees'));
       }
     } catch (err) {
       console.error('💥 Network error occurred:', err);
-      setError('Network error occurred');
+      setError(t('Network error occurred'));
     } finally {
       setLoading(false);
     }
@@ -63,8 +65,8 @@ export default function EmployeesPage() {
   const handleRefresh = () => {
     fetchEmployees();
     toast({
-      title: "Refreshed",
-      description: "Employee data has been refreshed",
+      title: t("Refreshed"),
+      description: t("Employee data has been refreshed"),
     });
   };
 
@@ -72,8 +74,8 @@ export default function EmployeesPage() {
     setEmployees(prev => [newEmployee, ...prev]);
     setShowAddDialog(false);
     toast({
-      title: "Employee Added",
-      description: `${newEmployee.name} has been added successfully`,
+      title: t("Employee Added"),
+      description: `${newEmployee.name} ${t("has been added successfully")}`,
     });
   };
 
@@ -89,7 +91,7 @@ export default function EmployeesPage() {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Employees</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Employees")}</h1>
         </div>
         <Card>
           <CardHeader>
@@ -109,15 +111,15 @@ export default function EmployeesPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Employees</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Employees")}</h1>
         <div className="flex gap-2">
           <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {t("Refresh")}
           </Button>
           <Button onClick={() => setShowAddDialog(true)} size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Employee
+            {t("Add Employee")}
           </Button>
         </div>
       </div>
@@ -125,7 +127,7 @@ export default function EmployeesPage() {
       {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{t("Error")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -134,13 +136,13 @@ export default function EmployeesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Employees Found</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("No Employees Found")}</h3>
             <p className="text-muted-foreground text-center mb-4">
-              No employees have been added yet. Add your first employee to get started.
+              {t("No employees have been added yet. Add your first employee to get started.")}
             </p>
             <Button onClick={() => setShowAddDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add First Employee
+              {t("Add First Employee")}
             </Button>
           </CardContent>
         </Card>
@@ -150,8 +152,8 @@ export default function EmployeesPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Employee Directory</h2>
-              <p className="text-muted-foreground">Total: {employees.length} employees</p>
+              <h2 className="text-xl font-semibold">{t("Employee Directory")}</h2>
+              <p className="text-muted-foreground">{t("Total")}: {employees.length} {t("employees")}</p>
             </div>
           </div>
           
@@ -212,7 +214,7 @@ export default function EmployeesPage() {
                   {employee.assignedVehicleId && (
                     <div className="flex items-center gap-2">
                       <Car className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Vehicle Assigned</span>
+                      <span className="text-sm">{t("Vehicle Assigned")}</span>
                     </div>
                   )}
 
@@ -220,7 +222,7 @@ export default function EmployeesPage() {
                   {employee.emergencyContacts && employee.emergencyContacts.length > 0 && (
                     <div className="pt-2 border-t">
                       <p className="text-xs font-medium text-muted-foreground mb-1">
-                        Emergency Contacts ({employee.emergencyContacts.length})
+                        {t("Emergency Contacts")} ({employee.emergencyContacts.length})
                       </p>
                       <div className="space-y-1">
                         {employee.emergencyContacts.slice(0, 2).map((contact, index) => (

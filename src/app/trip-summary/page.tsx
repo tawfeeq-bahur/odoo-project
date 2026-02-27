@@ -8,19 +8,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { Expense, Trip } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Route, Truck } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function TripSummaryPage() {
     const { user, trips, vehicles, expenses } = useSharedState();
+    const { t } = useLanguage();
 
     if (user?.role !== 'admin') {
         return (
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Access Denied</CardTitle>
+                        <CardTitle>{t("Access Denied")}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p>You do not have permission to view this page.</p>
+                        <p>{t("You do not have permission to view this page.")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -47,25 +49,25 @@ export default function TripSummaryPage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight font-headline">Live Trip Summary</h1>
-                    <p className="text-muted-foreground">A real-time overview of all trips currently in progress or planned.</p>
+                    <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Live Trip Summary")}</h1>
+                    <p className="text-muted-foreground">{t("A real-time overview of all trips currently in progress or planned.")}</p>
                 </div>
             </div>
 
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Route className="h-5 w-5 text-primary" /> Active Trips</CardTitle>
-                    <CardDescription>A real-time overview of all trips currently in progress.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><Route className="h-5 w-5 text-primary" /> {t("Active Trips")}</CardTitle>
+                    <CardDescription>{t("A real-time overview of all trips currently in progress.")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Employee & Vehicle</TableHead>
-                                <TableHead>Route</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Fuel Level</TableHead>
-                                <TableHead className="text-right">Trip Expenses</TableHead>
+                                <TableHead>{t("Employee & Vehicle")}</TableHead>
+                                <TableHead>{t("Route")}</TableHead>
+                                <TableHead>{t("Status")}</TableHead>
+                                <TableHead>{t("Fuel Level")}</TableHead>
+                                <TableHead className="text-right">{t("Trip Expenses")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -102,7 +104,7 @@ export default function TripSummaryPage() {
                     {ongoingTrips.length === 0 && (
                         <div className="text-center py-10 text-muted-foreground">
                             <Truck className="mx-auto h-8 w-8 mb-2" />
-                            <p>No trips are currently ongoing or planned.</p>
+                            <p>{t("No trips are currently ongoing or planned.")}</p>
                         </div>
                     )}
                 </CardContent>

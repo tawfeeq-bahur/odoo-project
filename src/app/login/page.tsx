@@ -16,6 +16,7 @@ import { AlertTriangle, Globe } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 
 const formSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -25,6 +26,7 @@ const formSchema = z.object({
 export default function LoginPage() {
   const { login } = useSharedState();
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,7 +68,7 @@ export default function LoginPage() {
               </Avatar>
             </div>
             <h1 className="text-3xl font-bold font-headline text-center mb-2">TourJet</h1>
-            <p className="text-sm text-muted-foreground text-center">Empowering Personalized Travel Planning</p>
+            <p className="text-sm text-muted-foreground text-center">{t("Empowering Personalized Travel Planning")}</p>
           </div>
 
           {/* Login Form */}
@@ -80,7 +82,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormControl>
                       <Input
-                        placeholder="Username"
+                        placeholder={t("Username")}
                         className="h-12 px-4 text-base"
                         {...field}
                       />
@@ -99,7 +101,7 @@ export default function LoginPage() {
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Password"
+                        placeholder={t("Password")}
                         className="h-12 px-4 text-base"
                         {...field}
                       />
@@ -113,23 +115,23 @@ export default function LoginPage() {
               {error && (
                 <Alert variant="destructive" className="py-3">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle className="text-sm">Login Failed</AlertTitle>
+                  <AlertTitle className="text-sm">{t("Login Failed")}</AlertTitle>
                   <AlertDescription className="text-xs">{error}</AlertDescription>
                 </Alert>
               )}
 
               {/* Login Button */}
               <Button type="submit" className="w-full h-12 text-base font-semibold">
-                Login
+                {t("Login")}
               </Button>
 
               {/* Additional Links */}
               <div className="flex justify-between items-center text-sm mt-4">
                 <button type="button" className="text-muted-foreground hover:text-primary transition-colors">
-                  Forgot Password?
+                  {t("Forgot Password?")}
                 </button>
                 <Link href="/signup" className="text-primary hover:underline font-medium">
-                  Sign Up
+                  {t("Sign Up")}
                 </Link>
               </div>
             </form>
@@ -138,7 +140,7 @@ export default function LoginPage() {
           {/* Demo Hint */}
           <div className="mt-6 pt-6 border-t border-border">
             <p className="text-xs text-center text-muted-foreground">
-              <span className="font-semibold">Demo Accounts:</span> Arun, Priya, Ravi | Password: 123
+              <span className="font-semibold">{t("Demo Accounts")}:</span> Arun, Priya, Ravi | {t("Password")}: 123
             </p>
           </div>
         </CardContent>

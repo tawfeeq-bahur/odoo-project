@@ -27,6 +27,7 @@ import { TourPackage } from "@/lib/types";
 import { TripDetailsDialog } from "@/components/TripDetailsDialog";
 import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog";
 import { cn } from "@/lib/utils";
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CalendarPage() {
     const { packages, user } = useSharedState();
@@ -36,6 +37,7 @@ export default function CalendarPage() {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
     const dialogTriggerRef = useRef<HTMLButtonElement>(null);
+    const { t } = useLanguage();
 
     // Auto-trigger dialog when date is clicked
     useEffect(() => {
@@ -118,10 +120,10 @@ export default function CalendarPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
                         <CalendarIcon className="h-8 w-8" />
-                        Travel Calendar
+                        {t("Travel Calendar")}
                     </h1>
                     <p className="text-muted-foreground">
-                        View all your travel plans throughout the year
+                        {t("View all your travel plans throughout the year")}
                     </p>
                 </div>
             </div>
@@ -131,7 +133,7 @@ export default function CalendarPage() {
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Total Trips
+                            {t("Total Trips")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -141,7 +143,7 @@ export default function CalendarPage() {
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Upcoming Trips
+                            {t("Upcoming Trips")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -153,7 +155,7 @@ export default function CalendarPage() {
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Ongoing Trips
+                            {t("Ongoing Trips")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -173,7 +175,7 @@ export default function CalendarPage() {
                         </CardTitle>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="sm" onClick={goToToday}>
-                                Today
+                                {t("Today")}
                             </Button>
                             <Button variant="outline" size="icon" onClick={prevMonth}>
                                 <ChevronLeft className="h-4 w-4" />
@@ -192,7 +194,7 @@ export default function CalendarPage() {
                                 key={day}
                                 className="text-center text-sm font-semibold text-muted-foreground py-2"
                             >
-                                {day}
+                                {t(day)}
                             </div>
                         ))}
 
@@ -245,7 +247,7 @@ export default function CalendarPage() {
                                             ))}
                                             {tours.length > 2 && (
                                                 <div className="text-xs text-muted-foreground px-1.5">
-                                                    +{tours.length - 2} more
+                                                    +{tours.length - 2} {t("more")}
                                                 </div>
                                             )}
                                         </div>
@@ -260,21 +262,21 @@ export default function CalendarPage() {
             {/* Legend */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Status Legend</CardTitle>
+                    <CardTitle className="text-lg">{t("Status Legend")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap gap-4">
                         <div className="flex items-center gap-2">
                             <div className="h-4 w-4 rounded border bg-green-500/20 border-green-500" />
-                            <span className="text-sm">Ongoing</span>
+                            <span className="text-sm">{t("Ongoing")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-4 w-4 rounded border bg-blue-500/20 border-blue-500" />
-                            <span className="text-sm">Up-Coming</span>
+                            <span className="text-sm">{t("Up-Coming")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-4 w-4 rounded border bg-gray-500/20 border-gray-500" />
-                            <span className="text-sm">Completed</span>
+                            <span className="text-sm">{t("Completed")}</span>
                         </div>
                     </div>
                 </CardContent>
@@ -284,7 +286,7 @@ export default function CalendarPage() {
             {userTours.filter((t) => t.status === "Up-Coming").length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Upcoming Trips</CardTitle>
+                        <CardTitle className="text-lg">{t("Upcoming Trips")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-3">

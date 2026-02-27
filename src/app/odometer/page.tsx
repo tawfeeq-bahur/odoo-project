@@ -26,10 +26,12 @@ import { useSharedState } from '@/components/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 import { OdometerReading } from '@/lib/types';
 import { format } from 'date-fns';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function OdometerPage() {
   const { user } = useSharedState();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [readings, setReadings] = useState<OdometerReading[]>([]);
   const [filteredReadings, setFilteredReadings] = useState<OdometerReading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,10 +150,10 @@ export default function OdometerPage() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Card>
           <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
+            <CardTitle>{t("Access Denied")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>This page is only available for administrators.</p>
+            <p>{t("This page is only available for administrators.")}</p>
           </CardContent>
         </Card>
       </div>
@@ -162,8 +164,8 @@ export default function OdometerPage() {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Odometer Verification</h1>
-          <p className="text-muted-foreground">Loading odometer readings...</p>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Odometer Verification")}</h1>
+          <p className="text-muted-foreground">{t("Loading odometer readings...")}</p>
         </div>
       </div>
     );
@@ -172,17 +174,17 @@ export default function OdometerPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Odometer Verification</h1>
-        <p className="text-muted-foreground">Review and verify driver odometer readings with geo-tagged photos.</p>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Odometer Verification")}</h1>
+        <p className="text-muted-foreground">{t("Review and verify driver odometer readings with geo-tagged photos.")}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
-            Odometer Readings
+            {t("Odometer Readings")}
           </CardTitle>
-          <CardDescription>All submitted odometer readings with photo verification</CardDescription>
+          <CardDescription>{t("All submitted odometer readings with photo verification")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 mb-4">
@@ -190,7 +192,7 @@ export default function OdometerPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by driver, vehicle, or odometer reading..."
+                  placeholder={t("Search by driver, vehicle, or odometer reading...")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -199,13 +201,13 @@ export default function OdometerPage() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t("Filter by status")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="all">{t("All Status")}</SelectItem>
+                <SelectItem value="pending">{t("Pending")}</SelectItem>
+                <SelectItem value="approved">{t("Approved")}</SelectItem>
+                <SelectItem value="rejected">{t("Rejected")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -213,13 +215,13 @@ export default function OdometerPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Driver</TableHead>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Odometer Reading</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("Driver")}</TableHead>
+                <TableHead>{t("Vehicle")}</TableHead>
+                <TableHead>{t("Odometer Reading")}</TableHead>
+                <TableHead>{t("Location")}</TableHead>
+                <TableHead>{t("Submitted")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
+                <TableHead className="text-right">{t("Actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -291,7 +293,7 @@ export default function OdometerPage() {
           {filteredReadings.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Camera className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No odometer readings found</p>
+              <p>{t("No odometer readings found")}</p>
             </div>
           )}
         </CardContent>
@@ -302,7 +304,7 @@ export default function OdometerPage() {
         <Dialog open={showPhotoDialog} onOpenChange={setShowPhotoDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Odometer Reading Details</DialogTitle>
+              <DialogTitle>{t("Odometer Reading Details")}</DialogTitle>
               <DialogDescription>
                 Driver: {selectedReading.driverId} | Vehicle: {selectedReading.vehicleId}
               </DialogDescription>
@@ -310,24 +312,24 @@ export default function OdometerPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Odometer Reading</Label>
+                  <Label className="text-sm font-medium">{t("Odometer Reading")}</Label>
                   <p className="text-2xl font-mono font-bold">{selectedReading.odometerValue.toLocaleString()} km</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Status</Label>
+                  <Label className="text-sm font-medium">{t("Status")}</Label>
                   <div className="mt-1">{getStatusBadge(selectedReading.status)}</div>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Location</Label>
+                  <Label className="text-sm font-medium">{t("Location")}</Label>
                   <p className="text-sm text-muted-foreground">
                     {selectedReading.latitude.toFixed(6)}, {selectedReading.longitude.toFixed(6)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Submitted</Label>
+                  <Label className="text-sm font-medium">{t("Submitted")}</Label>
                   <p className="text-sm text-muted-foreground">
                     {format(new Date(selectedReading.submittedAt), 'MMM dd, yyyy HH:mm:ss')}
                   </p>
@@ -347,7 +349,7 @@ export default function OdometerPage() {
               )}
 
               <div>
-                <Label className="text-sm font-medium">Photo</Label>
+                <Label className="text-sm font-medium">{t("Photo")}</Label>
                 <div className="mt-2 border rounded-lg overflow-hidden">
                   <img
                     src={selectedReading.photoUrl}
@@ -362,7 +364,7 @@ export default function OdometerPage() {
 
               {selectedReading.adminNotes && (
                 <div>
-                  <Label className="text-sm font-medium">Admin Notes</Label>
+                  <Label className="text-sm font-medium">{t("Admin Notes")}</Label>
                   <p className="text-sm text-muted-foreground mt-1">{selectedReading.adminNotes}</p>
                 </div>
               )}
@@ -376,7 +378,7 @@ export default function OdometerPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {newStatus === 'approved' ? 'Approve' : 'Reject'} Odometer Reading
+              {newStatus === 'approved' ? t('Approve') : t('Reject')} {t("Odometer Reading")}
             </DialogTitle>
             <DialogDescription>
               Driver: {selectedReading?.driverId} | Reading: {selectedReading?.odometerValue.toLocaleString()} km
@@ -384,7 +386,7 @@ export default function OdometerPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="adminNotes">Admin Notes (Optional)</Label>
+              <Label htmlFor="adminNotes">{t("Admin Notes (Optional)")}</Label>
               <Textarea
                 id="adminNotes"
                 placeholder="Add any notes about this verification..."
@@ -395,13 +397,13 @@ export default function OdometerPage() {
             </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button 
                 onClick={handleStatusUpdate}
                 variant={newStatus === 'approved' ? 'default' : 'destructive'}
               >
-                {newStatus === 'approved' ? 'Approve' : 'Reject'} Reading
+                {newStatus === 'approved' ? t('Approve') : t('Reject')} {t("Reading")}
               </Button>
             </div>
           </div>

@@ -34,15 +34,28 @@ const prompt = ai.definePrompt({
   input: {schema: TransliterationInputSchema},
   output: {schema: TransliterationOutputSchema},
   model: 'googleai/gemini-2.5-flash',
-  prompt: `You are an expert Optical Character Recognition (OCR) and transliteration engine. 
-  
-  Your task is to perform two steps:
-  1. Accurately extract all text from the provided image.
-  2. Transliterate the extracted text into the script of the target language: {{targetLanguage}}.
+  prompt: `You are an expert Optical Character Recognition (OCR) and transliteration engine.
 
-  For example, if the extracted text is "தமிழ்நாடு" and the target language is "Hindi", the output should be "तमिलनाडु". If the target language is "English", the output should be "TAMIL NADU".
+  IMPORTANT: Transliteration is NOT translation. 
+  - Transliteration = Converting the SOUNDS/PHONETICS of words into the letters of another script.
+  - Translation = Converting the MEANING of words into another language.
+  You must perform TRANSLITERATION only, never translation.
 
-  Return only the final transliterated text.
+  Your task:
+  1. Accurately extract all text visible in the provided image.
+  2. Transliterate the extracted text phonetically into the script of the target language: {{targetLanguage}}.
+     - Preserve the original pronunciation/sounds using the closest matching letters of the target script.
+     - Do NOT translate the meaning of words into the target language.
+     - Proper nouns, place names, and all other words must be phonetically represented, not translated.
+
+  Examples of correct transliteration (NOT translation):
+  - Tamil "அரசுப்பேருந்து" → English target: "Arasupeṟuntu" (NOT "Government Bus")
+  - Tamil "சேலம்" → English target: "Sēlam" (NOT "Salem" as a translation — but phonetically "Selam")
+  - Tamil "தமிழ்நாடு" → Hindi target: "तमिऴ्नाडु" (phonetic, NOT "तमिलनाडु की सरकार")
+  - Tamil "தமிழ்நாடு" → English target: "Tamiḻnāṭu" (phonetic Roman letters)
+  - Hindi "नमस्ते" → Tamil target: "நமஸ்தே" (phonetic, NOT a translation)
+
+  Return only the final transliterated text, nothing else.
 
 Here is the image to analyze:
 {{media url=photoDataUri}}`,

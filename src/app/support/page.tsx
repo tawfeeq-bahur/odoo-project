@@ -10,20 +10,22 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LifeBuoy, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function SupportPage() {
   const { user } = useSharedState();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   if (user?.role !== 'employee') {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Card>
           <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
+            <CardTitle>{t("Access Denied")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>This page is only available for employees.</p>
+            <p>{t("This page is only available for employees.")}</p>
           </CardContent>
         </Card>
       </div>
@@ -41,45 +43,45 @@ export default function SupportPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Support & Help</h1>
-        <p className="text-muted-foreground">Have an issue? Report it here and an admin will get back to you.</p>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Support & Help")}</h1>
+        <p className="text-muted-foreground">{t("Have an issue? Report it here and an admin will get back to you.")}</p>
       </div>
       
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LifeBuoy className="text-primary"/>
-            Contact Support
+            {t("Contact Support")}
           </CardTitle>
           <CardDescription>
-            Fill out the form below to report a problem or ask a question.
+            {t("Fill out the form below to report a problem or ask a question.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1">
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="subject">{t("Subject")}</Label>
                 <Input id="subject" placeholder="e.g., Issue with vehicle VAN-002" required />
             </div>
 
             <div className="space-y-1">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">{t("Category")}</Label>
                  <Select required>
                     <SelectTrigger id="category">
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder={t("Select a category")} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="vehicle-issue">Vehicle Issue</SelectItem>
-                        <SelectItem value="trip-issue">Trip Problem</SelectItem>
-                        <SelectItem value="expense-issue">Expense Claim Issue</SelectItem>
-                        <SelectItem value="payment-issue">Payment/Salary Inquiry</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="vehicle-issue">{t("Vehicle Issue")}</SelectItem>
+                        <SelectItem value="trip-issue">{t("Trip Problem")}</SelectItem>
+                        <SelectItem value="expense-issue">{t("Expense Claim Issue")}</SelectItem>
+                        <SelectItem value="payment-issue">{t("Payment/Salary Inquiry")}</SelectItem>
+                        <SelectItem value="other">{t("Other")}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t("Description")}</Label>
               <Textarea
                 id="description"
                 placeholder="Please describe the issue in detail..."
@@ -90,7 +92,7 @@ export default function SupportPage() {
 
             <Button type="submit" className="w-full">
               <Send className="mr-2" />
-              Send Message
+              {t("Send Message")}
             </Button>
           </form>
         </CardContent>

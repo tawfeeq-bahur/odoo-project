@@ -37,6 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useLanguage } from '@/context/LanguageContext';
 
 const MapDisplay = dynamic(
   () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -59,6 +60,7 @@ export default function TourDetailsPage() {
   const itinerary = tripPlan?.plan?.itinerary || [];
 
   const [driveLink, setDriveLink] = useState(tour?.driveLink || '');
+  const { t } = useLanguage();
 
   if (!tour) {
     notFound();
@@ -102,7 +104,7 @@ export default function TourDetailsPage() {
       <div className="flex items-center justify-between animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
         <div>
           <Button variant="ghost" onClick={() => router.push('/')} className="mb-2 -ml-4">
-            <ArrowLeft className="mr-2" /> Back to Dashboard
+            <ArrowLeft className="mr-2" /> {t("Back to Dashboard")}
           </Button>
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-bold tracking-tight font-headline">{tour.name}</h1>
@@ -114,11 +116,11 @@ export default function TourDetailsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
-            <CheckCircle className="mr-2" /> Check-in Location
+            <CheckCircle className="mr-2" /> {t("Check-in Location")}
           </Button>
           <Button asChild>
             <Link href={`/scanner?tourId=${tour.id}`}>
-              <Wallet className="mr-2" /> Log Expense
+              <Wallet className="mr-2" /> {t("Log Expense")}
             </Link>
           </Button>
         </div>
@@ -129,19 +131,19 @@ export default function TourDetailsPage() {
         <div className="lg:col-span-1 space-y-8">
           <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '100ms' }}>
             <CardHeader>
-              <CardTitle>Trip Overview</CardTitle>
+              <CardTitle>{t("Trip Overview")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              <InfoItem icon={Calendar} label="Duration" value={`${tour.durationDays} Days`} />
-              <InfoItem icon={Briefcase} label="Organizer" value={tour.organizerName} />
-              <InfoItem icon={Users} label="Max Group Size" value={`${tour.maxMembers} members`} />
-              <InfoItem icon={tour.travelStyle === 'day' ? Sun : tour.travelStyle === 'night' ? Moon : Mountain} label="Travel Style" value={tour.travelStyle.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} />
+              <InfoItem icon={Calendar} label={t("Duration")} value={`${tour.durationDays} ${t("Days")}`} />
+              <InfoItem icon={Briefcase} label={t("Organizer")} value={tour.organizerName} />
+              <InfoItem icon={Users} label={t("Max Group Size")} value={`${tour.maxMembers} ${t("members")}`} />
+              <InfoItem icon={tour.travelStyle === 'day' ? Sun : tour.travelStyle === 'night' ? Moon : Mountain} label={t("Travel Style")} value={tour.travelStyle.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} />
             </CardContent>
           </Card>
 
           <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '200ms' }}>
             <CardHeader>
-              <CardTitle>Members ({tour.members.length})</CardTitle>
+              <CardTitle>{t("Members")} ({tour.members.length})</CardTitle>
             </CardHeader>
             <CardContent>
               {tour.members.length > 0 ? (
@@ -149,39 +151,39 @@ export default function TourDetailsPage() {
                   {tour.members.map((member, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <span className="font-medium flex items-center gap-2"><UserIcon className="h-4 w-4 text-muted-foreground" /> {typeof member === 'string' ? member : member.name}</span>
-                      <span className="text-xs text-muted-foreground">Location not shared</span>
+                      <span className="text-xs text-muted-foreground">{t("Location not shared")}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No members have joined yet.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t("No members have joined yet.")}</p>
               )}
             </CardContent>
           </Card>
 
           <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '300ms' }}>
             <CardHeader>
-              <CardTitle>Shared Photo Album</CardTitle>
-              <CardDescription>A shared Google Drive folder for all tour photos.</CardDescription>
+              <CardTitle>{t("Shared Photo Album")}</CardTitle>
+              <CardDescription>{t("A shared Google Drive folder for all tour photos.")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button asChild className="w-full" variant="outline">
                 <a href={tour.driveLink || '#'} target="_blank" rel="noopener noreferrer">
-                  <FolderSync className="mr-2" /> Access Shared Album
+                  <FolderSync className="mr-2" /> {t("Access Shared Album")}
                 </a>
               </Button>
 
               {isOrganizer && (
                 <div className="space-y-2 pt-4 border-t">
-                  <Label htmlFor="driveLinkInput">Edit Drive Link</Label>
+                  <Label htmlFor="driveLinkInput">{t("Edit Drive Link")}</Label>
                   <Input
                     id="driveLinkInput"
-                    placeholder="Paste Google Drive link here"
+                    placeholder={t("Paste Google Drive link here")}
                     value={driveLink}
                     onChange={(e) => setDriveLink(e.target.value)}
                   />
                   <Button onClick={handleSaveDriveLink} className="w-full">
-                    <Save className="mr-2" /> Save Link
+                    <Save className="mr-2" /> {t("Save Link")}
                   </Button>
                 </div>
               )}
@@ -195,7 +197,7 @@ export default function TourDetailsPage() {
           {tripPlan && tripPlan.plan ? (
             <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '400ms' }}>
               <CardHeader>
-                <CardTitle>Route Plan</CardTitle>
+                <CardTitle>{t("Route Plan")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <MapDisplay plan={tripPlan.plan} traffic={tripPlan.plan.traffic} />
@@ -204,19 +206,19 @@ export default function TourDetailsPage() {
           ) : (
             <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '400ms' }}>
               <CardHeader>
-                <CardTitle>Route Plan</CardTitle>
+                <CardTitle>{t("Route Plan")}</CardTitle>
               </CardHeader>
               <CardContent className="text-center text-muted-foreground py-12">
                 <Route className="mx-auto h-12 w-12 mb-4" />
-                <h3 className="font-semibold">No Route Planned Yet</h3>
-                <p>The organizer hasn't generated a route plan for this tour.</p>
+                <h3 className="font-semibold">{t("No Route Planned Yet")}</h3>
+                <p>{t("The organizer hasn't generated a route plan for this tour.")}</p>
               </CardContent>
             </Card>
           )}
 
           <Card className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500" style={{ animationDelay: '500ms' }}>
             <CardHeader>
-              <CardTitle>Itinerary</CardTitle>
+              <CardTitle>{t("Itinerary")}</CardTitle>
             </CardHeader>
             <CardContent>
               {itinerary.length > 0 ? (
@@ -224,7 +226,7 @@ export default function TourDetailsPage() {
                   {itinerary.map((item, index) => (
                     <div key={index} className="flex gap-4">
                       <div className="text-center">
-                        <p className="font-bold">Day {item.day}</p>
+                        <p className="font-bold">{t("Day")} {item.day}</p>
                         <p className="text-xs text-muted-foreground">{item.time}</p>
                       </div>
                       <div className="border-l-2 border-primary pl-4">
@@ -237,7 +239,7 @@ export default function TourDetailsPage() {
               ) : (
                 <div className="text-center text-muted-foreground py-8">
                   <Clock className="mx-auto h-8 w-8 mb-2" />
-                  <p>No itinerary has been set for this tour yet.</p>
+                  <p>{t("No itinerary has been set for this tour yet.")}</p>
                 </div>
               )}
             </CardContent>

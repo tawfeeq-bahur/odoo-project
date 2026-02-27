@@ -9,19 +9,21 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Upload } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ProfilePage() {
   const { user, vehicles } = useSharedState();
+  const { t } = useLanguage();
 
   if (user?.role !== 'employee') {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Card>
           <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
+            <CardTitle>{t("Access Denied")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>This page is only available for employees.</p>
+            <p>{t("This page is only available for employees.")}</p>
           </CardContent>
         </Card>
       </div>
@@ -33,8 +35,8 @@ export default function ProfilePage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">My Profile</h1>
-        <p className="text-muted-foreground">View and manage your personal and professional details.</p>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">{t("My Profile")}</h1>
+        <p className="text-muted-foreground">{t("View and manage your personal and professional details.")}</p>
       </div>
       
       <div className="grid md:grid-cols-3 gap-8">
@@ -50,14 +52,14 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                     <Button variant="outline" className="w-full">
-                        <Camera className="mr-2"/> Change Picture
+                        <Camera className="mr-2"/> {t("Change Picture")}
                     </Button>
                 </CardContent>
             </Card>
 
              <Card>
                 <CardHeader>
-                    <CardTitle>Assigned Vehicle</CardTitle>
+                    <CardTitle>{t("Assigned Vehicle")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {assignedVehicle ? (
@@ -66,7 +68,7 @@ export default function ProfilePage() {
                             <p className="text-sm text-muted-foreground">{assignedVehicle.plateNumber}</p>
                         </div>
                     ) : (
-                        <p className="text-muted-foreground">No vehicle assigned.</p>
+                        <p className="text-muted-foreground">{t("No vehicle assigned.")}</p>
                     )}
                 </CardContent>
             </Card>
@@ -75,59 +77,59 @@ export default function ProfilePage() {
         <div className="md:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>These details are managed by your administrator.</CardDescription>
+                    <CardTitle>{t("Personal Information")}</CardTitle>
+                    <CardDescription>{t("These details are managed by your administrator.")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <Label htmlFor="name">Full Name</Label>
+                            <Label htmlFor="name">{t("Full Name")}</Label>
                             <Input id="name" value={user.username} readOnly />
                         </div>
                         <div className="space-y-1">
-                            <Label htmlFor="email">Email Address</Label>
+                            <Label htmlFor="email">{t("Email Address")}</Label>
                             <Input id="email" value={`${user.username.toLowerCase()}@fleetflow.com`} readOnly />
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <Label htmlFor="phone">Phone Number</Label>
+                        <Label htmlFor="phone">{t("Phone Number")}</Label>
                         <Input id="phone" value="+1 (123) 456-7890" readOnly />
                     </div>
-                    <Button variant="secondary" className="cursor-not-allowed">Update Details (Disabled)</Button>
+                    <Button variant="secondary" className="cursor-not-allowed">{t("Update Details (Disabled)")}</Button>
                 </CardContent>
 
                 <Separator className="my-6" />
 
                  <CardHeader>
-                    <CardTitle>License & Documents</CardTitle>
-                    <CardDescription>Upload your documents for verification.</CardDescription>
+                    <CardTitle>{t("License & Documents")}</CardTitle>
+                    <CardDescription>{t("Upload your documents for verification.")}</CardDescription>
                 </CardHeader>
                  <CardContent className="space-y-4">
                     <div className="p-6 border-2 border-dashed rounded-lg text-center">
                         <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-2"/>
-                        <p className="text-muted-foreground">Drag & drop your files here or click to upload.</p>
+                        <p className="text-muted-foreground">{t("Drag & drop your files here or click to upload.")}</p>
                     </div>
                     <Button>
-                        <Upload className="mr-2"/> Upload License
+                        <Upload className="mr-2"/> {t("Upload License")}
                     </Button>
                 </CardContent>
 
                  <Separator className="my-6" />
 
                  <CardHeader>
-                    <CardTitle>Payment Information</CardTitle>
-                    <CardDescription>Your payment details for salary and reimbursements.</CardDescription>
+                    <CardTitle>{t("Payment Information")}</CardTitle>
+                    <CardDescription>{t("Your payment details for salary and reimbursements.")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-1">
-                        <Label htmlFor="bank">Bank Name</Label>
-                        <Input id="bank" placeholder="Enter your bank name" />
+                        <Label htmlFor="bank">{t("Bank Name")}</Label>
+                        <Input id="bank" placeholder={t("Enter your bank name")} />
                     </div>
                      <div className="space-y-1">
-                        <Label htmlFor="account">Account Number</Label>
-                        <Input id="account" placeholder="Enter your account number" />
+                        <Label htmlFor="account">{t("Account Number")}</Label>
+                        <Input id="account" placeholder={t("Enter your account number")} />
                     </div>
-                     <Button variant="secondary">Save Payment Info</Button>
+                     <Button variant="secondary">{t("Save Payment Info")}</Button>
                 </CardContent>
             </Card>
         </div>

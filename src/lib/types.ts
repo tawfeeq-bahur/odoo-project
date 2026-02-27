@@ -78,3 +78,25 @@ export type ChatMessage = {
 export type User = {
   username: string;
 }
+
+// Travel preference answers collected during onboarding
+export type TravelPreferences = {
+  // What kind of scenery/environment the traveller loves
+  sceneTypes: Array<'greenery' | 'roadways' | 'nature' | 'cities' | 'beaches' | 'mountains' | 'deserts' | 'heritage'>;
+  // How often and how far they travel
+  travelFrequency: 'daily' | 'weekends' | 'monthly' | 'long-haul';
+  // Their usual group
+  groupType: 'solo' | 'friends' | 'family' | 'school' | 'couple';
+  // Budget comfort
+  budgetRange: 'budget' | 'mid-range' | 'luxury';
+  // Their interests
+  interests: Array<'food' | 'adventure' | 'culture' | 'shopping' | 'wildlife' | 'photography' | 'spiritual' | 'sports'>;
+  // Preferred pace
+  travelPace: 'relaxed' | 'moderate' | 'fast-paced';
+  // When they prefer to travel
+  preferredTime: 'day' | 'night' | 'both';
+  // Any dream destinations (free text)
+  dreamDestinations: string;
+  // Special needs / notes (free text)
+  specialNotes: string;
+}

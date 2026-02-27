@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSharedState } from '@/components/AppLayout';
+import { useLanguage } from '@/context/LanguageContext';
 
 const formSchema = z.object({
     username: z.string().min(3, { message: 'Username must be at least 3 characters.' }),
@@ -35,6 +36,7 @@ export default function SignupPage() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const { t } = useLanguage();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -77,10 +79,10 @@ export default function SignupPage() {
         console.log('Registration Data:', values);
         setSuccess(true);
         setError(null);
-        // Simulate registration success, then redirect to login
+        // After signup, send to personalisation onboarding
         setTimeout(() => {
-            router.push('/login');
-        }, 2000);
+            router.push('/onboarding');
+        }, 1500);
     }
 
     return (
@@ -97,9 +99,9 @@ export default function SignupPage() {
                     <div className="flex flex-col items-center mb-8">
                         <div className="flex items-center gap-3 mb-6">
                             <Globe className="h-8 w-8 text-emerald-500" />
-                            <h1 className="text-3xl font-bold font-headline">Registration</h1>
+                            <h1 className="text-3xl font-bold font-headline">{t("Registration")}</h1>
                         </div>
-                        <p className="text-sm text-muted-foreground text-center">Create your TourJet account</p>
+                        <p className="text-sm text-muted-foreground text-center">{t("Create your TourJet account")}</p>
                     </div>
 
                     {/* Photo Upload */}
@@ -120,7 +122,7 @@ export default function SignupPage() {
                                         <AvatarFallback className="bg-muted">
                                             <div className="flex flex-col items-center gap-1">
                                                 <Upload className="h-6 w-6 text-muted-foreground" />
-                                                <span className="text-xs text-muted-foreground">Photo</span>
+                                                <span className="text-xs text-muted-foreground">{t("Photo")}</span>
                                             </div>
                                         </AvatarFallback>
                                     )}
@@ -133,9 +135,9 @@ export default function SignupPage() {
                     {success && (
                         <Alert className="mb-6 bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800">
                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                            <AlertTitle className="text-emerald-800 dark:text-emerald-200">Registration Successful!</AlertTitle>
+                            <AlertTitle className="text-emerald-800 dark:text-emerald-200">{t("Registration Successful!")}</AlertTitle>
                             <AlertDescription className="text-emerald-700 dark:text-emerald-300">
-                                Redirecting to login page...
+                                {t("Redirecting to personalisation setup…")}
                             </AlertDescription>
                         </Alert>
                     )}
@@ -144,7 +146,7 @@ export default function SignupPage() {
                     {error && (
                         <Alert variant="destructive" className="mb-6">
                             <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>Registration Failed</AlertTitle>
+                            <AlertTitle>{t("Registration Failed")}</AlertTitle>
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     )}
@@ -162,7 +164,7 @@ export default function SignupPage() {
                                         <FormItem>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Username"
+                                                    placeholder={t("Username")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -181,7 +183,7 @@ export default function SignupPage() {
                                             <FormControl>
                                                 <Input
                                                     type="password"
-                                                    placeholder="Password"
+                                                    placeholder={t("Password")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -202,7 +204,7 @@ export default function SignupPage() {
                                         <FormItem>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="First Name"
+                                                    placeholder={t("First Name")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -220,7 +222,7 @@ export default function SignupPage() {
                                         <FormItem>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Last Name"
+                                                    placeholder={t("Last Name")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -239,7 +241,7 @@ export default function SignupPage() {
                                             <FormControl>
                                                 <Input
                                                     type="email"
-                                                    placeholder="Email Address"
+                                                    placeholder={t("Email Address")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -258,7 +260,7 @@ export default function SignupPage() {
                                             <FormControl>
                                                 <Input
                                                     type="tel"
-                                                    placeholder="Phone Number"
+                                                    placeholder={t("Phone Number")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -276,7 +278,7 @@ export default function SignupPage() {
                                         <FormItem>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="City"
+                                                    placeholder={t("City")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -294,7 +296,7 @@ export default function SignupPage() {
                                         <FormItem>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Country"
+                                                    placeholder={t("Country")}
                                                     className="h-12 px-4 text-base"
                                                     {...field}
                                                 />
@@ -313,7 +315,7 @@ export default function SignupPage() {
                                     <FormItem>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Additional Information ...."
+                                                placeholder={t("Additional Information ....")}
                                                 className="min-h-[100px] px-4 py-3 text-base resize-none"
                                                 {...field}
                                             />
@@ -329,14 +331,14 @@ export default function SignupPage() {
                                 className="w-full h-12 text-base font-semibold"
                                 disabled={success}
                             >
-                                Register Users
+                                {t("Register Users")}
                             </Button>
 
                             {/* Login Link */}
                             <div className="text-center text-sm">
-                                <span className="text-muted-foreground">Already have an account? </span>
+                                <span className="text-muted-foreground">{t("Already have an account?")} </span>
                                 <Link href="/login" className="text-primary hover:underline font-medium">
-                                    Login here
+                                    {t("Login here")}
                                 </Link>
                             </div>
                         </form>

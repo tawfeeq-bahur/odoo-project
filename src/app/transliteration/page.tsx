@@ -16,6 +16,7 @@ import { Copy } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useLanguage } from '@/context/LanguageContext';
 
 
 const indianLanguages = [
@@ -39,6 +40,7 @@ export default function TransliterationPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -105,9 +107,9 @@ export default function TransliterationPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2"><Languages /> Transliteration</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2"><Languages /> {t("Transliteration")}</h1>
         <p className="text-muted-foreground">
-          Extract and transliterate text from any image into one of the 22 official Indian languages.
+          {t("Extract and transliterate text from any image into one of the 22 official Indian languages.")}
         </p>
       </div>
 
@@ -115,8 +117,8 @@ export default function TransliterationPage() {
         <div className="space-y-8">
             <Card>
               <CardHeader>
-                  <CardTitle>1. Upload Image & Select Language</CardTitle>
-                  <CardDescription>Choose an image and the target language for transliteration.</CardDescription>
+                  <CardTitle>{t("1. Upload Image & Select Language")}</CardTitle>
+                  <CardDescription>{t("Choose an image and the target language for transliteration.")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                   <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
@@ -129,21 +131,21 @@ export default function TransliterationPage() {
                       ) : (
                           <div className="text-center text-muted-foreground">
                           <Upload className="mx-auto h-12 w-12" />
-                          <p>Click to upload or drag & drop</p>
+                          <p>{t("Click to upload or drag & drop")}</p>
                           </div>
                       )}
                       </div>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Choose Image Source</DialogTitle>
+                        <DialogTitle>{t("Choose Image Source")}</DialogTitle>
                       </DialogHeader>
                       <div className="grid grid-cols-2 gap-4 py-4">
                         <Button variant="outline" onClick={() => cameraInputRef.current?.click()}>
-                           <Camera className="mr-2"/> Use Camera
+                           <Camera className="mr-2"/> {t("Use Camera")}
                         </Button>
                          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                           <ImageIcon className="mr-2"/> From Gallery
+                           <ImageIcon className="mr-2"/> {t("From Gallery")}
                         </Button>
                       </div>
                     </DialogContent>
@@ -166,10 +168,10 @@ export default function TransliterationPage() {
                   />
 
                   <div>
-                    <Label htmlFor="language-select">Target Language</Label>
+                    <Label htmlFor="language-select">{t("Target Language")}</Label>
                     <Select value={targetLanguage} onValueChange={setTargetLanguage}>
                         <SelectTrigger id="language-select">
-                            <SelectValue placeholder="Select a language" />
+                            <SelectValue placeholder={t("Select a language")} />
                         </SelectTrigger>
                         <SelectContent>
                             {indianLanguages.map(lang => (
@@ -184,12 +186,12 @@ export default function TransliterationPage() {
                   {isLoading ? (
                       <>
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      {t("Processing...")}
                       </>
                   ) : (
                       <>
                       <ScanText className="mr-2 h-4 w-4" />
-                      Extract & Transliterate
+                      {t("Extract & Transliterate")}
                       </>
                   )}
                   </Button>
@@ -199,8 +201,8 @@ export default function TransliterationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>2. Transliterated Text</CardTitle>
-            <CardDescription>The text from the image, transliterated into <span className="font-bold">{targetLanguage}</span>, will appear below.</CardDescription>
+            <CardTitle>{t("2. Transliterated Text")}</CardTitle>
+            <CardDescription>{t("The text from the image, transliterated into")} <span className="font-bold">{targetLanguage}</span>, {t("will appear below.")}</CardDescription>
           </CardHeader>
           <CardContent className="relative">
             {isLoading && <ResultsSkeleton />}
@@ -208,7 +210,7 @@ export default function TransliterationPage() {
             {error && (
               <Alert variant="destructive" className="h-full">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Analysis Failed</AlertTitle>
+                <AlertTitle>{t("Analysis Failed")}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -216,7 +218,7 @@ export default function TransliterationPage() {
             {!isLoading && !error && !result && (
               <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-64">
                 <Text className="mx-auto h-12 w-12" />
-                <p>The result will appear here after analysis.</p>
+                <p>{t("The result will appear here after analysis.")}</p>
               </div>
             )}
             

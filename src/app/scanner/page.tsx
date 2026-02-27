@@ -21,6 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { useSearchParams } from 'next/navigation';
+import { useLanguage } from '@/context/LanguageContext';
 
 type ParsedExpense = ExpenseParserOutput['expenses'][0];
 
@@ -44,6 +45,7 @@ export default function ScannerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, packages, addExpense } = useSharedState();
+  const { t } = useLanguage();
 
   const userTours = packages.filter(p => p.organizerName === user?.username || p.members.includes(user?.username || ''));
 
@@ -146,9 +148,9 @@ export default function ScannerPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Log an Expense</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Log an Expense")}</h1>
         <p className="text-muted-foreground">
-          Upload a receipt for automatic scanning or enter an expense manually.
+          {t("Upload a receipt for automatic scanning or enter an expense manually.")}
         </p>
       </div>
 
@@ -156,8 +158,8 @@ export default function ScannerPage() {
         <div className="space-y-8">
             <Card>
             <CardHeader>
-                <CardTitle>1. Scan a Receipt</CardTitle>
-                <CardDescription>Choose a clear photo of your receipt for AI-powered scanning.</CardDescription>
+                <CardTitle>{t("1. Scan a Receipt")}</CardTitle>
+                <CardDescription>{t("Choose a clear photo of your receipt for AI-powered scanning.")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div
@@ -169,7 +171,7 @@ export default function ScannerPage() {
                 ) : (
                     <div className="text-center text-muted-foreground">
                     <Upload className="mx-auto h-12 w-12" />
-                    <p>Click to upload or drag & drop</p>
+                    <p>{t("Click to upload or drag & drop")}</p>
                     </div>
                 )}
                 </div>
@@ -184,12 +186,12 @@ export default function ScannerPage() {
                 {isLoading ? (
                     <>
                     <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
+                    {t("Analyzing...")}
                     </>
                 ) : (
                     <>
                     <ScanLine className="mr-2 h-4 w-4" />
-                    Analyze Expense
+                    {t("Analyze Expense")}
                     </>
                 )}
                 </Button>
@@ -198,8 +200,8 @@ export default function ScannerPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>2. Enter Expense Manually</CardTitle>
-                    <CardDescription>If you don't have a receipt, you can add your expense details here.</CardDescription>
+                    <CardTitle>{t("2. Enter Expense Manually")}</CardTitle>
+                    <CardDescription>{t("If you don't have a receipt, you can add your expense details here.")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -209,11 +211,11 @@ export default function ScannerPage() {
                                 name="tourId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Associate with Tour (Optional)</FormLabel>
+                                        <FormLabel>{t("Associate with Tour (Optional)")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select a tour" />
+                                                    <SelectValue placeholder={t("Select a tour")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -231,19 +233,19 @@ export default function ScannerPage() {
                                 name="type"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Expense Type</FormLabel>
+                                        <FormLabel>{t("Expense Type")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select an expense type" />
+                                                    <SelectValue placeholder={t("Select an expense type")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="Travel">Travel</SelectItem>
-                                                <SelectItem value="Food">Food</SelectItem>
-                                                <SelectItem value="Hotel">Hotel</SelectItem>
-                                                <SelectItem value="Tickets">Tickets</SelectItem>
-                                                <SelectItem value="Misc">Misc.</SelectItem>
+                                                <SelectItem value="Travel">{t("Travel")}</SelectItem>
+                                                <SelectItem value="Food">{t("Food")}</SelectItem>
+                                                <SelectItem value="Hotel">{t("Hotel")}</SelectItem>
+                                                <SelectItem value="Tickets">{t("Tickets")}</SelectItem>
+                                                <SelectItem value="Misc">{t("Misc.")}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -256,7 +258,7 @@ export default function ScannerPage() {
                                     name="amount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Amount (₹)</FormLabel>
+                                            <FormLabel>{t("Amount")} (₹)</FormLabel>
                                             <FormControl>
                                                 <Input type="number" step="0.01" placeholder="e.g., 25.50" {...field} />
                                             </FormControl>
@@ -269,7 +271,7 @@ export default function ScannerPage() {
                                     name="date"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Date</FormLabel>
+                                            <FormLabel>{t("Date")}</FormLabel>
                                             <FormControl>
                                                 <Input type="date" {...field} />
                                             </FormControl>
@@ -283,7 +285,7 @@ export default function ScannerPage() {
                                 name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Description</FormLabel>
+                                        <FormLabel>{t("Description")}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="e.g., Lunch at hotel" {...field} />
                                         </FormControl>
@@ -292,7 +294,7 @@ export default function ScannerPage() {
                                 )}
                             />
                             <Button type="submit" className="w-full">
-                                <Send className="mr-2"/> Submit Expense
+                                <Send className="mr-2"/> {t("Submit Expense")}
                             </Button>
                         </form>
                     </Form>
@@ -302,8 +304,8 @@ export default function ScannerPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>3. Review & Add Scanned Expenses</CardTitle>
-            <CardDescription>Review the expenses found by the AI and add them to your log.</CardDescription>
+            <CardTitle>{t("3. Review & Add Scanned Expenses")}</CardTitle>
+            <CardDescription>{t("Review the expenses found by the AI and add them to your log.")}</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading && <ResultsSkeleton />}
@@ -311,7 +313,7 @@ export default function ScannerPage() {
             {error && (
               <Alert variant="destructive" className="h-full">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Analysis Failed</AlertTitle>
+                <AlertTitle>{t("Analysis Failed")}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -319,7 +321,7 @@ export default function ScannerPage() {
             {!isLoading && !error && !parsedExpenses && (
               <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-64">
                 <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                <p>Scanned results will appear here after analysis.</p>
+                <p>{t("Scanned results will appear here after analysis.")}</p>
               </div>
             )}
             
@@ -344,7 +346,7 @@ export default function ScannerPage() {
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleAddExpense(exp)}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Add
+                        {t("Add")}
                     </Button>
                   </div>
                 ))}
@@ -353,7 +355,7 @@ export default function ScannerPage() {
             
              {parsedExpenses && parsedExpenses.length === 0 && (
                 <div className="text-center py-10 text-muted-foreground">
-                    <p>No valid expenses were added yet.</p>
+                    <p>{t("No valid expenses were added yet.")}</p>
                 </div>
             )}
           </CardContent>

@@ -31,6 +31,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { OdometerUpload } from '@/components/odometer/OdometerUpload';
+import { useLanguage } from '@/context/LanguageContext';
 
 const MapDisplay = dynamic(
   () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -46,16 +47,17 @@ export default function TripsPage() {
     const { toast } = useToast();
     const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
     const [showOdometerUpload, setShowOdometerUpload] = useState(false);
+    const { t } = useLanguage();
     
     if (user?.role !== 'employee') {
         return (
              <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Access Denied</CardTitle>
+                        <CardTitle>{t("Access Denied")}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p>This page is only available for employees. Admins manage trips via other pages.</p>
+                        <p>{t("This page is only available for employees. Admins manage trips via other pages.")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -100,17 +102,17 @@ export default function TripsPage() {
     return (
          <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight font-headline">My Trips</h1>
-                <p className="text-muted-foreground">View your assigned, ongoing, and completed trips.</p>
+                <h1 className="text-3xl font-bold tracking-tight font-headline">{t("My Trips")}</h1>
+                <p className="text-muted-foreground">{t("View your assigned, ongoing, and completed trips.")}</p>
             </div>
             
             {employeeTrips.length === 0 && (
                  <Card>
                     <CardContent className="flex flex-col items-center justify-center gap-4 text-center h-full min-h-60">
                         <Route className="w-12 h-12 text-primary" />
-                        <h3 className="text-xl font-semibold">No Trips Assigned</h3>
+                        <h3 className="text-xl font-semibold">{t("No Trips Assigned")}</h3>
                         <p className="text-muted-foreground max-w-sm">
-                           You currently have no trips assigned to you. Your administrator will assign you one soon.
+                           {t("You currently have no trips assigned to you. Your administrator will assign you one soon.")}
                         </p>
                     </CardContent>
                 </Card>
@@ -119,8 +121,8 @@ export default function TripsPage() {
             {ongoingTrips.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Clock /> Ongoing & Planned Trips</CardTitle>
-                        <CardDescription>These are your currently active or upcoming trips.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Clock /> {t("Ongoing & Planned Trips")}</CardTitle>
+                        <CardDescription>{t("These are your currently active or upcoming trips.")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <TripTable trips={ongoingTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
@@ -131,8 +133,8 @@ export default function TripsPage() {
             {completedTrips.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><CircleCheck /> Completed Trips</CardTitle>
-                        <CardDescription>A history of all your completed trips.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><CircleCheck /> {t("Completed Trips")}</CardTitle>
+                        <CardDescription>{t("A history of all your completed trips.")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <TripTable trips={completedTrips} getStatusBadge={getStatusBadge} onStartTrip={handleStartTrip} onEndTrip={handleEndTrip} onViewDetails={handleViewDetails} />
@@ -144,7 +146,7 @@ export default function TripsPage() {
                  <Dialog open={!!selectedTrip} onOpenChange={(isOpen) => !isOpen && setSelectedTrip(null)}>
                     <DialogContent className="max-w-4xl">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-headline">Trip Details: {selectedTrip.source} to {selectedTrip.destination}</DialogTitle>
+                            <DialogTitle className="text-2xl font-headline">{t("Trip Details")}: {selectedTrip.source} {t("to")} {selectedTrip.destination}</DialogTitle>
                             <DialogDescription>{selectedTrip.plan.suggestedRoute}</DialogDescription>
                         </DialogHeader>
                         <div className="grid md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-4">
@@ -153,32 +155,32 @@ export default function TripsPage() {
 
                                 <Alert>
                                     <AlertTriangle className="h-5 w-5" />
-                                    <AlertTitle>Disclaimer</AlertTitle>
+                                    <AlertTitle>{t("Disclaimer")}</AlertTitle>
                                     <AlertDescription>{selectedTrip.plan.disclaimer}</AlertDescription>
                                 </Alert>
                             </div>
                             <div className="space-y-4">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Trip Summary</CardTitle>
+                                        <CardTitle>{t("Trip Summary")}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                                        <InfoItem label="Distance" value={selectedTrip.plan.distance} />
-                                        <InfoItem label="Duration" value={selectedTrip.plan.duration} />
-                                        <InfoItem label="Est. Fuel Cost" value={`₹${selectedTrip.plan.estimatedFuelCost.toFixed(2)}`} />
-                                        <InfoItem label="Est. Toll Cost" value={`₹${selectedTrip.plan.estimatedTollCost.toFixed(2)}`} />
+                                        <InfoItem label={t("Distance")} value={selectedTrip.plan.distance} />
+                                        <InfoItem label={t("Duration")} value={selectedTrip.plan.duration} />
+                                        <InfoItem label={t("Est. Fuel Cost")} value={`₹${selectedTrip.plan.estimatedFuelCost.toFixed(2)}`} />
+                                        <InfoItem label={t("Est. Toll Cost")} value={`₹${selectedTrip.plan.estimatedTollCost.toFixed(2)}`} />
                                     </CardContent>
                                 </Card>
 
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Log Expenses for this Trip</CardTitle>
+                                        <CardTitle>{t("Log Expenses for this Trip")}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground mb-4">Upload receipts or manually enter costs related to this specific trip.</p>
+                                        <p className="text-sm text-muted-foreground mb-4">{t("Upload receipts or manually enter costs related to this specific trip.")}</p>
                                         <Button asChild className="w-full">
                                             <Link href={`/scanner?tripId=${selectedTrip.id}`}>
-                                                <Upload className="mr-2"/> Upload Expenses for this Trip
+                                                <Upload className="mr-2"/> {t("Upload Expenses for this Trip")}
                                             </Link>
                                         </Button>
                                     </CardContent>
@@ -186,15 +188,15 @@ export default function TripsPage() {
 
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Update Odometer</CardTitle>
+                                        <CardTitle>{t("Update Odometer")}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground mb-4">Take a geo-tagged photo of your odometer reading for verification.</p>
+                                        <p className="text-sm text-muted-foreground mb-4">{t("Take a geo-tagged photo of your odometer reading for verification.")}</p>
                                         <Button 
                                             onClick={() => setShowOdometerUpload(true)}
                                             className="w-full"
                                         >
-                                            <Upload className="mr-2"/> Update Odometer Reading
+                                            <Upload className="mr-2"/> {t("Update Odometer Reading")}
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -209,7 +211,7 @@ export default function TripsPage() {
                 <Dialog open={showOdometerUpload} onOpenChange={setShowOdometerUpload}>
                     <DialogContent className="max-w-md">
                         <DialogHeader>
-                            <DialogTitle>Update Odometer Reading</DialogTitle>
+                            <DialogTitle>{t("Update Odometer Reading")}</DialogTitle>
                             <DialogDescription>
                                 Take a photo of your odometer for trip: {selectedTrip.source} to {selectedTrip.destination}
                             </DialogDescription>
@@ -243,16 +245,18 @@ interface TripTableProps {
 }
 
 
-const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails}: TripTableProps) => (
+const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails}: TripTableProps) => {
+    const { t } = useLanguage();
+    return (
     <>
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>Route</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("Route")}</TableHead>
+                    <TableHead>{t("Start Date")}</TableHead>
+                    <TableHead>{t("End Date")}</TableHead>
+                    <TableHead>{t("Status")}</TableHead>
+                    <TableHead className="text-right">{t("Actions")}</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -275,13 +279,13 @@ const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails
                                    </Button>
                                </DropdownMenuTrigger>
                                <DropdownMenuContent align="end">
-                                   <DropdownMenuItem onClick={() => onViewDetails(trip)}><FileText className="mr-2"/>View Details</DropdownMenuItem>
-                                   {trip.status === 'Planned' && <DropdownMenuItem onClick={() => onStartTrip(trip.id)}><Play className="mr-2"/>Start Trip</DropdownMenuItem>}
-                                   {trip.status === 'Ongoing' && <DropdownMenuItem onClick={() => onEndTrip(trip.id)}><CircleCheck className="mr-2"/>End Trip</DropdownMenuItem>}
+                                   <DropdownMenuItem onClick={() => onViewDetails(trip)}><FileText className="mr-2"/>{t("View Details")}</DropdownMenuItem>
+                                   {trip.status === 'Planned' && <DropdownMenuItem onClick={() => onStartTrip(trip.id)}><Play className="mr-2"/>{t("Start Trip")}</DropdownMenuItem>}
+                                   {trip.status === 'Ongoing' && <DropdownMenuItem onClick={() => onEndTrip(trip.id)}><CircleCheck className="mr-2"/>{t("End Trip")}</DropdownMenuItem>}
                                    {(trip.status === 'Planned' || trip.status === 'Ongoing') && (
                                     <DropdownMenuItem asChild>
                                       <Link href="/support" className="text-destructive focus:text-destructive">
-                                        <AlertTriangle className="mr-2 h-4 w-4" /> Report Issue
+                                        <AlertTriangle className="mr-2 h-4 w-4" /> {t("Report Issue")}
                                       </Link>
                                     </DropdownMenuItem>
                                    )}
@@ -295,11 +299,12 @@ const TripTable = ({trips, getStatusBadge, onStartTrip, onEndTrip, onViewDetails
         {trips.length === 0 && (
             <div className="text-center p-10 text-muted-foreground">
                 <CircleX className="mx-auto h-8 w-8 mb-2" />
-                <p>No trips to display in this category.</p>
+                <p>{t("No trips to display in this category.")}</p>
             </div>
         )}
     </>
-)
+    )
+}
 
 const InfoItem = ({ label, value }: { label: string, value: string | React.ReactNode }) => (
     <div>

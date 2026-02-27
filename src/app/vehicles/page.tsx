@@ -31,6 +31,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
 
 
 export default function VehicleManagementPage() {
@@ -38,6 +39,7 @@ export default function VehicleManagementPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [assignToName, setAssignToName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useLanguage();
 
   // Load vehicles from database on component mount
   useEffect(() => {
@@ -160,13 +162,13 @@ export default function VehicleManagementPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">Vehicle Management</h1>
-            <p className="text-muted-foreground">Add, edit, and manage your fleet of vehicles.</p>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Vehicle Management")}</h1>
+            <p className="text-muted-foreground">{t("Add, edit, and manage your fleet of vehicles.")}</p>
         </div>
         <AddVehicleDialog onAddVehicle={handleAddVehicle}>
             <Button>
                 <PlusCircle className="mr-2" />
-                Add Vehicle
+                {t("Add Vehicle")}
             </Button>
         </AddVehicleDialog>
       </div>
@@ -176,12 +178,12 @@ export default function VehicleManagementPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Fuel Level</TableHead>
-                <TableHead>Last Maintenance</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("Vehicle")}</TableHead>
+                <TableHead>{t("Assigned To")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
+                <TableHead>{t("Fuel Level")}</TableHead>
+                <TableHead>{t("Last Maintenance")}</TableHead>
+                <TableHead className="text-right">{t("Actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -218,31 +220,31 @@ export default function VehicleManagementPage() {
                       <DropdownMenuContent align="end">
                          <DropdownMenuItem>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            {t("Edit")}
                          </DropdownMenuItem>
                           
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="ghost" className="w-full justify-start text-sm font-normal h-8 px-2">
                                   <User className="mr-2 h-4 w-4" />
-                                  {vehicle.assignedTo ? 'Re-assign' : 'Assign'}
+                                  {vehicle.assignedTo ? t('Re-assign') : t('Assign')}
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                <AlertDialogTitle>Assign Vehicle to Employee</AlertDialogTitle>
+                                <AlertDialogTitle>{t("Assign Vehicle to Employee")}</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Enter the name of the employee you want to assign this vehicle to.
+                                    {t("Enter the name of the employee you want to assign this vehicle to.")}
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <Input 
-                                    placeholder="Employee Name"
+                                    placeholder={t("Employee Name")}
                                     value={assignToName}
                                     onChange={(e) => setAssignToName(e.target.value)}
                                 />
                                 <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleAssign(vehicle.id)}>Assign</AlertDialogAction>
+                                <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleAssign(vehicle.id)}>{t("Assign")}</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                            </AlertDialog>
@@ -265,7 +267,7 @@ export default function VehicleManagementPage() {
                                }
                              }}>
                                 <UserMinus className="mr-2 h-4 w-4" />
-                                Unassign
+                                {t("Unassign")}
                             </DropdownMenuItem>
                            )}
 
@@ -286,7 +288,7 @@ export default function VehicleManagementPage() {
                            }
                          }}>
                             <Wrench className="mr-2 h-4 w-4" />
-                            Send to Maintenance
+                            {t("Send to Maintenance")}
                          </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" onClick={async () => {
                           try {
@@ -303,7 +305,7 @@ export default function VehicleManagementPage() {
                           }
                         }}>
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          {t("Delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -321,14 +323,14 @@ export default function VehicleManagementPage() {
                 <div className="p-4 bg-primary/10 rounded-full">
                     <Truck className="w-12 h-12 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold">No Vehicles Added</h3>
+                <h3 className="text-xl font-semibold">{t("No Vehicles Added")}</h3>
                 <p className="text-muted-foreground max-w-sm">
-                    Your fleet is empty. Get started by adding your first vehicle.
+                    {t("Your fleet is empty. Get started by adding your first vehicle.")}
                 </p>
                 <AddVehicleDialog onAddVehicle={handleAddVehicle}>
                     <Button className="mt-2">
                         <PlusCircle className="mr-2" />
-                        Add First Vehicle
+                        {t("Add First Vehicle")}
                     </Button>
                 </AddVehicleDialog>
             </CardContent>

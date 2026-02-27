@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import type { TourPackage, Expense, User as UserType, Trip, ItineraryItem } from "@/lib/types";
+import type { TourPackage, Expense, User as UserType, Trip, ItineraryItem, TravelPreferences } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
 import LoginPage from "@/app/login/page";
 import {
@@ -56,6 +56,8 @@ interface SharedState {
   expenses: Expense[];
   trips: Trip[];
   user: UserType | null;
+  preferences: TravelPreferences | null;
+  savePreferences: (prefs: TravelPreferences) => void;
   login: (username: string, password: string) => boolean;
   logout: () => void;
   signup: (username: string, password: string) => boolean;
@@ -106,7 +108,21 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [user, setUser] = useState<UserType | null>(null);
+  const [preferences, setPreferences] = useState<TravelPreferences | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('travel_preferences');
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
   const { toast } = useToast();
+
+  const savePreferences = (prefs: TravelPreferences) => {
+    setPreferences(prefs);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('travel_preferences', JSON.stringify(prefs));
+    }
+  };
 
   const login = (username: string, password: string): boolean => {
     const validUser = demoUsers.find(u => u.toLowerCase() === username.toLowerCase());
@@ -236,6 +252,8 @@ export const SharedStateProvider = ({ children }: { children: ReactNode }) => {
     expenses,
     trips,
     user,
+    preferences,
+    savePreferences,
     login,
     logout,
     signup,
@@ -263,13 +281,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();
   const { user, logout, addPackage } = useSharedState();
 
-  // Allow signup page without login
-  if (!user && pathname !== '/signup') {
+  // Allow signup and onboarding pages without login
+  if (!user && pathname !== '/signup' && pathname !== '/onboarding') {
     return <LoginPage />;
   }
 
-  // If on signup page, just render children without layout
-  if (pathname === '/signup') {
+  // If on signup or onboarding page, just render children without layout
+  if (pathname === '/signup' || pathname === '/onboarding') {
     return <>{children}</>;
   }
 

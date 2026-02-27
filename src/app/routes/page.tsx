@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Route, MapPin, Clock, Fuel, Leaf, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useSharedState } from '@/components/AppLayout';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface RouteData {
   _id: string;
@@ -31,6 +32,7 @@ interface RouteData {
 
 export default function RoutesPage() {
   const { user } = useSharedState();
+  const { t } = useLanguage();
   const [routes, setRoutes] = useState<RouteData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +49,11 @@ export default function RoutesPage() {
       if (data.success) {
         setRoutes(data.data || []);
       } else {
-        setError(data.message || 'Failed to fetch routes');
+        setError(data.message || t('Failed to fetch routes'));
       }
     } catch (err) {
       console.error('💥 Network error occurred:', err);
-      setError('Network error occurred');
+      setError(t('Network error occurred'));
     } finally {
       setLoading(false);
     }
@@ -64,8 +66,8 @@ export default function RoutesPage() {
   const handleRefresh = () => {
     fetchAllRoutes();
     toast({
-      title: "Refreshed",
-      description: "Routes data has been refreshed",
+      title: t("Refreshed"),
+      description: t("Routes data has been refreshed"),
     });
   };
 
@@ -96,7 +98,7 @@ export default function RoutesPage() {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Routes</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Routes")}</h1>
         </div>
         <Card>
           <CardHeader>
@@ -117,10 +119,10 @@ export default function RoutesPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Routes</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-headline">{t("Routes")}</h1>
         <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
+          {t("Refresh")}
         </Button>
       </div>
       
@@ -128,7 +130,7 @@ export default function RoutesPage() {
       {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{t("Error")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -137,9 +139,9 @@ export default function RoutesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Route className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Admin-Assigned Routes</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("No Admin-Assigned Routes")}</h3>
             <p className="text-muted-foreground text-center">
-              No routes have been assigned by admin yet. Routes will appear here once you assign them through the admin interface.
+              {t("No routes have been assigned by admin yet. Routes will appear here once you assign them through the admin interface.")}
             </p>
           </CardContent>
         </Card>
@@ -149,8 +151,8 @@ export default function RoutesPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Admin-Assigned Routes</h2>
-              <p className="text-muted-foreground">Total: {routes.length} routes assigned by admin</p>
+              <h2 className="text-xl font-semibold">{t("Admin-Assigned Routes")}</h2>
+              <p className="text-muted-foreground">{t("Total")}: {routes.length} {t("routes assigned by admin")}</p>
             </div>
           </div>
           
@@ -161,7 +163,7 @@ export default function RoutesPage() {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Route className="h-5 w-5" />
-                      Route #{index + 1}
+                      {t("Route")} #{index + 1}
                     </CardTitle>
                     <CardDescription>
                       {route.source} → {route.destination}
@@ -179,14 +181,14 @@ export default function RoutesPage() {
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">From</p>
+                        <p className="text-sm font-medium">{t("From")}</p>
                         <p className="text-lg">{route.source}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">To</p>
+                        <p className="text-sm font-medium">{t("To")}</p>
                         <p className="text-lg">{route.destination}</p>
                       </div>
                     </div>
@@ -196,7 +198,7 @@ export default function RoutesPage() {
                     <div className="flex items-center gap-2">
                       <Fuel className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">Vehicle Type</p>
+                        <p className="text-sm font-medium">{t("Vehicle Type")}</p>
                         <Badge className={getVehicleTypeColor(route.vehicleType)}>
                           {route.vehicleType}
                         </Badge>
@@ -206,7 +208,7 @@ export default function RoutesPage() {
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          <p className="text-sm font-medium">Vehicle Year</p>
+                          <p className="text-sm font-medium">{t("Vehicle Year")}</p>
                           <p className="text-lg">{route.vehicleYear}</p>
                         </div>
                       </div>
@@ -218,40 +220,40 @@ export default function RoutesPage() {
                 <div className="grid md:grid-cols-3 gap-4 pt-4 border-t">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-primary">{route.distance} km</p>
-                    <p className="text-sm text-muted-foreground">Distance</p>
+                    <p className="text-sm text-muted-foreground">{t("Distance")}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-green-600">{route.emissions} g</p>
-                    <p className="text-sm text-muted-foreground">CO₂ Emissions</p>
+                    <p className="text-sm text-muted-foreground">{t("CO₂ Emissions")}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-blue-600">
                       {route.routeSource || 'OSM'}
                     </p>
-                    <p className="text-sm text-muted-foreground">Route Source</p>
+                    <p className="text-sm text-muted-foreground">{t("Route Source")}</p>
                   </div>
                 </div>
 
                 {/* Additional Information */}
                 {(route.fuelType || route.routeType || route.traffic) && (
                   <div className="pt-4 border-t">
-                    <h4 className="font-medium mb-3">Additional Details</h4>
+                    <h4 className="font-medium mb-3">{t("Additional Details")}</h4>
                     <div className="grid md:grid-cols-3 gap-4 text-sm">
                       {route.fuelType && (
                         <div>
-                          <p className="text-muted-foreground">Fuel Type</p>
+                          <p className="text-muted-foreground">{t("Fuel Type")}</p>
                           <p className="font-medium">{route.fuelType}</p>
                         </div>
                       )}
                       {route.routeType && (
                         <div>
-                          <p className="text-muted-foreground">Route Type</p>
+                          <p className="text-muted-foreground">{t("Route Type")}</p>
                           <p className="font-medium">{route.routeType}</p>
                         </div>
                       )}
                       {route.traffic && (
                         <div>
-                          <p className="text-muted-foreground">Traffic</p>
+                          <p className="text-muted-foreground">{t("Traffic")}</p>
                           <p className="font-medium">{route.traffic}</p>
                         </div>
                       )}
@@ -265,7 +267,7 @@ export default function RoutesPage() {
                     <div className="flex items-start gap-2">
                       <Leaf className="h-4 w-4 text-green-600 mt-1" />
                       <div>
-                        <p className="text-sm font-medium text-green-800">Eco Tip</p>
+                        <p className="text-sm font-medium text-green-800">{t("Eco Tip")}</p>
                         <p className="text-sm text-green-700">{route.ecoTip}</p>
                       </div>
                     </div>

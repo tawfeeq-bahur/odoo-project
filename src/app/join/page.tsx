@@ -15,6 +15,7 @@ import { QrCode, LogIn, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/context/LanguageContext';
 
 const joinFormSchema = z.object({
   inviteCode: z.string().min(6, 'Invite code must be 6 characters').max(6, 'Invite code must be 6 characters'),
@@ -25,6 +26,7 @@ export default function JoinTripPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const form = useForm<z.infer<typeof joinFormSchema>>({
     resolver: zodResolver(joinFormSchema),
@@ -58,8 +60,8 @@ export default function JoinTripPage() {
           <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
             <QrCode className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle>Join a Tour</CardTitle>
-          <CardDescription>Enter the 6-character invite code provided by the tour organizer.</CardDescription>
+          <CardTitle>{t("Join a Tour")}</CardTitle>
+          <CardDescription>{t("Enter the 6-character invite code provided by the tour organizer.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -69,7 +71,7 @@ export default function JoinTripPage() {
                 name="inviteCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Invite Code</FormLabel>
+                    <FormLabel>{t("Invite Code")}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="ABCXYZ"
@@ -86,14 +88,14 @@ export default function JoinTripPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Join Failed</AlertTitle>
+                  <AlertTitle>{t("Join Failed")}</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
               <Button type="submit" className="w-full">
                 <LogIn className="mr-2" />
-                Join Tour
+                {t("Join Tour")}
               </Button>
             </form>
           </Form>

@@ -677,7 +677,10 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
 
           const icon = L.divIcon({
             className: 'poi-marker',
-            html: `<div style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid ${style.color};background:${style.color}dd;box-shadow:0 2px 4px rgba(0,0,0,.3);backdrop-filter:blur(1px)"><span style="font-size:12px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${style.emoji}</span></div>`
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+            popupAnchor: [0, -14],
+            html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid ${style.color};background:${style.color};box-shadow:0 2px 6px rgba(0,0,0,.4)"><span style="font-size:14px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${style.emoji}</span></div>`
           });
 
           const marker = L.marker([lat, lon], { icon }).bindPopup(`
@@ -709,7 +712,10 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           
           const icon = L.divIcon({
             className: 'poi-marker',
-            html: `<div style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid ${style.color};background:${style.color}dd;box-shadow:0 2px 4px rgba(0,0,0,.3);backdrop-filter:blur(1px)"><span style="font-size:12px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${style.emoji}</span></div>`
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+            popupAnchor: [0, -14],
+            html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid ${style.color};background:${style.color};box-shadow:0 2px 6px rgba(0,0,0,.4)"><span style="font-size:14px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${style.emoji}</span></div>`
           });
 
           const marker = L.marker([lat, lon], { icon }).bindPopup(`
@@ -815,6 +821,22 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
         if (map && !map.getPane('poiPane')) {
           map.createPane('poiPane');
           const pp = map.getPane('poiPane') as HTMLElement; pp.style.zIndex = '650';
+        }
+
+        // Add CSS to fix marker visibility — override Leaflet default div-icon styles
+        if (!document.getElementById('poi-marker-styles')) {
+          const style = document.createElement('style');
+          style.id = 'poi-marker-styles';
+          style.textContent = `
+            .leaflet-div-icon.poi-marker,
+            .leaflet-div-icon.custom-pin,
+            .leaflet-div-icon.police-marker {
+              background: transparent !important;
+              border: none !important;
+              box-shadow: none !important;
+            }
+          `;
+          document.head.appendChild(style);
         }
         
     }
@@ -1027,33 +1049,35 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     const activeRoute = roadPolyline.length > 0 ? roadPolyline : snappedPolyline;
     if (activeRoute.length === 0) return;
 
+    // Abort flag to prevent stale async operations from corrupting state
+    let cancelled = false;
+
     // Remove old markers layer
     if (markersLayerRef.current) {
       map.removeLayer(markersLayerRef.current);
+      markersLayerRef.current = null;
     }
     markerIndexRef.current.clear();
-    setPoiList({});
 
-    const layer = L.layerGroup(undefined, { pane: 'poiPane' as any });
-    markersLayerRef.current = layer;
-    layer.addTo(map);
+    const CATEGORY_STYLES: Record<string, { query: string; color: string; emoji: string }> = {
+      'Heritage Sites': { query: 'nwr[historic]', color: '#8b5cf6', emoji: '🏛️' },
+      'Police Stations': { query: 'nwr["amenity"="police"]', color: '#3b82f6', emoji: '🚔' },
+      'Fire Stations': { query: 'nwr["amenity"="fire_station"]', color: '#ef4444', emoji: '🔥' },
+      'Hospitals': { query: 'nwr["amenity"="hospital"]', color: '#ef4444', emoji: '🏥' },
+      'Restaurants': { query: 'nwr["amenity"="restaurant"]', color: '#f97316', emoji: '🍽️' },
+      'Restrooms': { query: 'nwr["amenity"="toilets"]', color: '#10b981', emoji: '🚻' },
+      'Fuel Stations': { query: 'nwr["amenity"="fuel"]', color: '#eab308', emoji: '⛽' },
+      'EV Stations': { query: 'nwr["amenity"="charging_station"]', color: '#14b8a6', emoji: '⚡' },
+    };
 
     const buildDivIcon = (bg: string, emoji: string) =>
       L.divIcon({
         className: 'poi-marker',
-        html: `<div style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid ${bg};background:${bg}dd;box-shadow:0 2px 4px rgba(0,0,0,.3);backdrop-filter:blur(1px)"><span style="font-size:12px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${emoji}</span></div>`
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16],
+        html: `<div style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;border:2px solid #fff;background:${bg};box-shadow:0 2px 8px rgba(0,0,0,.5)"><span style="font-size:16px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))">${emoji}</span></div>`
       });
-
-    const CATEGORY_STYLES: Record<string, { query: string; color: string; emoji: string }> = {
-      'Heritage Sites': { query: 'node[historic]', color: '#8b5cf6', emoji: '🏛️' },
-      'Police Stations': { query: 'node["amenity"="police"]', color: '#3b82f6', emoji: '🚔' },
-      'Fire Stations': { query: 'node["amenity"="fire_station"]', color: '#ef4444', emoji: '🔥' },
-      'Hospitals': { query: 'node["amenity"="hospital"]', color: '#ef4444', emoji: '🏥' },
-      'Restaurants': { query: 'node["amenity"="restaurant"]', color: '#f97316', emoji: '🍽️' },
-      'Restrooms': { query: 'node["amenity"="toilets"]', color: '#10b981', emoji: '🚻' },
-      'Fuel Stations': { query: 'node["amenity"="fuel"]', color: '#eab308', emoji: '⛽' },
-      'EV Stations': { query: 'node["amenity"="charging_station"]', color: '#14b8a6', emoji: '⚡' },
-    };
 
     const bounds = L.latLngBounds(activeRoute as L.LatLngTuple[]);
     const south = bounds.getSouth();
@@ -1091,7 +1115,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
       const ABx = B.x - A.x, ABy = B.y - A.y;
       const APx = P.x - A.x, APy = P.y - A.y;
       const ab2 = ABx * ABx + ABy * ABy || 1e-12;
-      let t = (APx * ABx + ABy * ABy) / ab2;
+      let t = (APx * ABx + APy * ABy) / ab2;
       t = Math.max(0, Math.min(1, t));
       const proj = { x: A.x + t * ABx, y: A.y + t * ABy };
       return toMeters(P.y, P.x, proj.y, proj.x);
@@ -1109,10 +1133,14 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     const fetchPOIs = async () => {
       try {
         const query = buildQuery();
+        console.log('[POI] Fetching POIs with Overpass query...');
         const resp = await fetch(overpassUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: `data=${encodeURIComponent(query)}` });
-        if (!resp.ok) return;
+        if (!resp.ok) { console.warn('[POI] Overpass fetch failed:', resp.status); return; }
+        if (cancelled) { console.log('[POI] Fetch cancelled (stale)'); return; }
         const data = await resp.json();
+        if (cancelled) { console.log('[POI] Cancelled after parse (stale)'); return; }
         const elements = Array.isArray(data?.elements) ? data.elements : [];
+        console.log(`[POI] Overpass returned ${elements.length} raw elements`);
 
         // 2km meters threshold to the route
         const MAX_DISTANCE_M = ROUTE_POI_CONFIG.BUFFER_KM * 1000;
@@ -1127,20 +1155,20 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           lat: number;
           lon: number;
           distance: number;
-          category: keyof typeof CATEGORY_STYLES | null;
+          category: string;
           name: string;
         }> = [];
 
         elements.forEach((e: any) => {
-          const lat = e.lat || e.center?.lat;
-          const lon = e.lon || e.center?.lon;
+          const lat = e.lat ?? e.center?.lat;
+          const lon = e.lon ?? e.center?.lon;
           if (typeof lat !== 'number' || typeof lon !== 'number') return;
           const pt: L.LatLngTuple = [lat, lon];
           const dist = distanceToPolyline(pt, activeRoute);
           if (dist > MAX_DISTANCE_M) return;
 
           const tags = e.tags || {};
-          let category: keyof typeof CATEGORY_STYLES | null = null;
+          let category: string | null = null;
           if (tags.historic) category = 'Heritage Sites';
           else if (tags.amenity === 'police') category = 'Police Stations';
           else if (tags.amenity === 'fire_station') category = 'Fire Stations';
@@ -1153,46 +1181,52 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           if (!category) return;
 
           const name = (tags.name || tags.brand || category) as string;
-          poisWithDistance.push({
-            element: e,
-            lat,
-            lon,
-            distance: dist,
-            category,
-            name
-          });
+          poisWithDistance.push({ element: e, lat, lon, distance: dist, category, name });
         });
 
-        // Sort by distance (closest first) and apply category limits
-        console.log(`Found ${poisWithDistance.length} POIs within ${MAX_DISTANCE_M}m of route`);
+        if (cancelled) return;
+        console.log(`[POI] ${poisWithDistance.length} POIs within ${MAX_DISTANCE_M}m of route`);
+
+        // Create a fresh layer and add markers directly to the map
+        const layer = L.layerGroup();
+        let markerCount = 0;
+
         poisWithDistance
-          .filter(poi => poi.category !== null) // Filter out null categories
           .sort((a, b) => a.distance - b.distance)
           .forEach((poi) => {
-            const { element, lat, lon, category, name } = poi;
-            
-            if (!category) return; // Additional safety check
-            
+            const { lat, lon, category, name } = poi;
             counts[category] = (counts[category] || 0) + 1;
             if (counts[category] > LIMIT_PER_CAT) return;
 
             const style = CATEGORY_STYLES[category];
+            if (!style) return;
             const icon = buildDivIcon(style.color, style.emoji);
             const pt: L.LatLngTuple = [lat, lon];
             const key = `${name}-${lat.toFixed(5)}-${lon.toFixed(5)}`;
-            const marker = L.marker(pt, { icon, zIndexOffset: 500, pane: 'poiPane' }).addTo(layer).bindPopup(`<div style="min-width: 120px;"><strong style="color: ${style.color};">${name}</strong><br><small style="color: #666;">${category}</small><br><small style="color: #999;">Distance: ${poi.distance.toFixed(0)}m</small></div>`);
+            const marker = L.marker(pt, { icon, zIndexOffset: 600, pane: 'poiPane' })
+              .bindPopup(`<div style="min-width: 120px;"><strong style="color: ${style.color};">${name}</strong><br><small style="color: #666;">${category}</small><br><small style="color: #999;">Distance: ${poi.distance.toFixed(0)}m</small></div>`);
+            layer.addLayer(marker);
             markerIndexRef.current.set(key, marker);
             if (!nextList[category]) nextList[category] = [];
             nextList[category].push({ name, lat, lon });
+            markerCount++;
           });
 
+        if (cancelled) return;
+
+        // Add layer to map and update refs/state
+        layer.addTo(map);
+        markersLayerRef.current = layer;
+        console.log(`[POI] Added ${markerCount} markers to map across ${Object.keys(nextList).length} categories`);
         setPoiList(nextList);
       } catch (err) {
-        console.warn('POI fetch failed', err);
+        console.warn('[POI] fetch failed', err);
       }
     };
 
     fetchPOIs();
+
+    return () => { cancelled = true; };
   }, [roadPolyline, snappedPolyline]);
 
   // Update police stations when route polyline changes

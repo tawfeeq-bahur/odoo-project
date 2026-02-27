@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Phone, Shield, AlertTriangle, Save, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface EmergencyContact {
   id: string;
@@ -21,6 +22,7 @@ export default function SOSPage() {
   const [newContact, setNewContact] = useState({ name: '', number: '' });
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   // Initialize with default police number
   useEffect(() => {
@@ -193,10 +195,10 @@ export default function SOSPage() {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-red-600 flex items-center justify-center gap-2">
             <Shield className="h-8 w-8" />
-            Emergency SOS
+            {t("Emergency SOS")}
           </h1>
           <p className="text-muted-foreground">
-            Manage your emergency contacts for quick access during emergencies
+            {t("Manage your emergency contacts for quick access during emergencies")}
           </p>
         </div>
 
@@ -204,7 +206,7 @@ export default function SOSPage() {
         <Alert className="border-red-200 bg-red-50">
           <AlertTriangle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
-            <strong>Important:</strong> You can add up to 3 emergency contacts. The police number (100) is included by default and cannot be removed.
+            <strong>{t("Important")}:</strong> {t("You can add up to 3 emergency contacts. The police number (100) is included by default and cannot be removed.")}
           </AlertDescription>
         </Alert>
 
@@ -213,10 +215,10 @@ export default function SOSPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Phone className="h-5 w-5" />
-              Emergency Contacts ({contacts.length}/3)
+              {t("Emergency Contacts")} ({contacts.length}/3)
             </CardTitle>
             <CardDescription>
-              Tap any contact to call immediately
+              {t("Tap any contact to call immediately")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -235,7 +237,7 @@ export default function SOSPage() {
                     <p className="font-medium">{contact.name}</p>
                     <p className="text-sm text-muted-foreground">{contact.number}</p>
                     {contact.isDefault && (
-                      <span className="text-xs text-red-600 font-medium">Default</span>
+                      <span className="text-xs text-red-600 font-medium">{t("Default")}</span>
                     )}
                   </div>
                 </div>
@@ -246,7 +248,7 @@ export default function SOSPage() {
                     size="sm"
                   >
                     <Phone className="h-4 w-4 mr-1" />
-                    Call
+                    {t("Call")}
                   </Button>
                   {!contact.isDefault && (
                     <Button
@@ -254,7 +256,7 @@ export default function SOSPage() {
                       variant="outline"
                       size="sm"
                     >
-                      Edit
+                      {t("Edit")}
                     </Button>
                   )}
                   {!contact.isDefault && (
@@ -274,22 +276,22 @@ export default function SOSPage() {
             {/* Add New Contact Form */}
             {contacts.length < 3 && !editingId && (
               <div className="border-t pt-4">
-                <h3 className="font-medium mb-3">Add New Emergency Contact</h3>
+                <h3 className="font-medium mb-3">{t("Add New Emergency Contact")}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="contact-name">Name</Label>
+                    <Label htmlFor="contact-name">{t("Name")}</Label>
                     <Input
                       id="contact-name"
-                      placeholder="Enter contact name"
+                      placeholder={t("Enter contact name")}
                       value={newContact.name}
                       onChange={(e) => setNewContact(prev => ({ ...prev, name: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contact-number">Mobile Number</Label>
+                    <Label htmlFor="contact-number">{t("Mobile Number")}</Label>
                     <Input
                       id="contact-number"
-                      placeholder="Enter 10-digit mobile number"
+                      placeholder={t("Enter 10-digit mobile number")}
                       value={newContact.number}
                       onChange={(e) => setNewContact(prev => ({ ...prev, number: e.target.value }))}
                       maxLength={10}
@@ -298,7 +300,7 @@ export default function SOSPage() {
                 </div>
                 <Button onClick={handleAddContact} className="mt-4">
                   <Save className="h-4 w-4 mr-2" />
-                  Add Contact
+                  {t("Add Contact")}
                 </Button>
               </div>
             )}
@@ -306,22 +308,22 @@ export default function SOSPage() {
             {/* Edit Contact Form */}
             {editingId && (
               <div className="border-t pt-4">
-                <h3 className="font-medium mb-3">Edit Emergency Contact</h3>
+                <h3 className="font-medium mb-3">{t("Edit Emergency Contact")}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="edit-contact-name">Name</Label>
+                    <Label htmlFor="edit-contact-name">{t("Name")}</Label>
                     <Input
                       id="edit-contact-name"
-                      placeholder="Enter contact name"
+                      placeholder={t("Enter contact name")}
                       value={newContact.name}
                       onChange={(e) => setNewContact(prev => ({ ...prev, name: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-contact-number">Mobile Number</Label>
+                    <Label htmlFor="edit-contact-number">{t("Mobile Number")}</Label>
                     <Input
                       id="edit-contact-number"
-                      placeholder="Enter 10-digit mobile number"
+                      placeholder={t("Enter 10-digit mobile number")}
                       value={newContact.number}
                       onChange={(e) => setNewContact(prev => ({ ...prev, number: e.target.value }))}
                       maxLength={10}
@@ -331,10 +333,10 @@ export default function SOSPage() {
                 <div className="flex gap-2 mt-4">
                   <Button onClick={handleUpdateContact}>
                     <Save className="h-4 w-4 mr-2" />
-                    Update Contact
+                    {t("Update Contact")}
                   </Button>
                   <Button onClick={cancelEdit} variant="outline">
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                 </div>
               </div>
@@ -345,9 +347,9 @@ export default function SOSPage() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle>{t("Quick Actions")}</CardTitle>
             <CardDescription>
-              Emergency services available 24/7
+              {t("Emergency services available 24/7")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -358,7 +360,7 @@ export default function SOSPage() {
               >
                 <div className="text-center">
                   <Shield className="h-6 w-6 mx-auto mb-1" />
-                  <div className="text-sm font-medium">Police</div>
+                  <div className="text-sm font-medium">{t("Police")}</div>
                   <div className="text-xs">100</div>
                 </div>
               </Button>
@@ -368,7 +370,7 @@ export default function SOSPage() {
               >
                 <div className="text-center">
                   <Phone className="h-6 w-6 mx-auto mb-1" />
-                  <div className="text-sm font-medium">Ambulance</div>
+                  <div className="text-sm font-medium">{t("Ambulance")}</div>
                   <div className="text-xs">102</div>
                 </div>
               </Button>
@@ -378,7 +380,7 @@ export default function SOSPage() {
               >
                 <div className="text-center">
                   <AlertTriangle className="h-6 w-6 mx-auto mb-1" />
-                  <div className="text-sm font-medium">Fire</div>
+                  <div className="text-sm font-medium">{t("Fire")}</div>
                   <div className="text-xs">101</div>
                 </div>
               </Button>
@@ -388,7 +390,7 @@ export default function SOSPage() {
               >
                 <div className="text-center">
                   <Phone className="h-6 w-6 mx-auto mb-1" />
-                  <div className="text-sm font-medium">Women</div>
+                  <div className="text-sm font-medium">{t("Women")}</div>
                   <div className="text-xs">181</div>
                 </div>
               </Button>
