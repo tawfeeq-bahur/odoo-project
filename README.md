@@ -1,5 +1,5 @@
 
-# TourJet - AI-Powered Tour Management
+# TourJet - AI-Powered Tour Management ( Developement )
 
 TourJet is a smart, AI-driven web application designed to simplify tour and travel management. It provides a centralized dashboard for organizers to plan trips, manage members, and track expenses, and a user-friendly panel for members to view trip details and collaborate.
 
