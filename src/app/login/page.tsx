@@ -14,7 +14,7 @@ import { useSharedState } from '@/components/AppLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, Globe } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -61,7 +61,6 @@ export default function LoginPage() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-6">
               <Avatar className="h-24 w-24 border-4 border-primary/20">
-                <AvatarImage src="/logo-globe.png" alt="TourJet" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-blue-500 text-white text-3xl">
                   <Globe className="h-12 w-12" />
                 </AvatarFallback>

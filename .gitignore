@@ -39,3 +39,13 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+.agents
+
+# ml generated artifacts
+/ml/checkpoints/
+/ml/data/
+/ml/plots/
+/ml/reports/
+/ml/model/__pycache__/
