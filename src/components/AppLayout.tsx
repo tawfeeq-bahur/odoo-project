@@ -281,13 +281,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useLanguage();
   const { user, logout, addPackage } = useSharedState();
 
-  // Allow signup and onboarding pages without login
-  if (!user && pathname !== '/signup' && pathname !== '/onboarding') {
+  // Allow auth and onboarding pages without login
+  if (!user && pathname !== '/signup' && pathname !== '/onboarding' && pathname !== '/login') {
     return <LoginPage />;
   }
 
-  // If on signup or onboarding page, just render children without layout
-  if (pathname === '/signup' || pathname === '/onboarding') {
+  // If on auth or onboarding pages, just render children without sidebar layout
+  if (pathname === '/signup' || pathname === '/onboarding' || pathname === '/login') {
     return <>{children}</>;
   }
 
