@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview Provides tourist attraction suggestions for a destination using AI
  * 
@@ -35,10 +34,20 @@ const AttractionsOutputSchema = z.object({
 export type TouristAttraction = z.infer<typeof TouristAttractionSchema>;
 export type AttractionsOutput = z.infer<typeof AttractionsOutputSchema>;
 
+// ⚡ In-memory cache — same destination served instantly on repeat
+const attractionsCache = new Map<string, AttractionsOutput>();
+
 export async function getDestinationAttractions(input: AttractionInput): Promise<AttractionsOutput> {
+    // ⚡ Cache check
+    const key = input.destination.trim().toLowerCase();
+    if (attractionsCache.has(key)) {
+        console.log(`[Cache] Attractions HIT: ${key}`);
+        return attractionsCache.get(key)!;
+    }
     try {
         const result = await attractionsFlow(input);
         if (!result) throw new Error("AI returned no result");
+        attractionsCache.set(key, result);
         return result;
     } catch (e) {
         console.warn('AI attractions fetcher failed, returning fallback', e);
@@ -83,24 +92,15 @@ const prompt = ai.definePrompt({
     output: { schema: AttractionsOutputSchema },
     model: 'googleai/gemini-2.5-flash',
     prompt: `
-        You are a travel expert specializing in tourist destinations in India and worldwide.
-        
-        Your task is to provide a comprehensive list of must-visit tourist attractions for {{destination}}{{#if country}}, {{country}}{{/if}}.
-        
-        Instructions:
-        1. List 8-12 top tourist attractions in {{destination}}
-        2. Include popular landmarks, monuments, natural wonders, temples, museums, and viewpoints
-        3. For each attraction, provide:
-           - Exact name of the place
-           - Type (Lake, Fort, Temple, Beach, Museum, etc.)
-           - Brief compelling description (1-2 lines)
-           - Realistic rating (3.5-5.0 based on popularity)
-           - Mark truly iconic places as mustVisit: true
-        4. Provide the best time to visit this destination
-        5. Give one practical travel tip
-        
-        Focus on accuracy and include only real, well-known attractions.
-        Order attractions by importance and popularity.
+        You are a travel expert for India. Return ONLY valid JSON.
+
+        List top tourist attractions for: {{destination}}{{#if country}}, {{country}}{{/if}}
+
+        Rules:
+        1. List exactly 6 top attractions (landmarks, temples, beaches, hills, museums).
+        2. Each: exact name, type, description (1 short sentence), rating (3.5-5.0), mustVisit bool.
+        3. bestTimeToVisit: one short answer (e.g. "October to March").
+        4. travelTip: one practical sentence.
     `,
 });
 
@@ -111,10 +111,10 @@ const attractionsFlow = ai.defineFlow(
         outputSchema: AttractionsOutputSchema,
     },
     async (input) => {
-        const { output } = await prompt(input);
-        if (!output) {
-            throw new Error("AI attractions did not return valid output.");
-        }
+        const { output } = await prompt(input, {
+            config: { temperature: 0.3, maxOutputTokens: 1024 },
+        });
+        if (!output) throw new Error('No output from attractions');
         return output;
     }
 );

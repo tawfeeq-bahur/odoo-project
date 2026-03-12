@@ -27,12 +27,12 @@ const RoadSnapperOutputSchema = z.object({
 export type RoadSnapperOutput = z.infer<typeof RoadSnapperOutputSchema>;
 
 export async function snapToRoads(input: RoadSnapperInput): Promise<RoadSnapperOutput> {
-  try {
-    return await roadSnapperFlow(input);
-  } catch (e) {
-    console.warn('AI road snapper failed, using fallback snapping', e);
-    return getFallbackSnappedPoints(input.path);
+  // AI road snapping removed — OSRM in MapDisplay already provides road-snapped geometry.
+  // Just return the input path directly for instant, zero-cost snapping.
+  if (input.path && input.path.length > 0) {
+    return { snappedPoints: input.path };
   }
+  return { snappedPoints: [] };
 }
 
 function getFallbackSnappedPoints(path: Array<{lat: number, lng: number}>): RoadSnapperOutput {

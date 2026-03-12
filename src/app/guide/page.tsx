@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getTripPlan, TripPlannerOutput } from '@/ai/flows/trip-planner';
+import type { TripPlannerOutput } from '@/ai/flows/trip-planner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Map as MapIcon, Milestone, Fuel, Clock, AlertTriangle, Route, Compass, Send, Plane, Train as TrainIcon, Car as CarIcon, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -21,7 +21,7 @@ import { useSharedState } from '@/components/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TransportMode, getTransportRecommendation, calculateDistance } from '@/utils/distance-calculator';
-import { getDestinationAttractions, AttractionsOutput } from '@/ai/flows/attractions';
+import type { AttractionsOutput } from '@/ai/flows/attractions';
 import { AttractionCard } from '@/components/AttractionCard';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -58,9 +58,160 @@ export default function TourPlannerPage() {
     const [currentTransportMode, setCurrentTransportMode] = useState<TransportMode>('road');
     const [attractions, setAttractions] = useState<AttractionsOutput | null>(null);
     const [attractionsLoading, setAttractionsLoading] = useState(false);
+    const [isAiUpgrading, setIsAiUpgrading] = useState(false); // true while AI is upgrading a shown fallback
+    // Pre-geocoded coords passed to MapDisplay to avoid re-geocoding
+    const [geocodedCoords, setGeocodedCoords] = useState<{ src: { latitude: number; longitude: number }; dst: { latitude: number; longitude: number } } | null>(null);
     const { user, packages, addTrip } = useSharedState();
     const { t } = useLanguage();
     const { toast } = useToast();
+
+    // Local city coordinate lookup — no network needed for these cities
+    const LOCAL_CITY_COORDS: Record<string, { latitude: number; longitude: number }> = {
+        'chennai': { latitude: 13.0827, longitude: 80.2707 },
+        'madras': { latitude: 13.0827, longitude: 80.2707 },
+        'mumbai': { latitude: 19.0760, longitude: 72.8777 },
+        'bombay': { latitude: 19.0760, longitude: 72.8777 },
+        'delhi': { latitude: 28.6139, longitude: 77.2090 },
+        'new delhi': { latitude: 28.6139, longitude: 77.2090 },
+        'bengaluru': { latitude: 12.9716, longitude: 77.5946 },
+        'bangalore': { latitude: 12.9716, longitude: 77.5946 },
+        'hyderabad': { latitude: 17.3850, longitude: 78.4867 },
+        'kolkata': { latitude: 22.5726, longitude: 88.3639 },
+        'calcutta': { latitude: 22.5726, longitude: 88.3639 },
+        'pune': { latitude: 18.5204, longitude: 73.8567 },
+        'ahmedabad': { latitude: 23.0225, longitude: 72.5714 },
+        'jaipur': { latitude: 26.9124, longitude: 75.7873 },
+        'surat': { latitude: 21.1702, longitude: 72.8311 },
+        'lucknow': { latitude: 26.8467, longitude: 80.9462 },
+        'kanpur': { latitude: 26.4499, longitude: 80.3319 },
+        'nagpur': { latitude: 21.1458, longitude: 79.0882 },
+        'visakhapatnam': { latitude: 17.6868, longitude: 83.2185 },
+        'vizag': { latitude: 17.6868, longitude: 83.2185 },
+        'indore': { latitude: 22.7196, longitude: 75.8577 },
+        'bhopal': { latitude: 23.2599, longitude: 77.4126 },
+        'patna': { latitude: 25.5941, longitude: 85.1376 },
+        'vadodara': { latitude: 22.3072, longitude: 73.1812 },
+        'coimbatore': { latitude: 11.0168, longitude: 76.9558 },
+        'ludhiana': { latitude: 30.9010, longitude: 75.8573 },
+        'agra': { latitude: 27.1767, longitude: 78.0081 },
+        'nashik': { latitude: 19.9975, longitude: 73.7898 },
+        'faridabad': { latitude: 28.4089, longitude: 77.3178 },
+        'meerut': { latitude: 28.9845, longitude: 77.7064 },
+        'rajkot': { latitude: 22.3039, longitude: 70.8022 },
+        'kalyan': { latitude: 19.2403, longitude: 73.1305 },
+        'varanasi': { latitude: 25.3176, longitude: 82.9739 },
+        'kashi': { latitude: 25.3176, longitude: 82.9739 },
+        'amritsar': { latitude: 31.6340, longitude: 74.8723 },
+        'kochi': { latitude: 9.9312, longitude: 76.2673 },
+        'cochin': { latitude: 9.9312, longitude: 76.2673 },
+        'ernakulam': { latitude: 9.9816, longitude: 76.2999 },
+        'thiruvananthapuram': { latitude: 8.5241, longitude: 76.9366 },
+        'trivandrum': { latitude: 8.5241, longitude: 76.9366 },
+        'kozhikode': { latitude: 11.2588, longitude: 75.7804 },
+        'calicut': { latitude: 11.2588, longitude: 75.7804 },
+        'thrissur': { latitude: 10.5276, longitude: 76.2144 },
+        'madurai': { latitude: 9.9252, longitude: 78.1198 },
+        'tiruchirappalli': { latitude: 10.7905, longitude: 78.7047 },
+        'trichy': { latitude: 10.7905, longitude: 78.7047 },
+        'tiruchy': { latitude: 10.7905, longitude: 78.7047 },
+        'salem': { latitude: 11.6643, longitude: 78.1460 },
+        'tirunelveli': { latitude: 8.7139, longitude: 77.7567 },
+        'vellore': { latitude: 12.9165, longitude: 79.1325 },
+        'thoothukudi': { latitude: 8.7642, longitude: 78.1348 },
+        'tuticorin': { latitude: 8.7642, longitude: 78.1348 },
+        'erode': { latitude: 11.3410, longitude: 77.7172 },
+        'tiruppur': { latitude: 11.1085, longitude: 77.3411 },
+        'dindigul': { latitude: 10.3624, longitude: 77.9695 },
+        'thanjavur': { latitude: 10.7870, longitude: 79.1378 },
+        'tanjore': { latitude: 10.7870, longitude: 79.1378 },
+        'cuddalore': { latitude: 11.7447, longitude: 79.7689 },
+        'kanyakumari': { latitude: 8.0883, longitude: 77.5385 },
+        'rameswaram': { latitude: 9.2876, longitude: 79.3129 },
+        'ooty': { latitude: 11.4102, longitude: 76.6950 },
+        'udhagamandalam': { latitude: 11.4102, longitude: 76.6950 },
+        'kodaikanal': { latitude: 10.2381, longitude: 77.4892 },
+        'mysore': { latitude: 12.2958, longitude: 76.6394 },
+        'mysuru': { latitude: 12.2958, longitude: 76.6394 },
+        'munnar': { latitude: 10.0889, longitude: 77.0595 },
+        'thekkady': { latitude: 9.6034, longitude: 77.1534 },
+        'alleppey': { latitude: 9.4981, longitude: 76.3388 },
+        'alappuzha': { latitude: 9.4981, longitude: 76.3388 },
+        'goa': { latitude: 15.2993, longitude: 74.1240 },
+        'panaji': { latitude: 15.4909, longitude: 73.8278 },
+        'manali': { latitude: 32.2432, longitude: 77.1892 },
+        'shimla': { latitude: 31.1048, longitude: 77.1734 },
+        'dharamsala': { latitude: 32.2190, longitude: 76.3234 },
+        'darjeeling': { latitude: 27.0360, longitude: 88.2627 },
+        'gangtok': { latitude: 27.3389, longitude: 88.6065 },
+        'shillong': { latitude: 25.5788, longitude: 91.8933 },
+        'guwahati': { latitude: 26.1445, longitude: 91.7362 },
+        'dehradun': { latitude: 30.3165, longitude: 78.0322 },
+        'haridwar': { latitude: 29.9457, longitude: 78.1642 },
+        'rishikesh': { latitude: 30.0869, longitude: 78.2676 },
+        'nainital': { latitude: 29.3919, longitude: 79.4542 },
+        'mussoorie': { latitude: 30.4598, longitude: 78.0644 },
+        'jodhpur': { latitude: 26.2389, longitude: 73.0243 },
+        'udaipur': { latitude: 24.5854, longitude: 73.7125 },
+        'ajmer': { latitude: 26.4499, longitude: 74.6399 },
+        'bikaner': { latitude: 28.0229, longitude: 73.3119 },
+        'pushkar': { latitude: 26.4906, longitude: 74.5511 },
+        'aurangabad': { latitude: 19.8762, longitude: 75.3433 },
+        'shirdi': { latitude: 19.7673, longitude: 74.4762 },
+        'kolhapur': { latitude: 16.7050, longitude: 74.2433 },
+        'solapur': { latitude: 17.6599, longitude: 75.9064 },
+        'amravati': { latitude: 20.9320, longitude: 77.7523 },
+        'chandigarh': { latitude: 30.7333, longitude: 76.7794 },
+        'patiala': { latitude: 30.3398, longitude: 76.3869 },
+        'jalandhar': { latitude: 31.3260, longitude: 75.5762 },
+        'jammu': { latitude: 32.7266, longitude: 74.8570 },
+        'srinagar': { latitude: 34.0837, longitude: 74.7973 },
+        'leh': { latitude: 34.1526, longitude: 77.5771 },
+        'bhubaneswar': { latitude: 20.2961, longitude: 85.8245 },
+        'puri': { latitude: 19.8135, longitude: 85.8312 },
+        'cuttack': { latitude: 20.4625, longitude: 85.8828 },
+        'raipur': { latitude: 21.2514, longitude: 81.6296 },
+        'ranchi': { latitude: 23.3441, longitude: 85.3096 },
+        'jamshedpur': { latitude: 22.8046, longitude: 86.2029 },
+        'gwalior': { latitude: 26.2183, longitude: 78.1828 },
+        'jabalpur': { latitude: 23.1815, longitude: 79.9864 },
+        'allahabad': { latitude: 25.4358, longitude: 81.8463 },
+        'prayagraj': { latitude: 25.4358, longitude: 81.8463 },
+        'mathura': { latitude: 27.4924, longitude: 77.6737 },
+        'vrindavan': { latitude: 27.5794, longitude: 77.6961 },
+        'ayodhya': { latitude: 26.7922, longitude: 82.1998 },
+        'pondicherry': { latitude: 11.9416, longitude: 79.8083 },
+        'puducherry': { latitude: 11.9416, longitude: 79.8083 },
+        'mahabalipuram': { latitude: 12.6269, longitude: 80.1927 },
+        'kumbakonam': { latitude: 10.9602, longitude: 79.3845 },
+        'chidambaram': { latitude: 11.3993, longitude: 79.6935 },
+        'tiruvannamalai': { latitude: 12.2253, longitude: 79.0747 },
+        'velankanni': { latitude: 10.6849, longitude: 79.8537 },
+        'nagapattinam': { latitude: 10.7672, longitude: 79.8449 },
+    };
+
+    function localGeocode(city: string): { latitude: number; longitude: number } | null {
+        const key = city.trim().toLowerCase();
+        return LOCAL_CITY_COORDS[key] || null;
+    }
+
+    async function geocodeCity(city: string): Promise<{ latitude: number; longitude: number }> {
+        // Try local lookup first — instant, no network
+        const local = localGeocode(city);
+        if (local) return local;
+        // Fallback to Nominatim with proper headers
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city + ', India')}&limit=1`;
+        const resp = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'Accept-Language': 'en',
+                'User-Agent': 'TourJet/1.0 (travel planning app)',
+            },
+        });
+        if (!resp.ok) throw new Error(`Nominatim error: ${resp.status}`);
+        const data = await resp.json();
+        if (!Array.isArray(data) || !data[0]) throw new Error(`City not found: ${city}`);
+        return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
+    }
 
     const plannerForm = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -84,20 +235,22 @@ export default function TourPlannerPage() {
     async function onPlannerSubmit(values: z.infer<typeof formSchema>) {
         // Geocode source and destination to get coordinates
         try {
-            const srcResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(values.source)}`);
-            const srcData = await srcResponse.json();
-            const dstResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(values.destination)}`);
-            const dstData = await dstResponse.json();
+            // Parallel geocoding — both cities at the same time
+            const [srcCoords, dstCoords] = await Promise.all([
+                geocodeCity(values.source),
+                geocodeCity(values.destination),
+            ]);
 
-            if (!srcData[0] || !dstData[0]) {
-                setError('Could not find locations. Please check source and destination.');
-                return;
-            }
+            const srcLat = srcCoords.latitude;
+            const srcLon = srcCoords.longitude;
+            const dstLat = dstCoords.latitude;
+            const dstLon = dstCoords.longitude;
 
-            const srcLat = parseFloat(srcData[0].lat);
-            const srcLon = parseFloat(srcData[0].lon);
-            const dstLat = parseFloat(dstData[0].lat);
-            const dstLon = parseFloat(dstData[0].lon);
+            // Store coords so MapDisplay doesn't re-geocode the same cities
+            setGeocodedCoords({
+                src: { latitude: srcLat, longitude: srcLon },
+                dst: { latitude: dstLat, longitude: dstLon },
+            });
 
             // Calculate distance using proper Haversine formula
             const distanceKm = calculateDistance(srcLat, srcLon, dstLat, dstLon);
@@ -131,6 +284,7 @@ export default function TourPlannerPage() {
         setIsLoading(true);
         setError(null);
         setPlan(null);
+        setIsAiUpgrading(false);
 
         const selectedPackage = packages.find(p => p.id === values.packageId);
         if (!selectedPackage || !user) {
@@ -139,74 +293,90 @@ export default function TourPlannerPage() {
             return;
         }
 
+        const planInput = {
+            ...values,
+            durationDays: selectedPackage.durationDays,
+            loadKg: 100,
+            transportMode: mode,
+        };
+
+        // ── INSTANT: show local fallback in <100ms so user sees something immediately ──
+        const instantPlan = generateFallbackPlan(planInput);
+        setPlan(instantPlan);
+        setIsLoading(false);        // hide spinner — card is now visible
+        setIsAiUpgrading(true);     // show subtle "AI upgrading" badge
+        setAttractionsLoading(true);
+
+        // ── BACKGROUND: fire AI in parallel, silently upgrade when ready ──
         try {
-            const result = await getTripPlan({
-                ...values,
-                durationDays: selectedPackage.durationDays,
-                loadKg: 100,
-                transportMode: mode, // Pass the selected transport mode
-            });
+            const [aiPlan, attractionsResult] = await Promise.all([
+                fetch('/api/ai/trip-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(planInput),
+                }).then(r => r.json() as Promise<TripPlannerOutput>),
+                fetch('/api/ai/attractions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ destination: values.destination }),
+                }).then(r => r.ok ? r.json() as Promise<AttractionsOutput> : null).catch(() => null),
+            ]);
 
             addTrip({
-                source: result.source,
-                destination: result.destination,
+                source: aiPlan.source,
+                destination: aiPlan.destination,
                 startDate: new Date().toISOString(),
                 organizerName: user.username,
                 packageId: selectedPackage.id,
                 packageName: selectedPackage.name,
-                plan: result,
+                plan: aiPlan,
             });
+
+            setPlan(aiPlan);                // replace fallback with AI plan
+            setAttractions(attractionsResult);
+            setIsAiUpgrading(false);
+            setAttractionsLoading(false);
 
             toast({
-                title: "Route Plan Generated!",
-                description: `A ${mode} route for ${result.source} to ${result.destination} has been created.`
+                title: "AI Plan Ready!",
+                description: `Detailed route for ${aiPlan.source} → ${aiPlan.destination} loaded.`
             });
-
-            setPlan(result);
-
-            // Fetch tourist attractions for destination
-            fetchAttractions(result.destination);
-
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Sorry, I could not generate a trip plan. The AI model might be unavailable. Please try again.';
-            setError(errorMessage);
-            const fallbackPlan = generateFallbackPlan({
-                ...values,
-                durationDays: selectedPackage.durationDays,
-                loadKg: 100,
-                transportMode: mode,
-            });
+            // AI failed — fallback is already showing, just clear the upgrading badge
+            console.warn('AI plan failed, keeping local fallback:', err);
+            setIsAiUpgrading(false);
+            setAttractionsLoading(false);
             addTrip({
-                source: fallbackPlan.source,
-                destination: fallbackPlan.destination,
+                source: instantPlan.source,
+                destination: instantPlan.destination,
                 startDate: new Date().toISOString(),
                 organizerName: user.username,
                 packageId: selectedPackage.id,
                 packageName: selectedPackage.name,
-                plan: fallbackPlan,
+                plan: instantPlan,
             });
-            setPlan(fallbackPlan);
-        } finally {
-            setIsLoading(false);
         }
     }
 
-    // Fetch tourist attractions for destination
-    async function fetchAttractions(destination: string) {
-        setAttractionsLoading(true);
-        try {
-            const result = await getDestinationAttractions({ destination });
-            setAttractions(result);
-        } catch (err) {
-            console.error('Failed to fetch attractions:', err);
-            // Silently fail - attractions are optional
-        } finally {
-            setAttractionsLoading(false);
-        }
-    }
+    // fetchAttractions is now called inline in parallel with getTripPlan above
 
     function generateFallbackPlan(input: z.infer<typeof formSchema> & { loadKg: number, durationDays: number, transportMode?: TransportMode }): TripPlannerOutput {
-        const distance = 450;
+        // Import distance table logic inline
+        const CITY_DISTANCES: Record<string, number> = {
+            'chennai-ooty': 540, 'ooty-chennai': 540, 'chennai-coimbatore': 495, 'coimbatore-chennai': 495,
+            'chennai-madurai': 460, 'madurai-chennai': 460, 'chennai-bangalore': 350, 'bangalore-chennai': 350,
+            'chennai-bengaluru': 350, 'bengaluru-chennai': 350, 'chennai-hyderabad': 625, 'hyderabad-chennai': 625,
+            'madurai-ooty': 180, 'ooty-madurai': 180, 'madurai-coimbatore': 215, 'coimbatore-madurai': 215,
+            'coimbatore-ooty': 86, 'ooty-coimbatore': 86, 'bangalore-mysore': 145, 'mysore-bangalore': 145,
+            'bengaluru-mysore': 145, 'mysore-bengaluru': 145, 'bangalore-ooty': 270, 'ooty-bangalore': 270,
+            'bengaluru-ooty': 270, 'ooty-bengaluru': 270, 'mumbai-delhi': 1420, 'delhi-mumbai': 1420,
+            'delhi-agra': 210, 'agra-delhi': 210, 'delhi-jaipur': 280, 'jaipur-delhi': 280,
+            'bangalore-mumbai': 984, 'mumbai-bangalore': 984, 'bengaluru-mumbai': 984, 'mumbai-bengaluru': 984,
+        };
+        const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '').replace('bengaluru', 'bangalore').replace('new delhi', 'delhi');
+        const src = normalize(input.source);
+        const dst = normalize(input.destination);
+        const distance = src === dst ? 10 : (CITY_DISTANCES[`${src}-${dst}`] || 350);
         const mode = input.transportMode || 'road';
 
         // Calculate duration and costs based on mode
@@ -503,7 +673,15 @@ export default function TourPlannerPage() {
                             <div className="space-y-8">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-lg sm:text-2xl font-headline break-words">{t("Travel Plan:")}{" "}{plan.source} {t("to")} {plan.destination}</CardTitle>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <CardTitle className="text-lg sm:text-2xl font-headline break-words">{t("Travel Plan:")}{" "}{plan.source} {t("to")} {plan.destination}</CardTitle>
+                                          {isAiUpgrading && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 animate-pulse">
+                                              <span className="h-1.5 w-1.5 rounded-full bg-orange-500 inline-block"></span>
+                                              AI enhancing plan…
+                                            </span>
+                                          )}
+                                        </div>
                                         <CardDescription className="break-words">{plan.suggestedRoute}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-6">
@@ -529,7 +707,12 @@ export default function TourPlannerPage() {
                                         </Alert>
                                     </CardContent>
                                 </Card>
-                                <MapDisplay plan={plan} traffic={currentTraffic} />
+                                <MapDisplay
+                                    plan={plan}
+                                    traffic={currentTraffic}
+                                    sourceLatLng={geocodedCoords?.src}
+                                    destLatLng={geocodedCoords?.dst}
+                                />
 
                                 {/* Must-Visit Places Section */}
                                 {(attractions || attractionsLoading) && (

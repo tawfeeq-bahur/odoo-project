@@ -104,7 +104,7 @@ const geocoderFlow = ai.defineFlow(
   },
   async input => {
     try {
-      const {output} = await prompt(input);
+      const {output} = await prompt(input, { config: { temperature: 0.1, maxOutputTokens: 100 } });
       if (!output) {
         throw new Error('No output from geocoder prompt');
       }

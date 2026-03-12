@@ -62,7 +62,7 @@ const tourInsightsFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-        const {output} = await prompt(input);
+        const {output} = await prompt(input, { config: { temperature: 0.3, maxOutputTokens: 400 } });
         if (!output) {
           throw new Error("AI did not return an output.");
         }

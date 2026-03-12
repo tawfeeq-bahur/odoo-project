@@ -21,9 +21,9 @@ import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 // Configurable parameters for route-based POI filtering
 // To adjust POI display, modify these values:
 const ROUTE_POI_CONFIG = {
-  BUFFER_KM: 2, // 2km buffer from route
-  MAX_EMERGENCY_POIS: 5, // Limit for Police/Fire stations
-  MAX_OTHER_POIS: 5, // Limit for other POIs per category
+  BUFFER_KM: 5, // 5km buffer from route
+  MAX_EMERGENCY_POIS: 10, // Limit for Police/Fire stations
+  MAX_OTHER_POIS: 10, // Limit for other POIs per category
   DEFAULT_RADIUS_M: 5000,
 };
 
@@ -52,16 +52,20 @@ function getFallbackCoordinates(location: string): { latitude: number; longitude
     'mumbai': { lat: 19.0760, lng: 72.8777 },
     'delhi': { lat: 28.7041, lng: 77.1025 },
     'bangalore': { lat: 12.9716, lng: 77.5946 },
+    'bengaluru': { lat: 12.9716, lng: 77.5946 },
     'chennai': { lat: 13.0827, lng: 80.2707 },
     'hyderabad': { lat: 17.3850, lng: 78.4867 },
     'pune': { lat: 18.5204, lng: 73.8567 },
     'kolkata': { lat: 22.5726, lng: 88.3639 },
     'coimbatore': { lat: 11.0168, lng: 76.9558 },
+    'ooty': { lat: 11.4102, lng: 76.6950 },
+    'udhagamandalam': { lat: 11.4102, lng: 76.6950 },
     'erode': { lat: 11.3410, lng: 77.7172 },
     'madurai': { lat: 9.9252, lng: 78.1198 },
     'salem': { lat: 11.6643, lng: 78.1460 },
     'tirupur': { lat: 11.1085, lng: 77.3411 },
     'trichy': { lat: 10.7905, lng: 78.7047 },
+    'tiruchy': { lat: 10.7905, lng: 78.7047 },
     'karur': { lat: 10.9601, lng: 78.0767 },
     'namakkal': { lat: 11.2212, lng: 78.1672 },
     'dindigul': { lat: 10.3450, lng: 77.9600 },
@@ -73,17 +77,49 @@ function getFallbackCoordinates(location: string): { latitude: number; longitude
     'cuddalore': { lat: 11.7447, lng: 79.7680 },
     'villupuram': { lat: 11.9394, lng: 79.5000 },
     'pondicherry': { lat: 11.9139, lng: 79.8145 },
+    'puducherry': { lat: 11.9139, lng: 79.8145 },
     'ariyalur': { lat: 11.1374, lng: 79.0758 },
     'perambalur': { lat: 11.2400, lng: 78.8800 },
     'pudukkottai': { lat: 10.3800, lng: 78.8200 },
     'sivaganga': { lat: 9.8500, lng: 78.4800 },
     'ramanathapuram': { lat: 9.3700, lng: 78.8200 },
+    'rameswaram': { lat: 9.2882, lng: 79.3129 },
     'virudhunagar': { lat: 9.5800, lng: 77.9600 },
     'theni': { lat: 10.0100, lng: 77.4800 },
     'kanyakumari': { lat: 8.0883, lng: 77.5385 },
     'nilgiris': { lat: 11.4600, lng: 76.6400 },
     'dharmapuri': { lat: 12.1200, lng: 78.1600 },
-    'krishnagiri': { lat: 12.5200, lng: 78.2200 }
+    'krishnagiri': { lat: 12.5200, lng: 78.2200 },
+    'mysore': { lat: 12.2958, lng: 76.6394 },
+    'mysuru': { lat: 12.2958, lng: 76.6394 },
+    'munnar': { lat: 10.0889, lng: 77.0595 },
+    'kochi': { lat: 9.9312, lng: 76.2673 },
+    'cochin': { lat: 9.9312, lng: 76.2673 },
+    'thiruvananthapuram': { lat: 8.5241, lng: 76.9366 },
+    'trivandrum': { lat: 8.5241, lng: 76.9366 },
+    'kozhikode': { lat: 11.2588, lng: 75.7804 },
+    'calicut': { lat: 11.2588, lng: 75.7804 },
+    'thrissur': { lat: 10.5276, lng: 76.2144 },
+    'goa': { lat: 15.2993, lng: 74.1240 },
+    'panaji': { lat: 15.4909, lng: 73.8278 },
+    'agra': { lat: 27.1767, lng: 78.0081 },
+    'jaipur': { lat: 26.9124, lng: 75.7873 },
+    'udaipur': { lat: 24.5854, lng: 73.7125 },
+    'jodhpur': { lat: 26.2389, lng: 73.0243 },
+    'varanasi': { lat: 25.3176, lng: 82.9739 },
+    'lucknow': { lat: 26.8467, lng: 80.9462 },
+    'chandigarh': { lat: 30.7333, lng: 76.7794 },
+    'amritsar': { lat: 31.6340, lng: 74.8723 },
+    'shimla': { lat: 31.1048, lng: 77.1734 },
+    'manali': { lat: 32.2432, lng: 77.1892 },
+    'darjeeling': { lat: 27.0360, lng: 88.2627 },
+    'bhopal': { lat: 23.2599, lng: 77.4126 },
+    'indore': { lat: 22.7196, lng: 75.8577 },
+    'nagpur': { lat: 21.1458, lng: 79.0882 },
+    'surat': { lat: 21.1702, lng: 72.8311 },
+    'ahmedabad': { lat: 23.0225, lng: 72.5714 },
+    'visakhapatnam': { lat: 17.6868, lng: 83.2185 },
+    'vizag': { lat: 17.6868, lng: 83.2185 },
   };
   
   const locationLower = location.toLowerCase();
@@ -525,9 +561,13 @@ const showPoliceStationsAlongRoute = async (map: L.Map, sourceLat: number, sourc
 type MapDisplayProps = {
   plan: TripPlannerOutput;
   traffic?: string;
+  /** Pre-geocoded source coords from parent — skips Nominatim API call */
+  sourceLatLng?: { latitude: number; longitude: number };
+  /** Pre-geocoded destination coords from parent — skips Nominatim API call */
+  destLatLng?: { latitude: number; longitude: number };
 };
 
-export function MapDisplay({ plan, traffic }: MapDisplayProps) {
+export function MapDisplay({ plan, traffic, sourceLatLng: propsSourceLatLng, destLatLng: propsDestLatLng }: MapDisplayProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const [sourceCoords, setSourceCoords] = useState<GeocodeOutput | null>(null);
@@ -543,6 +583,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
   const routeGroupRef = useRef<L.LayerGroup | null>(null);
   const markerIndexRef = useRef<Map<string, L.Marker>>(new Map());
   const [poiList, setPoiList] = useState<Record<string, { name: string; lat: number; lon: number }[]>>({});
+  const [poiLoading, setPoiLoading] = useState<boolean>(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const policeLayerRef = useRef<L.LayerGroup | null>(null);
   const [policeStationsCount, setPoliceStationsCount] = useState<number>(0);
@@ -849,26 +890,42 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
             setRoadPolyline([]);
             setAltPolylines([]);
 
-            // 1. Get coordinates for source and destination (fast geocoder first)
-            const fastGeocode = async (query: string): Promise<GeocodeOutput> => {
-              try {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-                const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                const j = await r.json();
-                if (Array.isArray(j) && j[0]) {
-                  return { latitude: parseFloat(j[0].lat), longitude: parseFloat(j[0].lon) };
-                }
-                throw new Error('nominatim empty');
-              } catch {
-                // Fallback to AI geocoder
-                return await getCoordinates({ location: query });
-              }
-            };
+            // 0. Use pre-geocoded coords from parent if available (skips Nominatim entirely)
+            //    Otherwise fall back to local lookup then Nominatim.
+            let sourceRes: GeocodeOutput;
+            let destRes: GeocodeOutput;
 
-            const [sourceRes, destRes] = await Promise.all([
-                fastGeocode(plan.source),
-                fastGeocode(plan.destination)
-            ]);
+            if (propsSourceLatLng && propsDestLatLng) {
+                // Parent already geocoded — use directly, zero extra API calls
+                sourceRes = propsSourceLatLng;
+                destRes = propsDestLatLng;
+            } else {
+                // Fallback: show map immediately with local coords, then refine
+                const srcFallback = getFallbackCoordinates(plan.source);
+                const dstFallback = getFallbackCoordinates(plan.destination);
+                setSourceCoords(srcFallback);
+                setDestCoords(dstFallback);
+
+                const fastGeocode = async (query: string): Promise<GeocodeOutput> => {
+                  try {
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+                    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    const j = await r.json();
+                    if (Array.isArray(j) && j[0]) {
+                      return { latitude: parseFloat(j[0].lat), longitude: parseFloat(j[0].lon) };
+                    }
+                    throw new Error('nominatim empty');
+                  } catch {
+                    return await getCoordinates({ location: query });
+                  }
+                };
+
+                [sourceRes, destRes] = await Promise.all([
+                    fastGeocode(plan.source),
+                    fastGeocode(plan.destination)
+                ]);
+            }
+
             setSourceCoords(sourceRes);
             setDestCoords(destRes);
 
@@ -932,7 +989,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
 
     fetchAndSnapRoute();
 
-  }, [plan]);
+  }, [plan, propsSourceLatLng?.latitude, propsSourceLatLng?.longitude, propsDestLatLng?.latitude, propsDestLatLng?.longitude]);
 
   useEffect(() => {
     const map = mapInstance.current;
@@ -1059,15 +1116,15 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     }
     markerIndexRef.current.clear();
 
-    const CATEGORY_STYLES: Record<string, { query: string; color: string; emoji: string }> = {
-      'Heritage Sites': { query: 'nwr[historic]', color: '#8b5cf6', emoji: '🏛️' },
-      'Police Stations': { query: 'nwr["amenity"="police"]', color: '#3b82f6', emoji: '🚔' },
-      'Fire Stations': { query: 'nwr["amenity"="fire_station"]', color: '#ef4444', emoji: '🔥' },
-      'Hospitals': { query: 'nwr["amenity"="hospital"]', color: '#ef4444', emoji: '🏥' },
-      'Restaurants': { query: 'nwr["amenity"="restaurant"]', color: '#f97316', emoji: '🍽️' },
-      'Restrooms': { query: 'nwr["amenity"="toilets"]', color: '#10b981', emoji: '🚻' },
-      'Fuel Stations': { query: 'nwr["amenity"="fuel"]', color: '#eab308', emoji: '⛽' },
-      'EV Stations': { query: 'nwr["amenity"="charging_station"]', color: '#14b8a6', emoji: '⚡' },
+    const CATEGORY_STYLES: Record<string, { color: string; emoji: string }> = {
+      'Heritage Sites': { color: '#8b5cf6', emoji: '🏛️' },
+      'Police Stations': { color: '#3b82f6', emoji: '🚔' },
+      'Fire Stations': { color: '#ef4444', emoji: '🔥' },
+      'Hospitals': { color: '#ef4444', emoji: '🏥' },
+      'Restaurants': { color: '#f97316', emoji: '🍽️' },
+      'Restrooms': { color: '#10b981', emoji: '🚻' },
+      'Fuel Stations': { color: '#eab308', emoji: '⛽' },
+      'EV Stations': { color: '#14b8a6', emoji: '⚡' },
     };
 
     const buildDivIcon = (bg: string, emoji: string) =>
@@ -1080,16 +1137,36 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
       });
 
     const bounds = L.latLngBounds(activeRoute as L.LatLngTuple[]);
-    const south = bounds.getSouth();
-    const west = bounds.getWest();
-    const north = bounds.getNorth();
-    const east = bounds.getEast();
-
-    const overpassUrl = 'https://overpass-api.de/api/interpreter';
+    // Add 0.1° padding so roads near the bbox edge still return POIs
+    const PAD = 0.1;
+    const south = bounds.getSouth() - PAD;
+    const west = bounds.getWest() - PAD;
+    const north = bounds.getNorth() + PAD;
+    const east = bounds.getEast() + PAD;
 
     const buildQuery = () => {
-      const parts = Object.values(CATEGORY_STYLES).map(c => `${c.query}(${south},${west},${north},${east});`);
-      return `[out:json][timeout:25];(${parts.join('')});out center;`;
+      const bbox = `${south},${west},${north},${east}`;
+      // Heritage Sites: historic tag OR tourism attractions/museums
+      const heritageParts = [
+        `node[historic](${bbox});`,
+        `way[historic](${bbox});`,
+        `node["tourism"~"^(attraction|museum|artwork|viewpoint|gallery)$"](${bbox});`,
+        `way["tourism"~"^(attraction|museum|artwork|viewpoint|gallery)$"](${bbox});`,
+      ].join('');
+      const otherParts = [
+        `node["amenity"="police"](${bbox});`,
+        `way["amenity"="police"](${bbox});`,
+        `node["amenity"="fire_station"](${bbox});`,
+        `way["amenity"="fire_station"](${bbox});`,
+        `node["amenity"="hospital"](${bbox});`,
+        `way["amenity"="hospital"](${bbox});`,
+        `node["amenity"="restaurant"](${bbox});`,
+        `node["amenity"="toilets"](${bbox});`,
+        `node["amenity"="fuel"](${bbox});`,
+        `way["amenity"="fuel"](${bbox});`,
+        `node["amenity"="charging_station"](${bbox});`,
+      ].join('');
+      return `[out:json][timeout:30];(${heritageParts}${otherParts});out center;`;
     };
 
     const toMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -1131,21 +1208,20 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     };
 
     const fetchPOIs = async () => {
+      setPoiLoading(true);
       try {
         const query = buildQuery();
-        console.log('[POI] Fetching POIs with Overpass query...');
-        const resp = await fetch(overpassUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body: `data=${encodeURIComponent(query)}` });
-        if (!resp.ok) { console.warn('[POI] Overpass fetch failed:', resp.status); return; }
-        if (cancelled) { console.log('[POI] Fetch cancelled (stale)'); return; }
-        const data = await resp.json();
-        if (cancelled) { console.log('[POI] Cancelled after parse (stale)'); return; }
+        console.log('[POI] Fetching POIs with Overpass query (multi-mirror)...');
+        // Use fetchFromOverpass which tries 4 mirrors with 30s timeout each
+        const data = await fetchFromOverpass(query, 30);
+        if (cancelled) { console.log('[POI] Fetch cancelled (stale)'); setPoiLoading(false); return; }
         const elements = Array.isArray(data?.elements) ? data.elements : [];
         console.log(`[POI] Overpass returned ${elements.length} raw elements`);
 
         // 2km meters threshold to the route
         const MAX_DISTANCE_M = ROUTE_POI_CONFIG.BUFFER_KM * 1000;
         const counts: Record<string, number> = {};
-        const LIMIT_PER_CAT = 20;
+        const LIMIT_PER_CAT = 30;
 
         const nextList: Record<string, { name: string; lat: number; lon: number }[]> = {};
 
@@ -1169,7 +1245,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
 
           const tags = e.tags || {};
           let category: string | null = null;
-          if (tags.historic) category = 'Heritage Sites';
+          if (tags.historic || ['attraction','museum','artwork','viewpoint','gallery'].includes(tags.tourism)) category = 'Heritage Sites';
           else if (tags.amenity === 'police') category = 'Police Stations';
           else if (tags.amenity === 'fire_station') category = 'Fire Stations';
           else if (tags.amenity === 'hospital') category = 'Hospitals';
@@ -1219,8 +1295,10 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
         markersLayerRef.current = layer;
         console.log(`[POI] Added ${markerCount} markers to map across ${Object.keys(nextList).length} categories`);
         setPoiList(nextList);
+        setPoiLoading(false);
       } catch (err) {
         console.warn('[POI] fetch failed', err);
+        setPoiLoading(false);
       }
     };
 
@@ -1229,21 +1307,7 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
     return () => { cancelled = true; };
   }, [roadPolyline, snappedPolyline]);
 
-  // Update police stations when route polyline changes
-  useEffect(() => {
-    const map = mapInstance.current;
-    if (!map || !sourceCoords || !destCoords) return;
-
-    // Use roadPolyline if available, otherwise fall back to snappedPolyline
-    const activeRoute = roadPolyline.length > 0 ? roadPolyline : snappedPolyline;
-    
-    if (activeRoute.length > 0) {
-      console.log('Updating police stations with route polyline filtering');
-      showPoliceStationsAlongRoute(map, sourceCoords.latitude, sourceCoords.longitude, destCoords.latitude, destCoords.longitude, policeLayerRef, activeRoute).then(result => {
-        setPoliceStationsCount(result.count);
-      });
-    }
-  }, [roadPolyline, snappedPolyline, sourceCoords, destCoords]);
+  // Police stations are now included in the main POI fetchPOIs() query above — no separate Overpass call needed.
 
 
   return (
@@ -1328,14 +1392,29 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
           </CardContent>
       </Card>
       {/* Points of Interest Along Route */}
-      {(plan.pointsOfInterest || poiList) && (
-        <Card>
-            <CardHeader>
-                <CardTitle>Points of Interest Along Route</CardTitle>
-                <CardDescription>Essential services and facilities near your suggested path.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {Object.entries({
+      <Card>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Points of Interest Along Route
+                {poiLoading && <span className="text-xs font-normal text-muted-foreground animate-pulse">Loading nearby places…</span>}
+              </CardTitle>
+              <CardDescription>Essential services and facilities near your suggested path.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              {poiLoading ? (
+                <div className="space-y-3">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="border rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 rounded-full bg-muted animate-pulse" />
+                        <div className="h-4 w-28 rounded bg-muted animate-pulse" />
+                      </div>
+                      <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+              <>{Object.entries({
                   'Heritage Sites': (poiList['Heritage Sites'] || []),
                   'Police Stations': (poiList['Police Stations'] || []),
                   'Fire Stations': (poiList['Fire Stations'] || []),
@@ -1395,10 +1474,10 @@ export function MapDisplay({ plan, traffic }: MapDisplayProps) {
                       )}
                     </div>
                   );
-                })}
-            </CardContent>
-        </Card>
-      )}
+                })}</>
+              )}
+          </CardContent>
+      </Card>
     </>
   );
 }

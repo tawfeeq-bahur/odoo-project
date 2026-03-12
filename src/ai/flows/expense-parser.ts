@@ -63,7 +63,7 @@ const expenseParserFlow = ai.defineFlow(
   },
   async input => {
     try {
-      const {output} = await prompt(input);
+      const {output} = await prompt(input, { config: { temperature: 0.1, maxOutputTokens: 300 } });
       if (!output) {
         throw new Error('No output from expense parser prompt');
       }

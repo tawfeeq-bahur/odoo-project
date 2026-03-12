@@ -102,7 +102,7 @@ const placeSearchFlow = ai.defineFlow(
         outputSchema: PlaceSearchOutputSchema,
     },
     async (input) => {
-        const { output } = await prompt(input);
+        const { output } = await prompt(input, { config: { temperature: 0.3, maxOutputTokens: 500 } });
         if (!output) {
             throw new Error("AI place search did not return valid output.");
         }
