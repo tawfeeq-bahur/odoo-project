@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import type { TourPackage, Expense, Member } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, CircleDollarSign, Users, Wrench, Lightbulb, AlertTriangle } from 'lucide-react';
-import { getTourInsights, TourInsightsOutput } from '@/ai/flows/vehicle-insights';
+import { getTourInsights, TourInsightsOutput } from '@/ai/flows/tour-insights';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type TourSummaryProps = {

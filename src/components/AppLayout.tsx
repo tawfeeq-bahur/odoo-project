@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { subDays } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { AddPackageDialog } from "./fleet/AddVehicleDialog";
+import { AddPackageDialog } from "./tours/AddPackageDialog";
 import { RightPanel } from "./RightPanel";
 import { LanguageSelector } from "./LanguageSelector";
 import { useLanguage } from "@/context/LanguageContext";

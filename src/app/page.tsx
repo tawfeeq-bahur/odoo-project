@@ -56,7 +56,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog";
+import { AddPackageDialog } from "@/components/tours/AddPackageDialog";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   Select,

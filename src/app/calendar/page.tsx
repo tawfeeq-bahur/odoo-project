@@ -25,7 +25,7 @@ import {
 } from "date-fns";
 import { TourPackage } from "@/lib/types";
 import { TripDetailsDialog } from "@/components/TripDetailsDialog";
-import { AddPackageDialog } from "@/components/fleet/AddVehicleDialog";
+import { AddPackageDialog } from "@/components/tours/AddPackageDialog";
 import { cn } from "@/lib/utils";
 import { useLanguage } from '@/context/LanguageContext';
 

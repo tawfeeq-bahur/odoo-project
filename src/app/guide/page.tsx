@@ -27,7 +27,7 @@ import { RouteAdvisories } from '@/components/RouteAdvisories';
 import { useLanguage } from '@/context/LanguageContext';
 
 const MapDisplay = dynamic(
-    () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
+    () => import('@/components/tours/MapDisplay').then((mod) => mod.MapDisplay),
     {
         ssr: false,
         loading: () => <Skeleton className="aspect-video w-full h-[400px] border-2 border-dashed rounded-lg bg-muted/30" />

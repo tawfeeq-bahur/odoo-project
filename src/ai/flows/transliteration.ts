@@ -13,7 +13,7 @@ import {googleAI} from '@genkit-ai/googleai';
 // Separate Genkit instance with its own API key for transliteration
 const transliterationAi = genkit({
   plugins: [googleAI({ apiKey: process.env.GOOGLE_GENAI_TRANSLITERATION_API_KEY })],
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-2.5-flash-lite',
 });
 
 const TransliterationInputSchema = z.object({
@@ -35,36 +35,76 @@ export async function extractTextFromImage(input: TransliterationInput): Promise
   return transliterationFlow(input);
 }
 
-const prompt = transliterationAi.definePrompt({
-  name: 'transliterationPrompt',
-  input: {schema: TransliterationInputSchema},
-  output: {schema: TransliterationOutputSchema},
-  model: 'googleai/gemini-2.5-flash',
-  prompt: `You are an expert Optical Character Recognition (OCR) and transliteration engine.
+// --- STEP 1: OCR - Extract raw text from image ---
+const OcrOutputSchema = z.object({
+  rawText: z.string().describe("All text extracted from the image exactly as written."),
+  detectedScript: z.string().describe("The script/language detected in the image (e.g., Tamil, Hindi, English, mixed).")
+});
 
-  IMPORTANT: Transliteration is NOT translation. 
-  - Transliteration = Converting the SOUNDS/PHONETICS of words into the letters of another script.
-  - Translation = Converting the MEANING of words into another language.
-  You must perform TRANSLITERATION only, never translation.
+const ocrPrompt = transliterationAi.definePrompt({
+  name: 'ocrPrompt',
+  input: {schema: z.object({ photoDataUri: z.string() })},
+  output: {schema: OcrOutputSchema},
+  model: 'googleai/gemini-2.5-flash-lite',
+  prompt: `You are an OCR engine. Extract ALL text visible in this image exactly as written. Do not modify, translate, or transliterate anything. Return the raw text preserving line breaks. Also identify what script/language the text is in.
 
-  Your task:
-  1. Accurately extract all text visible in the provided image.
-  2. Transliterate the extracted text phonetically into the script of the target language: {{targetLanguage}}.
-     - Preserve the original pronunciation/sounds using the closest matching letters of the target script.
-     - Do NOT translate the meaning of words into the target language.
-     - Proper nouns, place names, and all other words must be phonetically represented, not translated.
-
-  Examples of correct transliteration (NOT translation):
-  - Tamil "அரசுப்பேருந்து" → English target: "Arasupeṟuntu" (NOT "Government Bus")
-  - Tamil "சேலம்" → English target: "Sēlam" (NOT "Salem" as a translation — but phonetically "Selam")
-  - Tamil "தமிழ்நாடு" → Hindi target: "तमिऴ्नाडु" (phonetic, NOT "तमिलनाडु की सरकार")
-  - Tamil "தமிழ்நாடு" → English target: "Tamiḻnāṭu" (phonetic Roman letters)
-  - Hindi "नमस्ते" → Tamil target: "நமஸ்தே" (phonetic, NOT a translation)
-
-  Return only the final transliterated text, nothing else.
-
-Here is the image to analyze:
+Here is the image:
 {{media url=photoDataUri}}`,
+});
+
+// --- STEP 2: Transliterate extracted text ---
+const TransliterateInputSchema = z.object({
+  sourceText: z.string().describe("The source text to transliterate."),
+  sourceScript: z.string().describe("The script the source text is written in."),
+  targetLanguage: z.string().describe("The target language/script to transliterate into.")
+});
+
+const transliteratePrompt = transliterationAi.definePrompt({
+  name: 'transliteratePrompt',
+  input: {schema: TransliterateInputSchema},
+  output: {schema: TransliterationOutputSchema},
+  model: 'googleai/gemini-2.5-flash-lite',
+  prompt: `You are a TRANSLITERATION engine. You convert text from one SCRIPT to another SCRIPT phonetically.
+
+IMPORTANT: This is TRANSLITERATION, NOT TRANSLATION.
+- Transliteration = rewrite the SAME SOUNDS using DIFFERENT script/alphabet letters.
+- Translation = convert MEANING to another language. DO NOT DO THIS.
+
+SOURCE TEXT (in {{sourceScript}} script):
+"""
+{{sourceText}}
+"""
+
+TARGET SCRIPT: {{targetLanguage}}
+
+YOUR TASK: Convert every word from the source text into {{targetLanguage}} script by reproducing the PRONUNCIATION/SOUNDS, NOT the meaning.
+
+RULES:
+1. Keep the same sounds, only change the letters/script.
+2. Your output must contain ZERO characters from the original {{sourceScript}} script.
+3. Every letter must be in {{targetLanguage}} script.
+4. Numbers and symbols stay as-is: "28" → "28", "₹" → "₹", "TN-29" → "TN-29"
+5. Preserve line breaks.
+
+EXAMPLES OF CORRECT TRANSLITERATION (sounds preserved, script changed):
+- Tamil "அரசுப்பேருந்து" → English "Arasupperundhu"
+- Tamil "சேலம்" → English "Sēlam" or "Salem"
+- Tamil "நேர்வழி" → English "Nervazhi"
+- Tamil "தமிழ்நாடு" → English "Tamilnadu"
+- Tamil "திருநெல்வேலி" → English "Tirunelveli"
+- Tamil "பேருந்து" → Hindi "पेरुन्दु" (NOT "बस" which is translation)
+- Hindi "नमस्ते" → Tamil "நமஸ்தே" (NOT "வணக்கம்" which is translation)
+- Hindi "नमस्ते" → English "Namaste"
+- English "Hello" → Tamil "ஹெலோ"
+- English "Hello" → Hindi "हैलो"
+- English "Station" → Tamil "ஸ்டேஷன்"
+
+EXAMPLES OF WRONG OUTPUT (translation, NOT transliteration — DO NOT DO THIS):
+- Tamil "பேருந்து" → Hindi "बस" ← WRONG (this translates the meaning)
+- Tamil "நன்றி" → Hindi "धन्यवाद" ← WRONG (this translates the meaning)
+- Hindi "खाना" → Tamil "உணவு" ← WRONG (this translates the meaning)
+
+Now transliterate the source text into {{targetLanguage}} script. Output ONLY the transliterated text:`,
 });
 
 const transliterationFlow = transliterationAi.defineFlow(
@@ -74,15 +114,65 @@ const transliterationFlow = transliterationAi.defineFlow(
     outputSchema: TransliterationOutputSchema,
   },
   async input => {
-    try {
-      const {output} = await prompt(input, { config: { temperature: 0.1, maxOutputTokens: 2048 } });
-      if (!output) {
-        throw new Error('No output from transliteration prompt');
+    const maxRetries = 3;
+
+    // STEP 1: OCR - Extract raw text from image
+    let rawText = '';
+    let detectedScript = '';
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const {output} = await ocrPrompt({ photoDataUri: input.photoDataUri }, { config: { temperature: 0.1, maxOutputTokens: 2048 } });
+        if (!output || !output.rawText) {
+          throw new Error('No text extracted from image');
+        }
+        rawText = output.rawText;
+        detectedScript = output.detectedScript || 'Unknown';
+        console.log(`OCR extracted (${detectedScript}): ${rawText.substring(0, 100)}...`);
+        break;
+      } catch(e: any) {
+        const status = e?.status || e?.code;
+        const isRetryable = status === 503 || status === 429;
+        if (isRetryable && attempt < maxRetries) {
+          console.log(`OCR attempt ${attempt} failed (${status}), retrying...`);
+          await new Promise(r => setTimeout(r, attempt * 2000));
+          continue;
+        }
+        console.error(e);
+        throw new Error('Unable to extract text from image. AI model may be temporarily unavailable.');
       }
-      return output;
-    } catch(e) {
-      console.error(e);
-      throw new Error('Unable to extract text, AI model may be temporarily unavailable.')
     }
+
+    // If the source text is already in the target script, just return it
+    const targetScriptLower = input.targetLanguage.toLowerCase();
+    const detectedLower = detectedScript.toLowerCase();
+    if (detectedLower === targetScriptLower || detectedLower.includes(targetScriptLower)) {
+      return { extractedText: rawText };
+    }
+
+    // STEP 2: Transliterate the extracted text
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const {output} = await transliteratePrompt({
+          sourceText: rawText,
+          sourceScript: detectedScript,
+          targetLanguage: input.targetLanguage,
+        }, { config: { temperature: 0.2, maxOutputTokens: 2048 } });
+        if (!output || !output.extractedText) {
+          throw new Error('No output from transliteration');
+        }
+        return output;
+      } catch(e: any) {
+        const status = e?.status || e?.code;
+        const isRetryable = status === 503 || status === 429;
+        if (isRetryable && attempt < maxRetries) {
+          console.log(`Transliteration attempt ${attempt} failed (${status}), retrying...`);
+          await new Promise(r => setTimeout(r, attempt * 2000));
+          continue;
+        }
+        console.error(e);
+        throw new Error('Unable to transliterate text. AI model may be temporarily unavailable.');
+      }
+    }
+    throw new Error('Unable to transliterate text after multiple attempts.');
   }
 );

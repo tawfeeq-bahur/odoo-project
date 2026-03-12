@@ -30,12 +30,11 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { OdometerUpload } from '@/components/odometer/OdometerUpload';
 import { useLanguage } from '@/context/LanguageContext';
 import { RouteAdvisories } from '@/components/RouteAdvisories';
 
 const MapDisplay = dynamic(
-  () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
+  () => import('@/components/tours/MapDisplay').then((mod) => mod.MapDisplay),
   { 
     ssr: false,
     loading: () => <Skeleton className="aspect-video w-full h-[300px] border-2 border-dashed rounded-lg bg-muted/30" />
@@ -47,7 +46,6 @@ export default function TripsPage() {
     const { user, trips, updateTripStatus } = useSharedState();
     const { toast } = useToast();
     const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
-    const [showOdometerUpload, setShowOdometerUpload] = useState(false);
     const { t } = useLanguage();
     
     if (user?.role !== 'employee') {
@@ -190,50 +188,10 @@ export default function TripsPage() {
                                     </CardContent>
                                 </Card>
 
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>{t("Update Odometer")}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground mb-4">{t("Take a geo-tagged photo of your odometer reading for verification.")}</p>
-                                        <Button 
-                                            onClick={() => setShowOdometerUpload(true)}
-                                            className="w-full"
-                                        >
-                                            <Upload className="mr-2"/> {t("Update Odometer Reading")}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-
                             </div>
                         </div>
                     </DialogContent>
                  </Dialog>
-            )}
-
-            {showOdometerUpload && selectedTrip && (
-                <Dialog open={showOdometerUpload} onOpenChange={setShowOdometerUpload}>
-                    <DialogContent className="max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>{t("Update Odometer Reading")}</DialogTitle>
-                            <DialogDescription>
-                                Take a photo of your odometer for trip: {selectedTrip.source} to {selectedTrip.destination}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <OdometerUpload
-                            vehicleId={selectedTrip.vehicleId}
-                            tripId={selectedTrip.id}
-                            onSuccess={() => {
-                                setShowOdometerUpload(false);
-                                toast({
-                                    title: "Odometer reading submitted",
-                                    description: "Your reading has been submitted for verification"
-                                });
-                            }}
-                            onCancel={() => setShowOdometerUpload(false)}
-                        />
-                    </DialogContent>
-                </Dialog>
             )}
 
         </div>

@@ -20,16 +20,12 @@ import TransliterationScreen from '../screens/TransliterationScreen';
 
 import TripsScreen from '../screens/TripsScreen';
 import ScannerScreen from '../screens/ScannerScreen';
-import VehicleHealthScreen from '../screens/VehicleHealthScreen';
 import SupportScreen from '../screens/SupportScreen';
 
-import VehiclesScreen from '../screens/VehiclesScreen';
-import VehicleDetailScreen from '../screens/VehicleDetailScreen';
 import EmployeesScreen from '../screens/EmployeesScreen';
 import EmployeeDetailScreen from '../screens/EmployeeDetailScreen';
 import RoutesScreen from '../screens/RoutesScreen';
 import TripSummaryScreen from '../screens/TripSummaryScreen';
-import OdometerScreen from '../screens/OdometerScreen';
 
 import ProfileScreen from '../screens/ProfileScreen';
 import SOSScreen from '../screens/SOSScreen';
@@ -38,7 +34,7 @@ import SOSScreen from '../screens/SOSScreen';
 const HomeStack = createStackNavigator();
 const ExploreStack = createStackNavigator();
 const TripsStack = createStackNavigator();
-const FleetStack = createStackNavigator();
+const ManageStack = createStackNavigator();
 const ProfileStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -79,24 +75,20 @@ function TripsStackNav() {
     <TripsStack.Navigator screenOptions={HEADER_OPTIONS}>
       <TripsStack.Screen name="Trips" component={TripsScreen} options={{ title: 'My Trips' }} />
       <TripsStack.Screen name="Scanner" component={ScannerScreen} options={{ title: 'Log Expense' }} />
-      <TripsStack.Screen name="VehicleHealth" component={VehicleHealthScreen} options={{ title: 'Vehicle Health' }} />
       <TripsStack.Screen name="Support" component={SupportScreen} options={{ title: 'Support' }} />
     </TripsStack.Navigator>
   );
 }
 
-// ── Fleet Tab Stack ──────────────────────────────────────────────────────────
-function FleetStackNav() {
+// ── Manage Tab Stack ──────────────────────────────────────────────────────────
+function ManageStackNav() {
   return (
-    <FleetStack.Navigator screenOptions={HEADER_OPTIONS}>
-      <FleetStack.Screen name="Vehicles" component={VehiclesScreen} options={{ title: 'Fleet Management' }} />
-      <FleetStack.Screen name="VehicleDetail" component={VehicleDetailScreen} options={{ title: 'Vehicle Details' }} />
-      <FleetStack.Screen name="Employees" component={EmployeesScreen} options={{ title: 'Employees' }} />
-      <FleetStack.Screen name="EmployeeDetail" component={EmployeeDetailScreen} options={{ title: 'Employee Profile' }} />
-      <FleetStack.Screen name="Routes" component={RoutesScreen} options={{ title: 'Routes' }} />
-      <FleetStack.Screen name="TripSummary" component={TripSummaryScreen} options={{ title: 'Live Trip Summary' }} />
-      <FleetStack.Screen name="Odometer" component={OdometerScreen} options={{ title: 'Odometer Readings' }} />
-    </FleetStack.Navigator>
+    <ManageStack.Navigator screenOptions={HEADER_OPTIONS}>
+      <ManageStack.Screen name="Employees" component={EmployeesScreen} options={{ title: 'Employees' }} />
+      <ManageStack.Screen name="EmployeeDetail" component={EmployeeDetailScreen} options={{ title: 'Employee Profile' }} />
+      <ManageStack.Screen name="Routes" component={RoutesScreen} options={{ title: 'Routes' }} />
+      <ManageStack.Screen name="TripSummary" component={TripSummaryScreen} options={{ title: 'Live Trip Summary' }} />
+    </ManageStack.Navigator>
   );
 }
 
@@ -166,12 +158,12 @@ export default function MainNavigator() {
         }}
       />
       <Tab.Screen
-        name="FleetTab"
-        component={FleetStackNav}
+        name="ManageTab"
+        component={ManageStackNav}
         options={{
-          title: 'Fleet',
+          title: 'Manage',
           tabBarIcon: ({ focused, color, size }) => (
-            <TabIcon name={focused ? 'car' : 'car-outline'} focused={focused} color={color} size={size} />
+            <TabIcon name={focused ? 'settings' : 'settings-outline'} focused={focused} color={color} size={size} />
           ),
         }}
       />

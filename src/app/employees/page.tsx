@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users, Plus, Mail, Phone, Building, Car, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AddEmployeeDialog } from '@/components/fleet/AddEmployeeDialog';
+import { AddEmployeeDialog } from '@/components/tours/AddEmployeeDialog';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface EmployeeProfile {
