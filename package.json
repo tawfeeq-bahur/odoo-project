@@ -10,19 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package",
-    "setup": "node setup-admin-routes.js",
-    "test-routes": "node test-routes-admin.js",
-    "debug-routes": "node test-routes-debug.js",
-    "test-page": "node test-routes-page.js",
-    "test-reports": "node test-routes-page.js",
-    "test-routes-list": "node test-routes-list.js",
-    "test-routes-frontend": "node test-routes-frontend.js",
-    "add-routes": "node add-sample-routes.js",
-    "clear-routes": "node clear-sample-routes.js",
-    "clear-all-routes": "node clear-all-routes.js",
-    "setup-postgres": "node setup-postgresql.js",
-    "test-postgres": "node test-postgresql.js"
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",

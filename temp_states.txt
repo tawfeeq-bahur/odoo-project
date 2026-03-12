@@ -1,2 +1,0 @@
-﻿  const [placeResults, setPlaceResults] = useState<PlaceSearchOutput | null>(null);
-  const [placeLoading, setPlaceLoading] = useState(false);
