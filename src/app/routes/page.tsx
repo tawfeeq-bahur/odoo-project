@@ -10,6 +10,7 @@ import { Route, MapPin, Clock, Fuel, Leaf, RefreshCw, AlertTriangle } from 'luci
 import { useSharedState } from '@/components/AppLayout';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
+import { RouteAdvisories } from '@/components/RouteAdvisories';
 
 interface RouteData {
   _id: string;
@@ -273,6 +274,11 @@ export default function RoutesPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Route Advisories */}
+                <div className="pt-4 border-t">
+                  <RouteAdvisories source={route.source} destination={route.destination} travelDate={route.date} />
+                </div>
               </CardContent>
             </Card>
           ))}

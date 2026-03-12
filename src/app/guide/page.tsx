@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { TransportMode, getTransportRecommendation, calculateDistance } from '@/utils/distance-calculator';
 import type { AttractionsOutput } from '@/ai/flows/attractions';
 import { AttractionCard } from '@/components/AttractionCard';
+import { RouteAdvisories } from '@/components/RouteAdvisories';
 import { useLanguage } from '@/context/LanguageContext';
 
 const MapDisplay = dynamic(
@@ -707,6 +708,10 @@ export default function TourPlannerPage() {
                                         </Alert>
                                     </CardContent>
                                 </Card>
+
+                                {/* Route Advisories - Political rallies, festivals, road blocks, best times */}
+                                <RouteAdvisories source={plan.source} destination={plan.destination} />
+
                                 <MapDisplay
                                     plan={plan}
                                     traffic={currentTraffic}

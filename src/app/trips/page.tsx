@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { OdometerUpload } from '@/components/odometer/OdometerUpload';
 import { useLanguage } from '@/context/LanguageContext';
+import { RouteAdvisories } from '@/components/RouteAdvisories';
 
 const MapDisplay = dynamic(
   () => import('@/components/fleet/MapDisplay').then((mod) => mod.MapDisplay),
@@ -158,6 +159,9 @@ export default function TripsPage() {
                                     <AlertTitle>{t("Disclaimer")}</AlertTitle>
                                     <AlertDescription>{selectedTrip.plan.disclaimer}</AlertDescription>
                                 </Alert>
+
+                                {/* Route Advisories */}
+                                <RouteAdvisories source={selectedTrip.source} destination={selectedTrip.destination} />
                             </div>
                             <div className="space-y-4">
                                 <Card>

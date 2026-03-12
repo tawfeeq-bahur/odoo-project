@@ -7,8 +7,14 @@
  * - TransliterationOutput - The return type for the extractTextFromImage function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {genkit, z} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
+
+// Separate Genkit instance with its own API key for transliteration
+const transliterationAi = genkit({
+  plugins: [googleAI({ apiKey: process.env.GOOGLE_GENAI_TRANSLITERATION_API_KEY })],
+  model: 'googleai/gemini-2.5-flash',
+});
 
 const TransliterationInputSchema = z.object({
   photoDataUri: z
@@ -29,7 +35,7 @@ export async function extractTextFromImage(input: TransliterationInput): Promise
   return transliterationFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = transliterationAi.definePrompt({
   name: 'transliterationPrompt',
   input: {schema: TransliterationInputSchema},
   output: {schema: TransliterationOutputSchema},
@@ -61,7 +67,7 @@ Here is the image to analyze:
 {{media url=photoDataUri}}`,
 });
 
-const transliterationFlow = ai.defineFlow(
+const transliterationFlow = transliterationAi.defineFlow(
   {
     name: 'transliterationFlow',
     inputSchema: TransliterationInputSchema,
@@ -69,7 +75,7 @@ const transliterationFlow = ai.defineFlow(
   },
   async input => {
     try {
-      const {output} = await prompt(input, { config: { temperature: 0.1, maxOutputTokens: 200 } });
+      const {output} = await prompt(input, { config: { temperature: 0.1, maxOutputTokens: 2048 } });
       if (!output) {
         throw new Error('No output from transliteration prompt');
       }
